@@ -1,0 +1,393 @@
+'use client';
+
+/**
+ * FILE: UnifiedSearch.jsx
+ *
+ * PURPOSE:
+ * Single search input that combines neighborhood name filtering and
+ * NYC address lookup (via Geoclient) into one dropdown.
+ *
+ * DROPDOWN STRUCTURE:
+ *   Neighborhood matches — instant, local filter, grouped by borough
+ *   Address matches      — debounced Geoclient results, shown below neighborhoods
+ *
+ * Neighborhood results appear immediately; address results appear alongside them
+ * once Geoclient responds. Both sections share a single flat keyboard index.
+ *
+ * PROPS:
+ *   neighborhoods  — array of { id, name, borough, geoId, cdNumber }
+ *   onSelect       — optional ({ id, name, borough, cdNumber }) => void
+ *                    If provided, called instead of router.push (use in modals).
+ *                    If omitted, navigates directly.
+ *   onHover        — optional (neighborhoodId | null) => void  (for map sync)
+ */
+
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useRouter, useParams, usePathname } from 'next/navigation';
+import { useComparison } from '@/lib/context/ComparisonContext';
+import { searchAddresses } from '@/lib/geoclient/geocode';
+import { BOROUGH_ORDER } from '@/lib/utils/constants';
+import { highlight } from '@/lib/utils/highlight';
+import NeighborhoodGroups from '@/components/controls/NeighborhoodGroups';
+
+const DEBOUNCE_MS        = 200; // reduced from 350ms for faster address feedback
+const ADDRESS_MIN_LENGTH = 5;   // Geoclient needs enough context to identify a street
+
+export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover }) {
+  const [query,          setQuery]        = useState('');
+  const [focusedIndex,   setFocused]      = useState(-1);
+  const [dropVisible,    setDropVisible]  = useState(false);
+  const [addressResults, setAddressResults] = useState([]); // [{ label, neighborhood }]
+  const [addressLoading, setAddressLoading] = useState(false);
+
+  const inputRef     = useRef(null);
+  const itemRefs     = useRef([]);
+  const containerRef = useRef(null);
+  const debounceRef  = useRef(null);
+
+  const router   = useRouter();
+  const params   = useParams();
+  const pathname = usePathname();
+  const activeId = params?.id ? String(params.id) : null;
+
+  // Clear stale query whenever the route changes (e.g. map click navigated away
+  // while a query was typed but not submitted)
+  useEffect(() => {
+    setQuery('');
+    setAddressResults([]);
+  }, [pathname]);
+  const { setComparisonNeighborhood } = useComparison();
+
+  const isOpen = query.length > 0;
+
+  // ── Neighborhood filtering (instant) ──────────────────────────────────────
+  const { grouped, flatNeighborhoods } = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return { grouped: [], flatNeighborhoods: [] };
+
+    const filtered = neighborhoods.filter(n =>
+      n.name.toLowerCase().includes(q) ||
+      n.borough.toLowerCase().includes(q)
+    );
+
+    const map = {};
+    BOROUGH_ORDER.forEach(b => { map[b] = []; });
+    filtered.forEach(n => {
+      const key = map[n.borough] !== undefined ? n.borough : 'Other';
+      if (!map[key]) map[key] = [];
+      map[key].push(n);
+    });
+
+    const groups   = Object.entries(map).filter(([, ns]) => ns.length > 0);
+    const flatList = groups.flatMap(([, ns]) => ns);
+    return { grouped: groups, flatNeighborhoods: flatList };
+  }, [query, neighborhoods]);
+
+  // ── Address lookup (debounced) ────────────────────────────────────────────
+  // NOTE: Geoclient /search is a geocoder, not an autocomplete API — it needs
+  // a reasonably complete address to return results. For true keystroke-level
+  // suggestions, swap searchAddresses() for a Places Autocomplete API.
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    if (query.trim().length < ADDRESS_MIN_LENGTH) {
+      setAddressResults([]);
+      setAddressLoading(false);
+      return;
+    }
+    setAddressLoading(true);
+    debounceRef.current = setTimeout(async () => {
+      const hits = await searchAddresses(query, neighborhoods);
+      setAddressResults(hits);
+      setAddressLoading(false);
+    }, DEBOUNCE_MS);
+
+    return () => clearTimeout(debounceRef.current);
+  }, [query, neighborhoods]);
+
+  // Flat list combining neighborhoods + addresses for keyboard nav
+  const flatAll = useMemo(() => [
+    ...flatNeighborhoods.map(n => ({ type: 'neighborhood', neighborhood: n })),
+    ...addressResults.map(a => ({ type: 'address', ...a })),
+  ], [flatNeighborhoods, addressResults]);
+
+  // ── Dropdown animation ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (isOpen) {
+      const raf = requestAnimationFrame(() => setDropVisible(true));
+      return () => cancelAnimationFrame(raf);
+    } else {
+      setDropVisible(false);
+    }
+  }, [isOpen]);
+
+  // Reset focus when results change
+  useEffect(() => { setFocused(-1); }, [query]);
+
+  // Scroll focused item into view
+  useEffect(() => {
+    if (focusedIndex >= 0) {
+      itemRefs.current[focusedIndex]?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [focusedIndex]);
+
+  // Close on outside click
+  useEffect(() => {
+    function handleMouseDown(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setQuery('');
+        setAddressResults([]);
+      }
+    }
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, []);
+
+  // ── Selection ─────────────────────────────────────────────────────────────
+  const handleSelect = useCallback((neighborhood) => {
+    setQuery('');
+    setAddressResults([]);
+    onHover?.(null);
+    if (onSelect) {
+      onSelect(neighborhood);
+    } else {
+      setComparisonNeighborhood(null);
+      router.push(`/neighborhood/${neighborhood.id}`);
+    }
+  }, [onSelect, onHover, router, setComparisonNeighborhood]);
+
+  // ── Keyboard ──────────────────────────────────────────────────────────────
+  function handleKeyDown(e) {
+    if (!isOpen) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setFocused(i => Math.min(i + 1, flatAll.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setFocused(i => (i <= 0 ? -1 : i - 1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const target = focusedIndex >= 0 ? flatAll[focusedIndex] : flatAll[0];
+      if (target) handleSelect(target.neighborhood);
+    } else if (e.key === 'Escape') {
+      setQuery('');
+      setAddressResults([]);
+      inputRef.current?.blur();
+    }
+  }
+
+  const hasResults         = flatAll.length > 0;
+  const showAddressSection = addressResults.length > 0;
+  const isNYCEasterEgg     = query.trim().toLowerCase() === 'nyc';
+
+  return (
+    <div ref={containerRef} className="relative">
+
+      {/* ── Input ──────────────────────────────────────────────────────────── */}
+      <div className="relative">
+        <svg
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-400"
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+          aria-hidden="true"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round"
+            d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+        </svg>
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={e => { setQuery(e.target.value); onHover?.(null); }}
+          onKeyDown={handleKeyDown}
+          placeholder="Search by neighborhood or address…"
+          aria-label="Search neighborhoods or address"
+          aria-keyshortcuts="/"
+          aria-expanded={isOpen}
+          aria-autocomplete="list"
+          role="combobox"
+          className="w-full pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+        {/* Right side: loading spinner, clear button, or / shortcut hint */}
+        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center">
+          {addressLoading && query.length >= 3 ? (
+            <svg className="animate-spin w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+            </svg>
+          ) : query ? (
+            <button
+              onClick={() => { setQuery(''); setAddressResults([]); onHover?.(null); inputRef.current?.focus(); }}
+              aria-label="Clear search"
+              className="text-gray-400 hover:text-gray-600 transition-colors focus-visible:outline-none"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          ) : (
+            <kbd className="text-xs text-gray-500 border border-gray-200 rounded px-1 py-0.5 font-mono leading-none pointer-events-none select-none">
+              /
+            </kbd>
+          )}
+        </div>
+      </div>
+
+      {/* ── Dropdown ───────────────────────────────────────────────────────── */}
+      {isOpen && isNYCEasterEgg && (
+        <div
+          className="absolute z-[9999] w-full bg-white border border-blue-200 mt-1.5 rounded-lg shadow-lg overflow-hidden"
+          style={{
+            opacity:    dropVisible ? 1 : 0,
+            transform:  dropVisible ? 'translateY(0)' : 'translateY(-4px)',
+            transition: 'opacity 150ms ease-out, transform 150ms ease-out',
+          }}
+        >
+          <button
+            onClick={() => {
+              setQuery('');
+              window.dispatchEvent(new CustomEvent('chp:open-intro-modal'));
+            }}
+            className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
+          >
+            {/* Mini NYC skyline */}
+            <svg width="100%" height="28" viewBox="0 0 280 28" aria-hidden="true" className="mb-2 text-blue-300">
+              <rect x="0"   y="20" width="14" height="8"  fill="currentColor" opacity="0.5"/>
+              <rect x="16"  y="14" width="10" height="14" fill="currentColor" opacity="0.6"/>
+              <rect x="28"  y="8"  width="6"  height="20" fill="currentColor" opacity="0.8"/>
+              <rect x="36"  y="4"  width="4"  height="24" fill="currentColor"/>
+              <rect x="38"  y="2"  width="2"  height="4"  fill="currentColor"/>
+              <rect x="42"  y="10" width="12" height="18" fill="currentColor" opacity="0.7"/>
+              <rect x="56"  y="16" width="10" height="12" fill="currentColor" opacity="0.5"/>
+              <rect x="68"  y="6"  width="8"  height="22" fill="currentColor" opacity="0.9"/>
+              <rect x="71"  y="3"  width="2"  height="5"  fill="currentColor"/>
+              <rect x="78"  y="12" width="14" height="16" fill="currentColor" opacity="0.6"/>
+              <rect x="94"  y="18" width="10" height="10" fill="currentColor" opacity="0.4"/>
+              <rect x="106" y="10" width="12" height="18" fill="currentColor" opacity="0.7"/>
+              <rect x="120" y="14" width="8"  height="14" fill="currentColor" opacity="0.5"/>
+              <rect x="130" y="6"  width="10" height="22" fill="currentColor" opacity="0.8"/>
+              <rect x="142" y="16" width="12" height="12" fill="currentColor" opacity="0.4"/>
+              <rect x="156" y="10" width="8"  height="18" fill="currentColor" opacity="0.7"/>
+              <rect x="166" y="4"  width="6"  height="24" fill="currentColor" opacity="0.9"/>
+              <rect x="174" y="12" width="10" height="16" fill="currentColor" opacity="0.6"/>
+              <rect x="186" y="18" width="14" height="10" fill="currentColor" opacity="0.4"/>
+              <rect x="202" y="8"  width="8"  height="20" fill="currentColor" opacity="0.7"/>
+              <rect x="212" y="14" width="10" height="14" fill="currentColor" opacity="0.5"/>
+              <rect x="224" y="10" width="12" height="18" fill="currentColor" opacity="0.8"/>
+              <rect x="238" y="16" width="8"  height="12" fill="currentColor" opacity="0.5"/>
+              <rect x="248" y="6"  width="10" height="22" fill="currentColor" opacity="0.9"/>
+              <rect x="260" y="12" width="8"  height="16" fill="currentColor" opacity="0.6"/>
+              <rect x="270" y="20" width="10" height="8"  fill="currentColor" opacity="0.4"/>
+            </svg>
+            <p className="text-xs font-medium text-blue-700">All 59 community districts — you know your NYC</p>
+            <p className="text-xs text-blue-400 mt-0.5">See all neighborhoods →</p>
+          </button>
+        </div>
+      )}
+      {isOpen && !isNYCEasterEgg && (
+        <ul
+          role="listbox"
+          aria-label="Search results"
+          className="absolute z-[9999] w-full bg-white border border-gray-200 mt-1.5 rounded-lg shadow-lg max-h-72 overflow-auto py-1"
+          style={{
+            opacity:    dropVisible ? 1 : 0,
+            transform:  dropVisible ? 'translateY(0)' : 'translateY(-4px)',
+            transition: 'opacity 150ms ease-out, transform 150ms ease-out',
+          }}
+        >
+          {!hasResults && !addressLoading ? (
+            <li className="px-4 py-3 text-sm text-gray-500 text-center">
+              No results found
+            </li>
+          ) : (
+            (() => {
+              // Address results start their index after all neighborhood items
+              const addrStart = flatNeighborhoods.length;
+              return (
+                <>
+                  {/* ── Neighborhood section ──────────────────────────── */}
+                  <NeighborhoodGroups
+                    grouped={grouped}
+                    query={query}
+                    focusedIndex={focusedIndex}
+                    itemRefs={itemRefs}
+                    startIndex={0}
+                    onSelect={handleSelect}
+                    onSetFocused={setFocused}
+                    onHover={onHover}
+                    activeId={activeId}
+                  />
+
+                  {/* ── Address section ───────────────────────────────── */}
+                  {/* Loading hint — shown while Geoclient is searching */}
+                  {addressLoading && query.trim().length >= ADDRESS_MIN_LENGTH && (
+                    <li role="none">
+                      {flatNeighborhoods.length > 0 && (
+                        <div className="border-t border-gray-100 mx-2 mt-1" />
+                      )}
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-3 pt-2.5 pb-1 select-none">
+                        Addresses
+                      </p>
+                      <p className="text-xs text-gray-400 px-3 pb-2">Searching…</p>
+                    </li>
+                  )}
+                  {/* No-results hint — shown after search completes with no hits */}
+                  {!addressLoading && !showAddressSection && query.trim().length >= ADDRESS_MIN_LENGTH && (
+                    <li role="none">
+                      {flatNeighborhoods.length > 0 && (
+                        <div className="border-t border-gray-100 mx-2 mt-1" />
+                      )}
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-3 pt-2.5 pb-1 select-none">
+                        Addresses
+                      </p>
+                      <p className="text-xs text-gray-400 px-3 pb-2">Try a more complete address, e.g. 123 Main St Brooklyn</p>
+                    </li>
+                  )}
+                  {showAddressSection && (
+                    <li role="none">
+                      {/* Divider + section label */}
+                      {flatNeighborhoods.length > 0 && (
+                        <div className="border-t border-gray-100 mx-2 mt-1" />
+                      )}
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-3 pt-2.5 pb-1 select-none">
+                        Addresses
+                      </p>
+                      <ul role="group" aria-label="Address results">
+                        {addressResults.map((item, i) => {
+                          const idx       = addrStart + i;
+                          const isFocused = idx === focusedIndex;
+                          return (
+                            <li
+                              key={`addr-${i}`}
+                              ref={el => { itemRefs.current[idx] = el; }}
+                              role="option"
+                              aria-selected={isFocused}
+                              onClick={() => handleSelect(item.neighborhood)}
+                              onMouseEnter={() => { setFocused(idx); onHover?.(item.neighborhood.id); }}
+                              onMouseLeave={() => onHover?.(null)}
+                              className={[
+                                'flex flex-col px-3 py-2 text-xs cursor-pointer transition-colors',
+                                isFocused
+                                  ? 'bg-blue-50 text-blue-800'
+                                  : 'text-gray-700 hover:bg-gray-50',
+                              ].join(' ')}
+                            >
+                              <span className="font-medium leading-snug">
+                                {highlight(item.label, query.trim())}
+                              </span>
+                              <span className={`leading-snug mt-0.5 ${isFocused ? 'text-blue-500' : 'text-gray-400'}`}>
+                                {item.neighborhood.name} · CD {item.neighborhood.cdNumber}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </li>
+                  )}
+                </>
+              );
+            })()
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
