@@ -1,0 +1,16 @@
+[build]
+  command   = "npm run build"
+  publish   = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Environment variables required at runtime (set these in Netlify dashboard):
+#
+#   NYC_GEOCLIENT_KEY   — server-only API key for the geocode proxy route
+#                         (/app/api/geocode/route.js). Use this name, NOT
+#                         NEXT_PUBLIC_NYC_GEOCLIENT_KEY, so the key stays
+#                         out of the client bundle.
+#
+# How to set them:
+#   Netlify dashboard → Site → Site configuration → Environment variables

@@ -1,0 +1,1 @@
+Indicators are sourced from the NYC Department of Health and Mental Hygiene. Hospitalization data reflects NYC inpatient discharge records. Prevalence estimates are drawn from the Community Health Survey.

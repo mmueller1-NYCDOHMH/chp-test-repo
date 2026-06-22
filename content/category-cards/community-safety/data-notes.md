@@ -1,0 +1,1 @@
+Incarceration data comes from the NYC Department of Correction. Crime indicators are sourced from NYPD CompStat. Rates are age-adjusted where applicable and reflect the most recent available data year.

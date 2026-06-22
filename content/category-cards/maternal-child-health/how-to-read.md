@@ -1,0 +1,1 @@
+Rates are typically expressed per 1,000 live births or as percentages of all births. Lower rates for adverse outcomes (like preterm birth) indicate better outcomes. The citywide rate is shown as a reference for comparison.

@@ -1,0 +1,1 @@
+Chronic diseases account for the majority of deaths and hospitalizations in NYC. Their uneven distribution across neighborhoods reflects deeper inequities in living conditions, stress, and access to care — not individual behavior alone.
