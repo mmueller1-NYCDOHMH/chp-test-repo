@@ -1,0 +1,9 @@
+{
+    "intro": {
+      "body": "This section shows basic population characteristics in {{neighborhood}}."
+    },
+    "demographics": {
+      "title": "Demographics",
+      "subtitle": "Population characteristics and trends in {{neighborhood}}"
+    }
+  }
