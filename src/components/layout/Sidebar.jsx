@@ -153,7 +153,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries })
       setActiveTab('neighborhood');
       // Wait one tick for the tab switch to re-render before focusing the input
       setTimeout(() => {
-        document.querySelector('input[aria-label="Search neighborhoods"]')?.focus();
+        document.querySelector('input[aria-label="Search neighborhoods or address"]')?.focus();
       }, 50);
     }
     document.addEventListener('keydown', handleKeyDown);
