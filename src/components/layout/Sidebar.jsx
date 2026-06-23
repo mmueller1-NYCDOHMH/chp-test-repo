@@ -142,19 +142,28 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries })
 
   const [activeTab, _setActiveTab] = useState(DEFAULT_TAB);
 
-  // Press `/` anywhere on the page (outside an input) to jump to neighborhood search
+  // Global keyboard shortcuts (outside any text field):
+  //   /  — jump to neighborhood search
+  //   m  — open the intro / neighborhood picker modal
   useEffect(() => {
     function handleKeyDown(e) {
-      if (e.key !== '/') return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const tag = document.activeElement?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) return;
-      e.preventDefault();
-      setActiveTab('neighborhood');
-      // Wait one tick for the tab switch to re-render before focusing the input
-      setTimeout(() => {
-        document.querySelector('input[aria-label="Search neighborhoods or address"]')?.focus();
-      }, 50);
+
+      if (e.key === '/') {
+        e.preventDefault();
+        setActiveTab('neighborhood');
+        // Wait one tick for the tab switch to re-render before focusing the input
+        setTimeout(() => {
+          document.querySelector('input[aria-label="Search neighborhoods or address"]')?.focus();
+        }, 50);
+      }
+
+      if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('chp:open-intro-modal'));
+      }
     }
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);

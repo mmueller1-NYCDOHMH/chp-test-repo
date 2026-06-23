@@ -31,10 +31,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 const SHORTCUTS = [
-  { keys: ['/'],   description: 'Search neighborhoods'       },
-  { keys: ['i'],   description: 'Open indicator details'     },
-  { keys: ['Esc'], description: 'Close panel / clear search' },
-  { keys: ['?'],   description: 'Show this shortcuts menu'   },
+  { keys: ['/'],   description: 'Search neighborhoods'            },
+  { keys: ['m'],   description: 'Open neighborhood picker modal'  },
+  { keys: ['e'],   description: 'Expand hovered chart'            },
+  { keys: ['i'],   description: 'Open indicator details'          },
+  { keys: ['Esc'], description: 'Close panel / clear search'      },
+  { keys: ['?'],   description: 'Show this shortcuts menu'        },
 ];
 
 export default function KeyboardShortcutsButton() {

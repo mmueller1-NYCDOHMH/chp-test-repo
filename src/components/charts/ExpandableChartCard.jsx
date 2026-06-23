@@ -80,8 +80,9 @@ export default function ExpandableChartCard({
   const [notesVisible, setNotesVisible] = useState(false);
 
   const { open: openFlyout } = useFlyout();
-  const modalRef    = useRef(null);
+  const modalRef     = useRef(null);
   const expandBtnRef = useRef(null);
+  const isHovered    = useRef(false);
 
   // ── Expand modal animation ─────────────────────────────────────────────────
   useEffect(() => {
@@ -154,8 +155,29 @@ export default function ExpandableChartCard({
     });
   }
 
-  function handleCardMouseEnter() { window.__chp_hovered_card_open = handleDetails; }
-  function handleCardMouseLeave() { window.__chp_hovered_card_open = null; }
+  function handleCardMouseEnter() {
+    isHovered.current = true;
+    window.__chp_hovered_card_open = handleDetails;
+  }
+  function handleCardMouseLeave() {
+    isHovered.current = false;
+    window.__chp_hovered_card_open = null;
+  }
+
+  // Press `e` while hovering a card to expand it
+  useEffect(() => {
+    function onKey(e) {
+      if ((e.key === 'e' || e.key === 'E') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const tag = document.activeElement?.tagName?.toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) return;
+        if (!isHovered.current) return;
+        e.preventDefault();
+        setIsExpanded(true);
+      }
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sourceClean = cleanSource(source);
   const hasNotes    = !!(description || sourceUrl);
