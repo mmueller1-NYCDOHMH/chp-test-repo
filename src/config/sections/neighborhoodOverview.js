@@ -17,7 +17,7 @@
  *   inside NeighborhoodOverviewHero.jsx).
  */
 
-import { indicators, asStatTile } from '../registries/indicatorRegistry';
+import { indicators, asStatTile, asPyramidChart } from '../registries/indicatorRegistry';
 import { NEIGHBORHOOD_OVERVIEW_ID } from '../registries/sectionIds';
 
 export const neighborhoodOverview = {
@@ -40,6 +40,10 @@ export const neighborhoodOverview = {
           asStatTile(indicators.totalPopulation),
           asStatTile(indicators.bornOutsideUS),
           asStatTile(indicators.limitedEnglishProficiency),
+        ],
+        pyramidCharts: [
+          asPyramidChart(indicators.ageDistribution),
+          asPyramidChart(indicators.raceEthnicity),
         ],
       }
     }

@@ -148,3 +148,18 @@ export function asStatTile(indicator) {
     showDelta:      indicator.showDelta,
   };
 }
+
+// ── Helper: asPyramidChart ────────────────────────────────────────────────
+/**
+ * Returns the shape expected by neighborhoodOverviewHero pyramidCharts.
+ *
+ * @param {object} indicator - A distribution entry from the indicators registry
+ * @returns {{ indicatorKey, title, segments }}
+ */
+export function asPyramidChart(indicator) {
+  return {
+    indicatorKey: indicator.key,
+    title:        indicator.title,
+    segments:     indicator.segments,
+  };
+}
