@@ -1,0 +1,14 @@
+{
+  "key": "public-transit-use",
+  "topic": "transportation-safety",
+  "title": "Public Transit Use",
+  "subtitle": "% of workers who primarily commute by public transit",
+  "source": "Source: American Community Survey 5-Year Estimates",
+  "timePeriod": "TBD",
+  "label": "Public Transit Commuters",
+  "unit": "of workers",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": true
+}

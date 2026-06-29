@@ -1,0 +1,14 @@
+{
+  "key": "fruits-veggies",
+  "topic": "food-environment",
+  "title": "1+ Serving of Fruits or Vegetables",
+  "subtitle": "% of adults who eat one or more servings of fruits or vegetables per day",
+  "source": "Source: NYC Community Health Survey",
+  "timePeriod": "TBD",
+  "label": "Daily Fruit or Vegetable Consumption",
+  "unit": "of adults",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": true
+}

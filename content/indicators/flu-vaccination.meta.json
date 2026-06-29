@@ -1,0 +1,14 @@
+{
+  "key": "flu-vaccination",
+  "topic": "prevention",
+  "title": "Flu Vaccination",
+  "subtitle": "% of adults who received a flu vaccine in the past 12 months",
+  "source": "Source: NYC Community Health Survey",
+  "timePeriod": "TBD",
+  "label": "Flu Vaccination",
+  "unit": "of adults",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": true
+}

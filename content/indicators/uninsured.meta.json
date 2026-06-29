@@ -1,0 +1,14 @@
+{
+  "key": "uninsured",
+  "topic": "health-care-access",
+  "title": "Without Health Insurance",
+  "subtitle": "% of residents without health insurance coverage",
+  "source": "Source: American Community Survey 5-Year Estimates",
+  "timePeriod": "TBD",
+  "label": "Uninsured",
+  "unit": "of residents",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

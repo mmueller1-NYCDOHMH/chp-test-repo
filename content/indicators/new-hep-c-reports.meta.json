@@ -1,0 +1,14 @@
+{
+  "key": "new-hep-c-reports",
+  "topic": "infectious-disease",
+  "title": "New Hepatitis C Reports",
+  "subtitle": "Rate of newly reported Hepatitis C cases per 100,000 residents",
+  "source": "Source: NYC DOHMH Bureau of Communicable Disease",
+  "timePeriod": "TBD",
+  "label": "New Hep C Reports",
+  "unit": "per 100k residents",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

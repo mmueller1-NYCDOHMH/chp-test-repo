@@ -1,0 +1,1 @@
+Chronic diseases and infectious conditions are the leading causes of death and disability in New York City. Indicators here track the prevalence of long-term conditions, infectious disease burden, and key population-level health outcomes across neighborhoods.

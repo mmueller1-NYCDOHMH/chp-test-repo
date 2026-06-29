@@ -1,0 +1,15 @@
+{
+  "key": "life-expectancy",
+  "topic": "health-outcomes",
+  "title": "Life Expectancy at Birth",
+  "subtitle": "Years",
+  "source": "Source: NYC DOHMH Vital Statistics (2017–2021)",
+  "sourceUrl": "https://www.nyc.gov/site/doh/data/data-sets/vital-statistics-data.page",
+  "timePeriod": "2017–2021",
+  "label": "Life Expectancy",
+  "unit": "years at birth",
+  "displaySuffix": " yrs",
+  "deltaSuffix": " yrs",
+  "decimals": 1,
+  "higherIsBetter": true
+}

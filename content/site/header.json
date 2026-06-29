@@ -1,0 +1,23 @@
+{
+  "defaultSubtitle": "50+ measures of neighborhood health across all 59 community districts. Because our health starts where we live, work, and play.",
+
+  "specialDates": {
+    "worldHealthDay": {
+      "month": 4,
+      "day": 7,
+      "subtitle": "Today is World Health Day. Health equity starts at the neighborhood level."
+    },
+    "dohAnniversary": {
+      "month": 2,
+      "day": 26,
+      "foundingYear": 1866,
+      "subtitle": "On this day in {year}, NYC established its Board of Health — one of the first public health agencies in the US. {age} years of protecting the city."
+    },
+    "nycMarathon": {
+      "month": 11,
+      "weekday": 0,
+      "occurrence": 1,
+      "subtitle": "Marathon day. The race route passes through a dozen of these 59 community districts — each with its own health story."
+    }
+  }
+}

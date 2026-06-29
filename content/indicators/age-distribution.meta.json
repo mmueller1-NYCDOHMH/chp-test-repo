@@ -1,0 +1,33 @@
+{
+  "key": "age-distribution",
+  "topic": "neighborhood-overview",
+  "title": "Age Distribution",
+  "subtitle": "Share of residents by age group",
+  "source": "Source: American Community Survey 5-Year Estimates (2019–2023)",
+  "timePeriod": "ACS 2019–2023",
+  "label": "Age",
+  "unit": "breakdown of residents",
+  "kind": "distribution",
+  "segments": [
+    {
+      "key": "under18",
+      "label": "Under 18"
+    },
+    {
+      "key": "age18to24",
+      "label": "18–24"
+    },
+    {
+      "key": "age25to44",
+      "label": "25–44"
+    },
+    {
+      "key": "age45to64",
+      "label": "45–64"
+    },
+    {
+      "key": "age65plus",
+      "label": "65+"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "key": "unmet-medical-need",
+  "topic": "health-care-access",
+  "title": "Without Needed Medical Care",
+  "subtitle": "% of adults who did not get medical care they needed in the past 12 months",
+  "source": "Source: NYC Community Health Survey",
+  "timePeriod": "TBD",
+  "label": "Unmet Medical Need",
+  "unit": "of adults",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

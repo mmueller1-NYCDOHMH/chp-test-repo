@@ -1,0 +1,14 @@
+{
+  "key": "new-hiv-diagnoses",
+  "topic": "infectious-disease",
+  "title": "New HIV Diagnoses",
+  "subtitle": "Rate of new HIV diagnoses per 100,000 residents",
+  "source": "Source: NYC DOHMH HIV Epidemiology and Field Services Program",
+  "timePeriod": "TBD",
+  "label": "New HIV Diagnoses",
+  "unit": "per 100k residents",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

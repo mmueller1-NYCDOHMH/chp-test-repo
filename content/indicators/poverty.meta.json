@@ -1,0 +1,15 @@
+{
+  "key": "poverty",
+  "topic": "economic-conditions",
+  "title": "Poverty",
+  "subtitle": "% of residents below the federal poverty level",
+  "source": "Source: American Community Survey 5-Year Estimates (2018–2022)",
+  "sourceUrl": "https://www.census.gov/programs-surveys/acs",
+  "timePeriod": "2018–2022",
+  "label": "Below Poverty Line",
+  "unit": "of residents",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

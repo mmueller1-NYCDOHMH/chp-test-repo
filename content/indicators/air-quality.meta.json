@@ -1,0 +1,14 @@
+{
+  "key": "air-quality",
+  "topic": "environmental-risk",
+  "title": "Air Quality",
+  "subtitle": "Fine particulate matter (PM2.5) concentration (mcg/m³)",
+  "source": "Source: NYC Community Air Survey",
+  "timePeriod": "TBD",
+  "label": "PM2.5 Concentration",
+  "unit": "mcg/m³ annual average",
+  "displaySuffix": "",
+  "deltaSuffix": " mcg/m³",
+  "decimals": 1,
+  "higherIsBetter": false
+}

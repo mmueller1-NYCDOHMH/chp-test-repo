@@ -1,0 +1,14 @@
+{
+  "key": "teen-pregnancy",
+  "topic": "maternal",
+  "title": "Teen Pregnancy",
+  "subtitle": "Rate of pregnancies among females ages 15–19 per 1,000 females",
+  "source": "Source: NYC DOHMH Bureau of Vital Statistics",
+  "timePeriod": "TBD",
+  "label": "Teen Pregnancy Rate",
+  "unit": "per 1,000 females 15–19",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

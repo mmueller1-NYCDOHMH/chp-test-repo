@@ -1,0 +1,14 @@
+{
+  "key": "born-outside-us",
+  "topic": "neighborhood-overview",
+  "title": "Born Outside the U.S.",
+  "subtitle": "% of residents born outside the U.S.",
+  "source": "Source: American Community Survey 5-Year Estimates (2019–2023)",
+  "timePeriod": "ACS 2019–2023",
+  "label": "Born Outside the U.S.",
+  "unit": "of residents",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": null
+}

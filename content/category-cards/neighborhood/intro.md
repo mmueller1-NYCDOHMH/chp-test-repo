@@ -1,0 +1,1 @@
+The physical and built environment of a neighborhood has a direct impact on the health of its residents. These indicators reflect environmental quality, food access, housing conditions, and transportation infrastructure across NYC community districts.

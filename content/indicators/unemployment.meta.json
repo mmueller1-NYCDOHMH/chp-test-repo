@@ -1,0 +1,14 @@
+{
+  "key": "unemployment",
+  "topic": "economic-conditions",
+  "title": "Unemployment",
+  "subtitle": "Percentage of the civilian labor force (ages 16+) who are unemployed",
+  "source": "Source: American Community Survey 5-Year Estimates (2019–2023)",
+  "timePeriod": "2019–2023",
+  "label": "Unemployed",
+  "unit": "of residents",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

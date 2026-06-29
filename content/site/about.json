@@ -1,0 +1,47 @@
+{
+  "_note": "Prose content for the About page. Edit strings here — no code changes needed. Tip boxes and structured elements (keyboard shortcuts table, code snippets) stay in the JSX at /src/app/about/page.js because they need inline formatting.",
+
+  "pageTitle": "About Community Health Profiles",
+  "deptLabel": "NYC Department of Health & Mental Hygiene",
+  "pageDescription": "How to navigate Community Health Profiles, understand the data, and get the most from the site.",
+
+  "intro": "Community Health Profiles is a public data tool from the NYC Department of Health. It presents health indicators for all 59 of the city's community districts, with comparisons to borough and citywide averages, so communities, researchers, and policymakers can see how their neighborhood compares and where disparities exist.",
+
+  "navigating": {
+    "choosingNeighborhood": "Every profile is scoped to a single community district. Use the search box in the left sidebar to find a neighborhood by name or borough — typing 'Bronx' shows all Bronx districts, typing 'Harlem' narrows to matching names. You can also click any district directly on the map.",
+    "topicNavigation": "The horizontal bar near the top of the page lists the main health topic categories. Hovering a category opens a dropdown of subcategories — clicking one scrolls directly to that section. The active section is highlighted as you scroll.",
+    "findingIndicator": "Switch to the 'Find indicator' tab in the left sidebar to search across all available indicators by name. Clicking a result scrolls the page to the relevant section and briefly highlights it so you can orient quickly."
+  },
+
+  "comparing": {
+    "p1": "Every profile shows one neighborhood at a time, but you can add a second district to compare it against. Scroll down in the left sidebar's Neighborhood tab to find the 'Compare to' field. Search for any other community district and select it.",
+    "p2": "Once a comparison district is selected, it appears highlighted in amber across every bar chart on the page — your primary neighborhood stays highlighted in blue. The sidebar map also shows both districts, using the same colors, so you can see where they sit geographically relative to each other.",
+    "p3": "A pill showing the comparison district's name appears in the sidebar. Click it to change the comparison, or click the x to clear it and return to single-neighborhood view. Switching your primary neighborhood automatically clears the comparison."
+  },
+
+  "nonObvious": {
+    "intro": "A few interactions exist that don't have visible labels — they're worth knowing about."
+  },
+
+  "understandingData": {
+    "communityDistricts": "New York City is divided into 59 community districts — administrative units roughly corresponding to neighborhoods. Each district has a community board and typically covers 50,000–200,000 residents. Profiles are scoped to these districts because they reflect meaningful social and geographic boundaries, and because most city health data is collected and reported at this level.",
+    "indicators": "Each metric shown is called an indicator — a single, well-defined measure of a health-related condition in a population. Examples include the share of adults with diagnosed diabetes, the rate of incarcerations per 100,000 residents, or life expectancy at birth. Indicators are chosen because they are reliably measurable, comparable across geographies, and meaningful for understanding population health.",
+    "comparisons": "Most indicators show a comparison to the NYC citywide average. A value shown as higher or lower than citywide tells you how this community district compares to the city as a whole — not whether the outcome is good or bad in absolute terms. Some indicators (like obesity or poverty) are better when lower; others (like life expectancy) are better when higher. The direction is labeled where it applies.",
+    "readingCharts": "Bar charts show one value per community district across all 59 CDs. The selected neighborhood's bar is highlighted in blue; if a comparison district is active, its bar is highlighted in amber. All other districts appear in gray. Hovering any bar shows the district name and value. The citywide average is shown as a reference line."
+  },
+
+  "detailPanel": {
+    "intro": "Clicking 'More about this indicator' on any chart card opens a side panel with three things:",
+    "choropleth": "A map of all 59 community districts colored by their value for this indicator, from low (light blue) to high (dark blue). Hovering a district on the map highlights its bar in the distribution strip below.",
+    "distributionStrip": "A dot-on-a-line view showing where the selected district sits among all 59 CDs. The selected neighborhood appears as a larger filled dot; the citywide average as a dashed tick. Hovering any dot shows that district's name and value. Hovering the map and hovering the strip are synced — they highlight each other.",
+    "sourceDescription": "Each panel includes a plain-language description of what the indicator measures, the data source with year, and a link to the source dataset where available."
+  },
+
+  "dataSources": {
+    "p1": "Indicators draw on multiple sources including the American Community Survey, NYC vital statistics, hospital discharge records, and surveys administered by the NYC Department of Health. Data years vary by indicator and are noted in each indicator's detail panel.",
+    "sourceLink": {
+      "text": "NYC Community Health Profiles documentation",
+      "url": "https://www.nyc.gov/site/doh/data/data-publications/profiles.page"
+    }
+  }
+}

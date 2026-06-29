@@ -1,0 +1,14 @@
+{
+  "key": "pedestrian-injuries",
+  "topic": "transportation-safety",
+  "title": "Pedestrian Injury Hospitalizations",
+  "subtitle": "Rate of pedestrian injury hospitalizations per 100,000 residents",
+  "source": "Source: NYC SPARCS / DOHMH",
+  "timePeriod": "TBD",
+  "label": "Pedestrian Injury Hospitalizations",
+  "unit": "per 100k residents",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

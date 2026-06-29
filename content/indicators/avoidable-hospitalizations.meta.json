@@ -1,0 +1,14 @@
+{
+  "key": "avoidable-hospitalizations",
+  "topic": "health-care-use",
+  "title": "Avoidable Hospitalizations",
+  "subtitle": "Rate of hospitalizations for conditions manageable with primary care, per 100,000 residents",
+  "source": "Source: NYC SPARCS / DOHMH",
+  "timePeriod": "TBD",
+  "label": "Avoidable Hospitalizations",
+  "unit": "per 100k residents",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

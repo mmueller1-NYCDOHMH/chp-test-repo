@@ -1,0 +1,15 @@
+{
+  "key": "incarcerations",
+  "topic": "community-safety",
+  "title": "Incarcerations",
+  "subtitle": "Rate of residents admitted to local jails (not including prisons) per 100,000 adults ages 16 and older",
+  "source": "Source: NYC Department of Correction (2023–2024)",
+  "sourceUrl": "https://www.nyc.gov/site/doc/about/reports-and-statistics.page",
+  "timePeriod": "2023–2024",
+  "label": "Jail Incarcerations",
+  "unit": "per 100k adults",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

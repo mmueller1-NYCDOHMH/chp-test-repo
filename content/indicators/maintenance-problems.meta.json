@@ -1,0 +1,14 @@
+{
+  "key": "maintenance-problems",
+  "topic": "housing-quality",
+  "title": "Homes with Any Maintenance Problems",
+  "subtitle": "% of renter-occupied homes reporting one or more maintenance deficiencies",
+  "source": "Source: NYC Housing and Vacancy Survey",
+  "timePeriod": "TBD",
+  "label": "Homes with Maintenance Problems",
+  "unit": "of renter-occupied homes",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

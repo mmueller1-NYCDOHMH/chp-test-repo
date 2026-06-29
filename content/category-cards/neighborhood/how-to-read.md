@@ -1,0 +1,1 @@
+Each chart compares this community district to the citywide average. A bar extending further right indicates a higher value — whether that's better or worse depends on the indicator. Look at the direction badge (↑/↓) and the source notes for context on how to interpret each measure.

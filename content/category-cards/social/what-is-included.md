@@ -1,0 +1,1 @@
+Indicators covering economic security, community safety, and social opportunity — including poverty rates, unemployment, incarceration, and access to education — across all 59 NYC community districts.

@@ -1,0 +1,33 @@
+{
+  "key": "race-ethnicity",
+  "topic": "neighborhood-overview",
+  "title": "Race & Ethnicity",
+  "subtitle": "Share of residents by race/ethnicity",
+  "source": "Source: American Community Survey 5-Year Estimates (2019–2023)",
+  "timePeriod": "ACS 2019–2023",
+  "label": "Race / Ethnicity",
+  "unit": "of residents",
+  "kind": "distribution",
+  "segments": [
+    {
+      "key": "hispanic",
+      "label": "Hispanic/Latino"
+    },
+    {
+      "key": "white",
+      "label": "White"
+    },
+    {
+      "key": "black",
+      "label": "Black"
+    },
+    {
+      "key": "asian",
+      "label": "Asian"
+    },
+    {
+      "key": "other",
+      "label": "Other"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "key": "binge-drinking",
+  "topic": "substance-use",
+  "title": "Binge Drinking",
+  "subtitle": "% of adults who report binge drinking in the past 30 days",
+  "source": "Source: NYC Community Health Survey",
+  "timePeriod": "TBD",
+  "label": "Binge Drinking",
+  "unit": "of adults",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

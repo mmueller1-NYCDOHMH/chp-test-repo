@@ -1,0 +1,14 @@
+{
+  "key": "cockroaches",
+  "topic": "housing-quality",
+  "title": "Homes Reporting Cockroaches",
+  "subtitle": "% of renter-occupied homes reporting cockroach presence",
+  "source": "Source: NYC Housing and Vacancy Survey",
+  "timePeriod": "TBD",
+  "label": "Homes with Cockroaches",
+  "unit": "of renter-occupied homes",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

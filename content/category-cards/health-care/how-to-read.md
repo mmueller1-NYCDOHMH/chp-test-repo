@@ -1,0 +1,1 @@
+Each chart compares this community district to the citywide average. For most indicators in this section, higher values indicate greater access or utilization of care. Check the direction badge and source notes for each indicator to understand what a higher or lower value means in context.

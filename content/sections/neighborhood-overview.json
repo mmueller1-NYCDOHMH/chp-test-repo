@@ -1,0 +1,5 @@
+{
+  "_note": "Controls the At-a-Glance hero panel. statTiles = single-value stat tiles (left row). pyramidCharts = comparison bars (age breakdown, race/ethnicity). Edit to change which indicators appear or their order. Keys must match /content/indicators/{key}.meta.json files.",
+  "statTiles":    ["total-population", "born-outside-us", "limited-english-proficiency"],
+  "pyramidCharts": ["age-distribution", "race-ethnicity"]
+}

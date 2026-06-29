@@ -1,0 +1,14 @@
+{
+  "key": "preterm-births",
+  "topic": "maternal",
+  "title": "Preterm Births",
+  "subtitle": "% of live births delivered before 37 weeks of gestation",
+  "source": "Source: NYC DOHMH Bureau of Vital Statistics",
+  "timePeriod": "TBD",
+  "label": "Preterm Births",
+  "unit": "of live births",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

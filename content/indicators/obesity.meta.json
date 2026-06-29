@@ -1,0 +1,15 @@
+{
+  "key": "obesity",
+  "topic": "chronic-conditions",
+  "title": "Adult Obesity",
+  "subtitle": "% of adults with BMI ≥ 30",
+  "source": "Source: NYC Community Health Survey (2018–2022)",
+  "sourceUrl": "https://www.nyc.gov/site/doh/data/data-sets/community-health-survey.page",
+  "timePeriod": "2018–2022",
+  "label": "Adult Obesity",
+  "unit": "of adults",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

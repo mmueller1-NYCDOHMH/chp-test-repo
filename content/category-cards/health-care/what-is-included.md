@@ -1,0 +1,1 @@
+Indicators covering access to health care services, preventive care, and hospitalizations — including insurance coverage, primary care access, injury-related hospital admissions, and vaccination rates.

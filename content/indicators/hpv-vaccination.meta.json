@@ -1,0 +1,14 @@
+{
+  "key": "hpv-vaccination",
+  "topic": "prevention",
+  "title": "HPV Vaccination",
+  "subtitle": "% of adolescents ages 13–17 who have received the HPV vaccine series",
+  "source": "Source: NYC DOHMH Immunization Registry",
+  "timePeriod": "TBD",
+  "label": "HPV Vaccination",
+  "unit": "of adolescents 13–17",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": true
+}

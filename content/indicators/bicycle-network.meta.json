@@ -1,0 +1,14 @@
+{
+  "key": "bicycle-network",
+  "topic": "transportation-safety",
+  "title": "Bicycle Network Coverage",
+  "subtitle": "Miles of bike lanes per square mile of land area",
+  "source": "Source: NYC Department of Transportation",
+  "timePeriod": "TBD",
+  "label": "Bike Lane Coverage",
+  "unit": "miles per sq mi",
+  "displaySuffix": "",
+  "deltaSuffix": "",
+  "decimals": 1,
+  "higherIsBetter": true
+}

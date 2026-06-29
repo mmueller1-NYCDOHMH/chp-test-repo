@@ -1,0 +1,15 @@
+{
+  "key": "total-population",
+  "topic": "neighborhood-overview",
+  "title": "Total Population",
+  "subtitle": "Residents living in the area",
+  "source": "Source: American Community Survey 5-Year Estimates (2019–2023)",
+  "timePeriod": "ACS 2019–2023",
+  "label": "People",
+  "unit": "live in this area",
+  "displaySuffix": "",
+  "deltaSuffix": "",
+  "decimals": 0,
+  "higherIsBetter": null,
+  "showDelta": false
+}

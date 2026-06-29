@@ -1,0 +1,14 @@
+{
+  "key": "sugary-drinks",
+  "topic": "food-environment",
+  "title": "Sugary Drinks",
+  "subtitle": "% of adults who drink one or more sugary beverages per day",
+  "source": "Source: NYC Community Health Survey",
+  "timePeriod": "TBD",
+  "label": "Daily Sugary Drink Consumption",
+  "unit": "of adults",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

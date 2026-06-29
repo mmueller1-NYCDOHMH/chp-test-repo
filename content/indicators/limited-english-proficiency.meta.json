@@ -1,0 +1,14 @@
+{
+  "key": "limited-english-proficiency",
+  "topic": "neighborhood-overview",
+  "title": "Limited English Proficiency",
+  "subtitle": "% of residents with limited English proficiency",
+  "source": "Source: American Community Survey 5-Year Estimates (2019–2023)",
+  "timePeriod": "ACS 2019–2023",
+  "label": "Limited English Proficiency",
+  "unit": "of residents",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": null
+}

@@ -1,0 +1,14 @@
+{
+  "key": "smoking",
+  "topic": "substance-use",
+  "title": "Smoking",
+  "subtitle": "% of adults who currently smoke cigarettes",
+  "source": "Source: NYC Community Health Survey",
+  "timePeriod": "TBD",
+  "label": "Current Smokers",
+  "unit": "of adults",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

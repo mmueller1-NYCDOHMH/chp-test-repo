@@ -1,0 +1,37 @@
+{
+  "_note": "UI strings for the neighborhood picker modal. Edit here — no code changes needed.",
+
+  "deptLabel":  "NYC Department of Health & Mental Hygiene",
+  "title":      "Community Health Profiles",
+  "subtitle":   "Explore health data for all 59 NYC Community Districts. Each profile shows indicators across chronic conditions, social and economic factors, and demographics; with comparisons to borough and citywide averages.",
+
+  "tabs": {
+    "neighborhood": "By neighborhood",
+    "address":      "By address"
+  },
+
+  "search": {
+    "placeholder":    "Search neighborhoods…",
+    "keyboardHint":   "↑↓ navigate · Enter select",
+    "addressHint":    "Type at least 3 characters — results appear as you type.",
+    "noResults":      "No neighborhoods match"
+  },
+
+  "map": {
+    "hint": "Click any community to explore"
+  },
+
+  "features": [
+    { "id": "compare",  "label": "Compare any two neighborhoods side by side" },
+    { "id": "explore",  "label": "Dive into any indicator — maps, distribution, and context" },
+    { "id": "keyboard", "label": "Navigate everything from the keyboard" }
+  ],
+
+  "footer": {
+    "attribution":     "Data from the NYC Department of Health and Mental Hygiene",
+    "aboutLabel":      "About this tool",
+    "aboutHref":       "/about",
+    "aboutBlurb":      "New to Community Health Profiles? Learn how the data is collected, what the indicators mean, and how to get the most out of this tool.",
+    "randomButton":    "Random neighborhood →"
+  }
+}

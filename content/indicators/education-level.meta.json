@@ -1,0 +1,14 @@
+{
+  "key": "education-level",
+  "topic": "avertable-deaths",
+  "title": "Highest Level of Education Achieved",
+  "subtitle": "% of adults ages 25+ with less than a high school diploma",
+  "source": "Source: American Community Survey 5-Year Estimates",
+  "timePeriod": "TBD",
+  "label": "Less Than High School Diploma",
+  "unit": "of adults 25+",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

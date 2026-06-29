@@ -1,0 +1,4 @@
+{
+  "_note": "Ordered list of indicator keys for this section. Edit to add, remove, or reorder indicators. Each key must match a /data/indicators/{key}.json data file and a /content/indicators/{key}.meta.json metadata file.",
+  "indicators": ["incarcerations"]
+}

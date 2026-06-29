@@ -1,0 +1,1 @@
+Access to quality health care — and using it — can prevent serious illness, reduce hospitalizations, and improve outcomes. Gaps in access or preventive care often reflect broader inequities in income, insurance coverage, and the availability of services in a neighborhood.

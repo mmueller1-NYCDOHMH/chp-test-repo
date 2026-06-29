@@ -1,0 +1,14 @@
+{
+  "key": "late-prenatal-care",
+  "topic": "maternal",
+  "title": "Late or No Prenatal Care",
+  "subtitle": "% of live births where prenatal care began in the third trimester or was absent",
+  "source": "Source: NYC DOHMH Bureau of Vital Statistics",
+  "timePeriod": "TBD",
+  "label": "Late or No Prenatal Care",
+  "unit": "of live births",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": false
+}

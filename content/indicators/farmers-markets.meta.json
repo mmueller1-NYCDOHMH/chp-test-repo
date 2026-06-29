@@ -1,0 +1,14 @@
+{
+  "key": "farmers-markets",
+  "topic": "food-environment",
+  "title": "Farmers Markets",
+  "subtitle": "Number of farmers markets per square mile",
+  "source": "Source: NYC Open Data / GreenMarket",
+  "timePeriod": "TBD",
+  "label": "Farmers Markets",
+  "unit": "per square mile",
+  "displaySuffix": "",
+  "deltaSuffix": "",
+  "decimals": 1,
+  "higherIsBetter": true
+}

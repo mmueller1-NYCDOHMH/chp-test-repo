@@ -1,0 +1,14 @@
+{
+  "key": "air-conditioning",
+  "topic": "housing-quality",
+  "title": "Homes with Air Conditioning",
+  "subtitle": "% of homes with at least one working air conditioning unit",
+  "source": "Source: NYC Housing and Vacancy Survey",
+  "timePeriod": "TBD",
+  "label": "Homes with AC",
+  "unit": "of homes",
+  "displaySuffix": "",
+  "deltaSuffix": " pts",
+  "decimals": 0,
+  "higherIsBetter": true
+}
