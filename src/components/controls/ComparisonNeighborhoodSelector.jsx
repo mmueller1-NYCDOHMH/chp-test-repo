@@ -32,7 +32,7 @@
  * - Color: amber throughout to match the comparison bar color in charts
  */
 
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback, useId } from 'react';
 import { useParams } from 'next/navigation';
 import { useComparison } from '@/lib/context/ComparisonContext';
 import { BOROUGH_ORDER } from '@/lib/utils/constants';
@@ -68,6 +68,10 @@ function ComparisonPill({ neighborhood, onClear, onEdit }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
+  const uid       = useId();
+  const listboxId = `${uid}-listbox`;
+  const optPrefix = `${uid}-opt`;
+
   const { comparisonNeighborhood, setComparisonNeighborhood } = useComparison();
   const params    = useParams();
   const primaryId = params?.id ? String(params.id) : null;
@@ -215,6 +219,8 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
           aria-label="Search comparison neighborhoods"
           aria-expanded={isOpen}
           aria-autocomplete="list"
+          aria-controls={listboxId}
+          aria-activedescendant={focusedIndex >= 0 ? `${optPrefix}-${focusedIndex}` : undefined}
           role="combobox"
           className="w-full pl-8 pr-3 py-1.5 text-sm border border-amber-300 rounded-lg bg-white placeholder-gray-400 text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
         />
@@ -234,6 +240,7 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
       {/* Dropdown */}
       {isOpen && (
         <ul
+          id={listboxId}
           role="listbox"
           aria-label="Comparison neighborhoods"
           className="absolute z-[9999] w-full bg-white border border-gray-200 mt-1 rounded-lg shadow-lg max-h-56 overflow-auto py-1"
@@ -257,6 +264,7 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
               onSetFocused={setFocusedIndex}
               colorScheme="amber"
               size="xs"
+              optionIdPrefix={optPrefix}
             />
           )}
         </ul>

@@ -21,9 +21,9 @@
  * - Depends on computeDelta from compareIndicator.js for delta calculations
  */
 
-import { loadIndicatorData }               from '@/lib/data/loadIndicatorData';
-import { indicators as allIndicators }     from '@/config/registries/indicatorRegistry';
-import { computeDelta }                    from '@/lib/utils/compareIndicator';
+import { loadIndicatorData }  from '@/lib/data/loadIndicatorData';
+import { indicatorMeta }      from '@/config/indicatorMeta';
+import { computeDelta }       from '@/lib/utils/compareIndicator';
 
 // ─── resolveIndicatorRows ─────────────────────────────────────────────────────
 
@@ -144,7 +144,7 @@ const MAX_FINDINGS = 4;
  * }>}
  */
 export function buildNotableFindings(geoId) {
-  const directional = Object.values(allIndicators).filter(
+  const directional = Object.values(indicatorMeta).filter(
     ind => ind.higherIsBetter != null && ind.key
   );
 

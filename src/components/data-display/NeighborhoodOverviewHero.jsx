@@ -48,49 +48,21 @@
  * - Delta calculations live in @/lib/utils/compareIndicator
  */
 
-import ComparisonPyramidChart from '@/components/data-display/ComparisonPyramidChart';
-import AnimatedValue           from '@/components/data-display/AnimatedValue';
+import ComparisonStatTilesClient    from '@/components/data-display/ComparisonStatTilesClient';
+import AtAGlanceTitle               from '@/components/data-display/AtAGlanceTitle';
+import PyramidChartSection          from '@/components/data-display/PyramidChartSection';
+import ComparisonPyramidChartClient from '@/components/data-display/ComparisonPyramidChartClient';
+import { loadIndicatorData }        from '@/lib/data/loadIndicatorData';
 import {
   resolveIndicatorRows,
   buildStatTile,
   buildPyramidChart,
 } from '@/lib/data/resolveOverviewData';
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
-
-const DELTA_STYLES = {
-  better:  'text-green-700 bg-green-50',
-  worse:   'text-red-700 bg-red-50',
-  neutral: 'text-gray-600 bg-gray-50',
-};
-
-/** Single-value tile: big number + label/unit + (optional) delta + period. */
-function StatTile({ label, unit, displayValue, timePeriod, delta, animationDelay = 0, className = '' }) {
-  const deltaStyle = delta ? DELTA_STYLES[delta.direction] : '';
-
-  return (
-    <div className={`bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-1.5 min-w-0 ${className}`}>
-      <div className="text-2xl font-semibold text-gray-900 leading-none">
-        <AnimatedValue key={displayValue} value={displayValue ?? '—'} delay={animationDelay} />
-      </div>
-
-      <div className="text-xs font-semibold text-gray-700 leading-snug">{label}</div>
-      {unit && <div className="text-xs text-gray-500 leading-snug">{unit}</div>}
-
-      {delta && (
-        <span
-          className={`mt-1 self-start text-xs font-medium px-1.5 py-0.5 rounded-full leading-snug ${deltaStyle}`}
-        >
-          {delta.text}
-        </span>
-      )}
-
-      {timePeriod && (
-        <div className="text-xs text-gray-500 mt-auto pt-1">{timePeriod}</div>
-      )}
-    </div>
-  );
-}
+// ─── Sub-components moved to ComparisonStatTilesClient.jsx ───────────────────
+// StatTile is now rendered by the client component so it can read comparison
+// context and show comparison CD values without making this server component
+// a client component.
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -105,56 +77,53 @@ export default function NeighborhoodOverviewHero({
 
   const resolvedTiles = statTiles.map((cfg) => {
     const { cdRow, nycRow } = resolveIndicatorRows(cfg.indicatorKey, geoId);
-    return buildStatTile(cfg, cdRow, nycRow);
+    const tile = buildStatTile(cfg, cdRow, nycRow);
+    // Carry displaySuffix through so the client component can format comparison values identically
+    return { ...tile, displaySuffix: cfg.displaySuffix ?? '' };
   });
 
-  const resolvedPyramids = pyramidCharts.map(cfg => buildPyramidChart(cfg, geoId));
+  // Raw data per stat-tile indicator — passed to the client wrapper so it can
+  // look up comparison CD values without an additional server round-trip.
+  const rawDataByKey = Object.fromEntries(
+    statTiles.map(cfg => [cfg.indicatorKey, loadIndicatorData(cfg.indicatorKey)])
+  );
+
+  const resolvedPyramids = pyramidCharts.map(cfg => ({
+    ...buildPyramidChart(cfg, geoId),
+    // Carry raw data + segment config so the client wrapper can resolve comparison segments
+    rawData:    loadIndicatorData(cfg.indicatorKey),
+    segmentCfg: cfg.segments,
+  }));
 
   return (
     <div className="flex flex-col gap-6">
 
       {/* ── Identity header ─────────────────────────────────── */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900">
-          {neighborhood ?? 'Neighborhood'} at a Glance
-        </h3>
+        <AtAGlanceTitle neighborhood={neighborhood ?? 'Neighborhood'} />
         {borough && (
-          <p className="text-sm text-gray-500 mt-0.5">{borough}</p>
+          <p className="text-sm text-gray-600 mt-0.5">{borough}</p>
         )}
       </div>
 
       {/* ── Stat tiles (population, nativity, language) ──────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 items-stretch">
-        {resolvedTiles.map(({ key, ...tile }, i) => (
-          <StatTile
-            key={key}
-            {...tile}
-            animationDelay={0}
-            className={
-              // Odd tile count: last tile spans both columns on mobile only
-              resolvedTiles.length % 2 !== 0 && i === resolvedTiles.length - 1
-                ? 'col-span-2 sm:col-span-1'
-                : ''
-            }
-          />
-        ))}
-      </div>
+      {/* Client component — reads ComparisonContext to show comparison CD values */}
+      <ComparisonStatTilesClient
+        tiles={resolvedTiles}
+        rawDataByKey={rawDataByKey}
+        primaryLabel={neighborhood ?? 'Neighborhood'}
+        geoId={geoId}
+      />
 
       {/* ── Comparison pyramid charts (age + race/ethnicity) ─── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-        {resolvedPyramids.map(chart => (
-          <ComparisonPyramidChart
-            key={`${chart.indicatorKey}-${neighborhood}`}
-            title={chart.title}
-            neighborhoodLabel={neighborhood ?? 'Neighborhood'}
-            segments={chart.segments}
-            timePeriod={chart.timePeriod}
-          />
-        ))}
-      </div>
+      <PyramidChartSection
+        charts={resolvedPyramids}
+        neighborhoodLabel={neighborhood ?? 'Neighborhood'}
+        geoId={geoId}
+      />
 
       {/* ── Source footnote ─────────────────────────────────── */}
-      <p className="text-xs text-gray-500 border-t border-gray-100 pt-4">
+      <p className="text-xs text-gray-600 border-t border-gray-100 pt-4">
         Source: American Community Survey 5-Year Estimates. Population, age,
         race/ethnicity, nativity, and limited English proficiency reflect the
         most recent available ACS release. Single-value metrics compare the

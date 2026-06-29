@@ -238,7 +238,7 @@ export default function AddressSearch({
                 <span className="font-medium leading-snug">
                   {highlight(item.label, query)}
                 </span>
-                <span className={`leading-snug mt-0.5 ${isFocused ? 'text-blue-500' : 'text-gray-400'}`}>
+                <span className={`leading-snug mt-0.5 ${isFocused ? 'text-blue-600' : 'text-gray-500'}`}>
                   {item.neighborhood.name} · CD {item.neighborhood.cdNumber}
                 </span>
               </li>

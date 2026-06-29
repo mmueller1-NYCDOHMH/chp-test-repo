@@ -29,17 +29,16 @@ import BackToTopButton from '@/components/controls/BackToTopButton';
 import { ComparisonProvider } from '@/lib/context/ComparisonContext';
 import { getNeighborhoods } from '@/lib/data/getNeighborhoods';
 import { getIndicatorSummaries } from '@/lib/data/getIndicatorSummaries';
-import { neighborhoodOverview } from '@/config/sections/neighborhoodOverview';
+import { loadOverviewHeroConfig } from '@/lib/data/loadSectionIndicators';
 
-// Derive the at-a-glance indicator keys from the overview section config so
-// the sidebar stat panel stays in sync with whatever is defined there.
-const atAGlanceKeys = neighborhoodOverview.children
-  .flatMap(child => child.props?.statTiles ?? [])
-  .map(tile => tile.indicatorKey);
+export default async function PageLayout({ config, children, pageLabel, pageNav }) {
+  const neighborhoods = await getNeighborhoods();
 
-export default async function PageLayout({ config, children, pageLabel }) {
-  const neighborhoods       = await getNeighborhoods();
-  const indicatorSummaries  = getIndicatorSummaries(atAGlanceKeys);
+  // At-a-glance keys come from the section JSON, not from the JS config.
+  // loadOverviewHeroConfig reads /content/sections/neighborhood-overview.json.
+  const heroConfig    = loadOverviewHeroConfig();
+  const atAGlanceKeys = (heroConfig?.statTiles ?? []).map(t => t.indicatorKey);
+  const indicatorSummaries = getIndicatorSummaries(atAGlanceKeys);
 
   return (
     <ComparisonProvider neighborhoods={neighborhoods}>
@@ -57,6 +56,7 @@ export default async function PageLayout({ config, children, pageLabel }) {
             sections={config.sections.filter(s => !s.category)}
             neighborhoods={neighborhoods}
             indicatorSummaries={indicatorSummaries}
+            pageNav={pageNav}
           />
 
           {/* Main content */}

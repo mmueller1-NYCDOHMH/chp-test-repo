@@ -58,6 +58,7 @@ export default function CHPBuilder({ config, data }) {
                 block={block}
                 data={data}
                 context={templateContext}
+                sectionId={section.id}
               />
             ))}
           </SectionWrapper>

@@ -42,7 +42,18 @@
  * - This function contains no rendering logic — only class resolution
  * - Updating layout behavior should be done here, not in components
  * - Designed to scale with additional layout variants and spacing rules
+ *
+ * CHANGING CARD APPEARANCE:
+ * Edit CARD_BASE and CARD_PADDING below — they apply to every section card.
  */
+
+// ── Card style constants ───────────────────────────────────────────────────
+// Edit these to change the appearance of all section cards site-wide.
+const CARD_BASE    = 'bg-white border border-gray-200 rounded-xl shadow-sm';
+const CARD_PADDING = 'p-6';
+
+// ── Section spacing ────────────────────────────────────────────────────────
+const SECTION_MARGIN_BOTTOM = 'mb-12';
 
 export function resolveLayoutClasses(resolved) {
     const {
@@ -76,17 +87,9 @@ export function resolveLayoutClasses(resolved) {
       hero: "flex flex-col items-center text-center",
     };
 
-    const cardStyles = {
-        base: "bg-white border border-gray-200 rounded-xl shadow-sm",
-        padded: "p-6",
-      };
-  
     return {
-      outer: `mb-12 ${widthClasses[width]}`,
+      outer: `${SECTION_MARGIN_BOTTOM} ${widthClasses[width]}`,
       inner: `${variantClasses[variant]} ${gapClasses[gap]}`,
-      card: `${cardStyles.base} ${cardStyles.padded}`
-
+      card:  `${CARD_BASE} ${CARD_PADDING}`,
     };
-
-    
   }

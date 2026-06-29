@@ -39,6 +39,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { siteNav } from '@/config/nav/siteNav';
+import { useComparison } from '@/lib/context/ComparisonContext';
 
 const FALLBACK_NAV_HEIGHT = 56;
 
@@ -57,6 +58,8 @@ export default function StickyContextBar({ neighborhoods = [], sections = [] }) 
   const neighborhood = activeId
     ? neighborhoods.find(n => String(n.id) === activeId)
     : null;
+
+  const { comparisonNeighborhood, setComparisonNeighborhood } = useComparison();
 
   const [activeSectionId, setActiveSectionId] = useState(null);
   const [topOffset, setTopOffset]             = useState(FALLBACK_NAV_HEIGHT);
@@ -201,14 +204,14 @@ export default function StickyContextBar({ neighborhoods = [], sections = [] }) 
               >
                 {neighborhood.name}
               </button>
-              <span className="text-xs text-gray-500 shrink-0">{neighborhood.borough}</span>
+              <span className="text-xs text-gray-600 shrink-0">{neighborhood.borough}</span>
 
               {/* Share button */}
               <button
                 onClick={handleShare}
                 aria-label="Copy link to this neighborhood"
                 title="Copy link"
-                className="shrink-0 ml-1 text-gray-400 hover:text-blue-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+                className="shrink-0 ml-1 p-1 -m-1 text-gray-400 hover:text-blue-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
               >
                 {copied ? (
                   <span className="text-xs font-medium text-blue-600">Copied!</span>
@@ -220,13 +223,36 @@ export default function StickyContextBar({ neighborhoods = [], sections = [] }) 
               </button>
             </div>
           ) : !neighborhood ? (
-            <span className="text-xs text-gray-500">Community Health Profiles</span>
+            <span className="text-xs text-gray-600">Community Health Profiles</span>
           ) : null}
         </div>
 
+        {/* Centre — comparison pill: only on mobile (md+ has sidebar which already shows it) */}
+        {comparisonNeighborhood && (
+          <div className="md:hidden flex items-center gap-1.5 shrink-0 mx-3">
+            <span className="flex items-center gap-1.5 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-full pl-2.5 pr-1 py-0.5">
+              <span
+                className="w-2 h-2 rounded-full bg-amber-400 shrink-0"
+                aria-hidden="true"
+              />
+              <span className="hidden sm:inline">Comparing:</span>
+              <span className="truncate max-w-[120px]">{comparisonNeighborhood.name}</span>
+              <button
+                onClick={() => setComparisonNeighborhood(null)}
+                aria-label={`Remove comparison with ${comparisonNeighborhood.name}`}
+                className="ml-0.5 shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-amber-600 hover:text-amber-900 hover:bg-amber-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+              >
+                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </span>
+          </div>
+        )}
+
         {/* Right — active section breadcrumb (only when in a siteNav section) */}
         {breadcrumb && (
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 shrink-0 ml-4">
+          <div className="flex items-center gap-1.5 text-xs text-gray-600 shrink-0 ml-auto">
             <span className="hidden sm:inline">{breadcrumb.catLabel}</span>
             <span className="hidden sm:inline">›</span>
             <span className="text-blue-600 font-medium">{breadcrumb.subLabel}</span>

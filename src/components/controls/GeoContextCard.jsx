@@ -55,7 +55,7 @@ export default function GeoContextCard({ neighborhoods = [] }) {
       <div className="border-t border-blue-100 my-2" />
 
       {/* GeoID — useful reference for data team / developers */}
-      <p className="text-xs text-blue-400 font-mono">
+      <p className="text-xs text-blue-600 font-mono">
         GeoID {geoId}
       </p>
 

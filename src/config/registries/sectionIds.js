@@ -25,12 +25,13 @@
  * - The constant value must exactly match the `id` field in the
  *   corresponding section config.
  *
- * ADDING A NEW SECTION (5-step recipe):
- * 1. Uncomment (or add) its constant here
- * 2. Create /config/sections/{sectionName}.js
- * 3. Create /config/registries/indicators/{sectionName}.js
- * 4. Import + spread in indicatorRegistry.js
- * 5. Import + add to neighborhoodProfile.js; remove dummy:true in siteNav.js
+ * ADDING A NEW SECTION (3-step recipe):
+ * 1. Add (or uncomment) its constant here
+ * 2. Add the constant to siteNav.js (with anchor) and remove dummy:true
+ * 3. Add buildStandardSection(CONSTANT) in neighborhoodProfile.js at the right position
+ *    — indicator list goes in /content/sections/{id}.json (no JS changes)
+ *    — indicator metadata goes in /content/indicators/{key}.meta.json
+ *    — indicator data goes in /data/indicators/{key}.json
  */
 
 
@@ -38,12 +39,11 @@
 export const NEIGHBORHOOD_OVERVIEW_ID = 'neighborhood-overview';
 
 
-// ── Social & Economic Wellness ───────────────────────────────────────────────
+// ── Social ───────────────────────────────────────────────────────────────────
 export const COMMUNITY_SAFETY_ID   = 'community-safety';
 export const ECONOMIC_ID           = 'economic-conditions';
-export const AVERTABLE_DEATHS_ID   = 'avertable-deaths';
-export const SUBSTANCE_USE_ID      = 'substance-use';
-export const MENTAL_WELLNESS_ID    = 'mental-wellness';
+export const AVERTABLE_DEATHS_ID   = 'avertable-deaths'; // indicator under Economic; no standalone nav entry
+export const EDUCATION_ID          = 'education';
 
 
 // ── Neighborhood ──────────────────────────────────────────────────────────────
@@ -53,18 +53,20 @@ export const HOUSING_QUALITY_ID       = 'housing-quality';
 export const TRANSPORTATION_SAFETY_ID = 'transportation-safety';
 
 
-// ── Health Care ───────────────────────────────────────────────────────────────
-export const HEALTH_CARE_ACCESS_ID = 'health-care-access';
-export const HEALTH_CARE_USE_ID    = 'health-care-use';
-export const PREVENTION_ID         = 'prevention';
+// ── Health care ───────────────────────────────────────────────────────────────
+export const HEALTH_CARE_ACCESS_ID       = 'health-care-access';
+export const INJURY_HOSPITALIZATIONS_ID  = 'injury-hospitalizations';
+export const PREVENTION_ID               = 'prevention';
 
 
-// ── Family Health ─────────────────────────────────────────────────────────────
+// ── Maternal & child health ───────────────────────────────────────────────────
 export const MATERNAL_ID     = 'maternal';
 export const INFANT_CHILD_ID = 'infant-child';
 
 
-// ── Diseases & Outcomes ───────────────────────────────────────────────────────
+// ── Health conditions ─────────────────────────────────────────────────────────
+export const MENTAL_WELLNESS_ID     = 'mental-wellness';
+export const SUBSTANCE_USE_ID       = 'substance-use';
 export const CHRONIC_CONDITIONS_ID  = 'chronic-conditions';
 export const INFECTIOUS_DISEASE_ID  = 'infectious-disease';
 export const HEALTH_OUTCOMES_ID     = 'health-outcomes';

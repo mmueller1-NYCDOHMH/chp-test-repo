@@ -57,7 +57,32 @@ const ModalMap = dynamic(
   { ssr: false }
 );
 
+// UI copy — edit /content/site/introModal.json, no code changes needed
+import modalCopy from '../../../content/site/introModal.json';
+
 const STORAGE_KEY = 'chp_intro_seen';
+
+/** Small icon matched to each feature chip id */
+function FeatureIcon({ id }) {
+  const cls = 'w-3 h-3 shrink-0 text-gray-400';
+  if (id === 'compare') return (
+    <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+    </svg>
+  );
+  if (id === 'explore') return (
+    <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    </svg>
+  );
+  if (id === 'keyboard') return (
+    <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <rect x="2" y="6" width="20" height="12" rx="2" strokeLinejoin="round" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" />
+    </svg>
+  );
+  return null;
+}
 
 export default function IntroModal({ neighborhoods = [] }) {
   const [isOpen,        setIsOpen]        = useState(false);
@@ -73,13 +98,14 @@ export default function IntroModal({ neighborhoods = [] }) {
   // How long the CSS close transition runs (keep in sync with transition durations below)
   const CLOSE_DURATION = 250;
 
-  const router    = useRouter();
-  const inputRef  = useRef(null);
-  const itemRefs  = useRef([]);
-  const listRef   = useRef(null);
-  const dialogRef = useRef(null);
+  const router     = useRouter();
+  const inputRef   = useRef(null);
+  const itemRefs   = useRef([]);
+  const listRef    = useRef(null);
+  const dialogRef  = useRef(null);
+  const triggerRef = useRef(null); // element that opened the modal — focus returns here on close
 
-  // Only open if the user hasn't visited before
+  // Only open if the user hasn't visited before (auto-open has no trigger element)
   useEffect(() => {
     try {
       if (!localStorage.getItem(STORAGE_KEY)) setIsOpen(true);
@@ -90,6 +116,7 @@ export default function IntroModal({ neighborhoods = [] }) {
   // explorer badge — when present, the list pre-filters to unvisited CDs only.
   useEffect(() => {
     function handleExternalOpen(e) {
+      triggerRef.current = document.activeElement; // remember what opened us
       setIsOpen(true);
       if (e.detail?.visitedIds?.length) {
         setVisitedIds(new Set(e.detail.visitedIds));
@@ -119,6 +146,9 @@ export default function IntroModal({ neighborhoods = [] }) {
     try { localStorage.setItem(STORAGE_KEY, '1'); } catch { /* ignore */ }
     setIsOpen(false);
     setVisitedIds(null);
+    // Return focus to the element that triggered the modal (e.g. explorer badge).
+    // RAF lets the modal unmount first so focus isn't clobbered by blur events.
+    requestAnimationFrame(() => triggerRef.current?.focus());
   }, []);
 
   // Move focus to search input when the modal opens + focus trap
@@ -240,7 +270,7 @@ export default function IntroModal({ neighborhoods = [] }) {
       {/* Modal card — wider to accommodate the map; full-screen on mobile */}
       <div
         ref={dialogRef}
-        className="relative bg-white md:rounded-2xl shadow-2xl w-full max-w-5xl h-full md:h-[85vh] flex flex-col overflow-hidden"
+        className="relative bg-white md:rounded-2xl shadow-2xl w-full max-w-5xl h-full md:h-[96vh] flex flex-col overflow-hidden"
         style={{
           opacity:    dialogVisible ? 1 : 0,
           transform:  dialogVisible ? 'scale(1) translateY(0)' : 'scale(0.97) translateY(8px)',
@@ -263,17 +293,46 @@ export default function IntroModal({ neighborhoods = [] }) {
 
         {/* ── Header (full-width) ──────────────────────────────────────────── */}
         <div className="px-5 pt-5 pb-4 md:px-8 md:pt-7 md:pb-5 border-b border-gray-100 shrink-0">
-          <p className="text-xs font-semibold text-blue-600 uppercase tracking-widest mb-1.5">
-            NYC Department of Health &amp; Mental Hygiene
+          <p className="text-sm font-semibold text-blue-600 uppercase tracking-widest mb-1.5">
+            {modalCopy.deptLabel}
           </p>
           <h1 className="text-2xl font-bold text-gray-900 mb-2 leading-tight">
-            Community Health Profiles
+            {modalCopy.title}
           </h1>
-          <p className="text-gray-500 text-sm leading-relaxed max-w-2xl">
-            Explore health data for all 59 NYC Community Districts. Each profile shows
-            indicators across chronic conditions, social and economic factors, and
-            demographics; with comparisons to borough and citywide averages.
+          <p className="text-gray-600 text-sm leading-relaxed max-w-2xl">
+            {modalCopy.subtitle}
           </p>
+
+          {/* ── About blurb ───────────────────────────────────────────────── */}
+          {modalCopy.footer.aboutBlurb && (
+            <div className="mt-2.5 flex flex-col gap-1">
+              <p className="text-sm text-gray-500 leading-snug">
+                {modalCopy.footer.aboutBlurb}
+              </p>
+              <a
+                href={modalCopy.footer.aboutHref}
+                onClick={dismiss}
+                className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded w-fit"
+              >
+                {modalCopy.footer.aboutLabel} →
+              </a>
+            </div>
+          )}
+
+          {/* ── Feature discovery chips ────────────────────────────────────── */}
+          {modalCopy.features?.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3" aria-label="What you can do">
+              {modalCopy.features.map((feature) => (
+                <div
+                  key={feature.id}
+                  className="flex items-center gap-1 text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-full px-2.5 py-0.5 select-none"
+                >
+                  <FeatureIcon id={feature.id} />
+                  {feature.label}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ── Two-column body ──────────────────────────────────────────────── */}
@@ -285,8 +344,8 @@ export default function IntroModal({ neighborhoods = [] }) {
             {/* Tab strip */}
             <div role="tablist" aria-label="Search method" className="flex border-b border-gray-100 shrink-0">
               {[
-                { id: 'neighborhood', label: 'By neighborhood' },
-                { id: 'address',      label: 'By address' },
+                { id: 'neighborhood', label: modalCopy.tabs.neighborhood },
+                { id: 'address',      label: modalCopy.tabs.address },
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -294,7 +353,7 @@ export default function IntroModal({ neighborhoods = [] }) {
                   aria-selected={searchTab === tab.id}
                   onClick={() => setSearchTab(tab.id)}
                   className={[
-                    'flex-1 py-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500',
+                    'flex-1 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500',
                     searchTab === tab.id
                       ? 'border-b-2 border-blue-600 text-blue-700 bg-blue-50'
                       : 'border-b-2 border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50',
@@ -324,8 +383,11 @@ export default function IntroModal({ neighborhoods = [] }) {
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       onKeyDown={handleInputKeyDown}
-                      placeholder="Search neighborhoods…"
-                      aria-label="Search neighborhoods"
+                      placeholder={modalCopy.search.placeholder}
+                      aria-label={modalCopy.search.placeholder}
+                      role="combobox"
+                      aria-expanded={flatFiltered.length > 0}
+                      aria-autocomplete="list"
                       aria-controls="intro-neighborhood-list"
                       aria-activedescendant={focusedIndex >= 0 ? `intro-result-${focusedIndex}` : undefined}
                       className="w-full pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -343,13 +405,13 @@ export default function IntroModal({ neighborhoods = [] }) {
                     )}
                   </div>
                   {visitedIds && (
-                    <p className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5 mt-2 text-center leading-snug">
+                    <p className="text-sm text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5 mt-2 text-center leading-snug">
                       Showing {filtered.length} unvisited neighborhoods
                     </p>
                   )}
                   {!visitedIds && flatFiltered.length > 0 && (
-                    <p className="text-xs text-gray-500 mt-2 text-center">
-                      ↑↓ navigate · Enter select
+                    <p className="text-sm text-gray-600 mt-2 text-center">
+                      {modalCopy.search.keyboardHint}
                     </p>
                   )}
                 </div>
@@ -366,7 +428,7 @@ export default function IntroModal({ neighborhoods = [] }) {
                       let globalIdx = 0;
                       return Object.entries(grouped).map(([borough, nhoods]) => (
                         <div key={borough} className="mb-3">
-                          <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest
+                          <div className="text-sm font-semibold text-gray-600 uppercase tracking-widest
                                           mb-1 px-2 sticky top-0 bg-white py-1">
                             {borough}
                           </div>
@@ -375,7 +437,7 @@ export default function IntroModal({ neighborhoods = [] }) {
                             const isFocused = idx === focusedIndex;
                             const isHovered = hoveredId === n.id;
                             return (
-                              <button
+                              <li
                                 key={n.id}
                                 id={`intro-result-${idx}`}
                                 ref={el => { itemRefs.current[idx] = el; }}
@@ -385,22 +447,22 @@ export default function IntroModal({ neighborhoods = [] }) {
                                 onMouseEnter={() => { setHoveredId(n.id); setFocusedIndex(idx); }}
                                 onMouseLeave={() => { setHoveredId(null); }}
                                 className={[
-                                  'w-full text-left text-sm px-3 py-1.5 rounded-lg transition-colors focus:outline-none',
+                                  'w-full text-left text-sm px-3 py-1.5 rounded-lg transition-colors cursor-pointer',
                                   isFocused || isHovered
                                     ? 'bg-blue-50 text-blue-700'
                                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900',
                                 ].join(' ')}
                               >
                                 {highlight(n.name, query)}
-                              </button>
+                              </li>
                             );
                           })}
                         </div>
                       ));
                     })()
                   ) : (
-                    <p className="text-sm text-gray-500 text-center py-6 px-4">
-                      No neighborhoods match &ldquo;{query}&rdquo;
+                    <p className="text-sm text-gray-600 text-center py-6 px-4">
+                      {modalCopy.search.noResults} &ldquo;{query}&rdquo;
                     </p>
                   )}
                 </div>
@@ -416,8 +478,8 @@ export default function IntroModal({ neighborhoods = [] }) {
                   onSelect={handleSelect}
                   onHover={setHoveredId}
                 />
-                <p className="text-xs text-gray-400 mt-3 leading-snug">
-                  Type at least 3 characters — results appear as you type.
+                <p className="text-sm text-gray-600 mt-3 leading-snug">
+                  {modalCopy.search.addressHint}
                 </p>
               </div>
             )}
@@ -428,14 +490,14 @@ export default function IntroModal({ neighborhoods = [] }) {
           <div className="hidden md:flex flex-1 relative bg-gray-50">
             {/* Instruction hint */}
             <div className="absolute top-3 right-3 z-[1000] bg-white/90 backdrop-blur-sm
-                            text-xs text-gray-500 px-2.5 py-1.5 rounded-md shadow-sm
+                            text-sm text-gray-500 px-2.5 py-1.5 rounded-md shadow-sm
                             pointer-events-none select-none">
-              Click any community to explore
+              {modalCopy.map.hint}
             </div>
-
             <ModalMap
               neighborhoods={neighborhoods}
               hoveredId={hoveredId}
+              visitedIds={visitedIds}
               onSelect={handleSelect}
               onHover={setHoveredId}
             />
@@ -443,18 +505,16 @@ export default function IntroModal({ neighborhoods = [] }) {
         </div>
 
         {/* ── Footer (full-width) ──────────────────────────────────────────── */}
-        <div className="px-8 py-3.5 border-t border-gray-100 shrink-0 flex items-center justify-between">
-          <p className="text-xs text-gray-500">
-            Data from the NYC Bureau of Epidemiological Services
-          </p>
+        <div className="px-8 py-3.5 border-t border-gray-100 shrink-0 flex items-center justify-between gap-4">
+          <p className="text-sm text-gray-400 leading-snug">{modalCopy.footer.attribution}</p>
           <button
             onClick={() => {
               const pick = neighborhoods[Math.floor(Math.random() * neighborhoods.length)];
               if (pick) handleSelect(pick);
             }}
-            className="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+            className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded shrink-0"
           >
-            Random neighborhood →
+            {modalCopy.footer.randomButton}
           </button>
         </div>
 

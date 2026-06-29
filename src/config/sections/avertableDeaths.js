@@ -6,17 +6,15 @@
  * Rendered on the neighborhood profile page under Social & Economic Wellness.
  *
  * NOTES:
- * - Add/remove charts by editing the `charts` array — use asChartConfig(indicators.xxx)
+ * * - Add/remove/reorder charts: edit /content/sections/{sectionId}.json — no JS needed
  * - All indicator metadata lives in /config/registries/indicators/avertableDeaths.js
  */
 
-import { indicators, asChartConfig } from '../registries/indicatorRegistry';
 import { AVERTABLE_DEATHS_ID } from '../registries/sectionIds';
 
 export const avertableDeaths = {
   id: AVERTABLE_DEATHS_ID,
   layout: 'cardRow',
-  navTitle: 'Avertable Deaths',
   children: [
     {
       id: 'avertable-deaths-header',
@@ -30,9 +28,7 @@ export const avertableDeaths = {
       type: 'indicatorChartGrid',
       props: {
         sectionLabel: 'Avertable Deaths',
-        charts: [
-          asChartConfig(indicators.educationLevel),
-        ]
+        // indicators loaded automatically from /content/sections/{sectionId}.json
       }
     },
   ]

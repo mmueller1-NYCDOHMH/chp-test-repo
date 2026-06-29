@@ -18,13 +18,56 @@
  * - Cleans up the Vega view on unmount to prevent memory leaks.
  * - spec changes trigger a full re-render (view is finalized and rebuilt).
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, memo } from 'react';
 import { useComparison } from '@/lib/context/ComparisonContext';
 
-export default function VegaLiteChart({ spec, tooltip = true }) {
-  const containerRef = useRef(null);
-  const viewRef      = useRef(null);
+// React.memo prevents Vega from rebuilding when parent client components
+// re-render (e.g. comparison context changes) but pass the same spec reference.
+// Since specs are built in server components and serialized once, their object
+// identity is stable across client re-renders, so shallow comparison is sufficient.
+const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onViewReady }) {
+  const containerRef  = useRef(null);
+  const wrapperRef    = useRef(null);
+  const viewRef       = useRef(null);
+  const vegaReadyRef  = useRef(false); // true once vega-embed resolves
+  const inViewRef     = useRef(false); // true once element is in the viewport
+  const enteredRef    = useRef(false); // mirrors hasEntered — readable in async callbacks
+  const [hasEntered, setHasEntered] = useState(false);
   const [embedError, setEmbedError] = useState(false);
+
+  // ── Entrance animation ────────────────────────────────────────────────────
+  // Gate on BOTH the element being in view AND Vega having finished rendering.
+  // This prevents two failure modes:
+  //   1. Fading in an empty box (Vega hasn't drawn yet)
+  //   2. No visible transition (IntersectionObserver fires before the browser
+  //      has painted the initial opacity:0 state)
+  // Double RAF guarantees the invisible state is committed to the screen before
+  // we flip to visible, so the CSS transition always plays.
+  // enteredRef is used instead of hasEntered because async callbacks (IntersectionObserver,
+  // vega-embed .then()) capture stale closure values of useState variables.
+  function tryEnterAnimation() {
+    if (vegaReadyRef.current && inViewRef.current && !enteredRef.current) {
+      enteredRef.current = true;
+      requestAnimationFrame(() => requestAnimationFrame(() => setHasEntered(true)));
+    }
+  }
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          inViewRef.current = true;
+          observer.disconnect();
+          tryEnterAnimation();
+        }
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Track the current comparison geoId in a ref so the embed callback
   // (async) can read it without capturing a stale closure value.
@@ -82,6 +125,13 @@ export default function VegaLiteChart({ spec, tooltip = true }) {
       }).then((result) => {
         if (!cancelled) {
           viewRef.current = result.view;
+          // Notify parent so it can capture the view for image export, etc.
+          onViewReady?.(result.view);
+          // Signal that Vega has rendered — try to start the entrance animation.
+          // If the element is already in view, this triggers it immediately.
+          // If it's still off-screen, the IntersectionObserver will trigger it later.
+          vegaReadyRef.current = true;
+          tryEnterAnimation();
           // Apply comparison highlight immediately after mounting.
           // compGeoIdRef may already be set if the context hydrated from the
           // URL before this async embed completed.
@@ -117,15 +167,35 @@ export default function VegaLiteChart({ spec, tooltip = true }) {
         style={{ minHeight: '175px' }}
         aria-label="Chart unavailable"
       >
-        <p className="text-sm text-gray-400">No data available</p>
+        <p className="text-sm text-gray-500">No data available</p>
       </div>
     );
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="w-full"
-    />
+    <div className="relative" style={{ minHeight: '175px' }}>
+      {/* Skeleton — visible while vega-embed loads and animates in.
+          Sits behind the chart wrapper so the fade-in transition plays
+          over it rather than over blank white space. */}
+      {!hasEntered && (
+        <div
+          className="absolute inset-0 rounded-lg bg-gray-100 animate-pulse"
+          aria-hidden="true"
+        />
+      )}
+
+      <div
+        ref={wrapperRef}
+        style={{
+          opacity:    hasEntered ? 1 : 0,
+          transform:  hasEntered ? 'translateY(0)' : 'translateY(10px)',
+          transition: 'opacity 450ms ease-out, transform 450ms ease-out',
+        }}
+      >
+        <div ref={containerRef} className="w-full" />
+      </div>
+    </div>
   );
-}
+});
+
+export default VegaLiteChart;

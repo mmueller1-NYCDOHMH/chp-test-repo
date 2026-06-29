@@ -51,7 +51,7 @@ export default function IndicatorChart({
         style={{ minHeight: '175px' }}
         aria-label="No data available"
       >
-        <p className="text-sm text-gray-400">No data available</p>
+        <p className="text-sm text-gray-500">No data available</p>
       </div>
     );
   }

@@ -1,25 +1,26 @@
 /**
  * FILE: searchIndex.js
  *
- * Builds a flat, searchable list of all indicators from the registry.
- * Each entry carries enough context for the search UI to display
- * a useful result and scroll to the right section on click.
+ * Builds a flat, searchable list of all indicators from their meta.json files.
+ * Safe for client and server bundles — uses static JSON imports, no fs.
  *
- * To add a new indicator to search: add it to its indicator registry file
- * and section config as normal — it will appear here automatically.
+ * To add a new indicator to search:
+ *   1. Create /content/indicators/{key}.meta.json
+ *   2. Add one import line to /src/config/indicatorMeta.js
+ *   → Appears in search automatically. No changes needed here.
  *
  * Shape of each entry:
  *   key              — indicator data file key
  *   title            — full display title
  *   subtitle         — unit / method descriptor
- *   indicatorAnchor  — href anchor for the specific indicator card (e.g. '#indicator-incarcerations')
- *   anchor           — href anchor for the section (e.g. '#community-safety') — fallback
- *   categoryLabel    — top-level nav category (e.g. 'Social & Economic Conditions')
- *   subcategoryLabel — subcategory label (e.g. 'Community & Safety')
+ *   indicatorAnchor  — href anchor for the specific indicator card
+ *   anchor           — href anchor for the section (fallback)
+ *   categoryLabel    — top-level nav category
+ *   subcategoryLabel — subcategory label
  */
 
-import { indicators }  from './registries/indicatorRegistry';
-import { siteNav }     from './nav/siteNav';
+import { indicatorMeta } from './indicatorMeta';
+import { siteNav }       from './nav/siteNav';
 
 // Build a flat lookup: sectionId → { categoryLabel, subcategoryLabel, anchor }
 const sectionMap = {};
@@ -35,13 +36,12 @@ siteNav.forEach(category => {
     });
 });
 
-export const searchIndex = Object.values(indicators)
-  .filter(ind => sectionMap[ind.topic])   // skip indicators in non-existent sections
+export const searchIndex = Object.values(indicatorMeta)
+  .filter(ind => sectionMap[ind.topic])   // skip indicators not in a live section
   .map(ind => ({
     key:              ind.key,
     title:            ind.title,
     subtitle:         ind.subtitle ?? '',
-    // indicatorAnchor targets the specific card; anchor is the section fallback
     indicatorAnchor:  `#indicator-${ind.key}`,
     anchor:           sectionMap[ind.topic].anchor,
     categoryLabel:    sectionMap[ind.topic].categoryLabel,

@@ -34,16 +34,17 @@ import { createPortal } from 'react-dom';
 import { useParams } from 'next/navigation';
 import { slugify } from '@/lib/utils/slugify';
 import { useComparison } from '@/lib/context/ComparisonContext';
-import { GEOJSON_URL } from '@/lib/utils/constants';
+import { MAP_STYLES, BOROUGH_PALETTE, MAP_USER_PIN } from '@/lib/charts/chartColors';
+import { fetchGeoJson, clearGeoJsonCache } from '@/lib/utils/fetchGeoJson';
 
 // ── Style helpers — defined outside component so they're never re-created ─────
 // Keeping these out of render is important: initialStyle (below) is a stable
 // useCallback that reads from refs. If style helpers were inside the component,
 // initialStyle would need them in its deps and lose stability.
-function baseStyle()       { return { color: '#4b5563', weight: 1, fillColor: '#e5e7eb', fillOpacity: 0.5 }; }
-function hoverStyle()      { return { color: '#111827', weight: 2, fillColor: '#c7d2fe', fillOpacity: 0.7 }; }
-function selectedStyle()   { return { color: '#1d4ed8', weight: 3, fillColor: '#93c5fd', fillOpacity: 0.8 }; }
-function comparisonStyle() { return { color: '#b45309', weight: 3, fillColor: '#fcd34d', fillOpacity: 0.8 }; }
+function baseStyle()       { return { ...MAP_STYLES.base,       color: '#4b5563' }; }
+function hoverStyle()      { return { ...MAP_STYLES.hover }; }
+function selectedStyle()   { return { ...MAP_STYLES.selected }; }
+function comparisonStyle() { return { ...MAP_STYLES.comparison }; }
 
 const NYC_CENTER = [40.7128, -74.006];
 const NYC_ZOOM   = 10;
@@ -73,9 +74,14 @@ export default function NeighborhoodMap({ onSelect }) {
   const [mapVisible,       setMapVisible]       = useState(false);
   const [modalInitialView, setModalInitialView] = useState(null);
   const [hoveredDistrict,  setHoveredDistrict]  = useState(null);
+  // One-time hint surfacing the map↔chart hover sync feature
+  const [showMapHint,      setShowMapHint]      = useState(false);
+
+  const mapHintShownRef   = useRef(false); // tracks whether hint has been dismissed this session
 
   const mapRef            = useRef(null); // Leaflet L.Map instance
   const geoLayerRef       = useRef(null); // main map GeoJSON layer group
+  const hoveredLayerRef   = useRef(null); // currently hovered Leaflet layer
   const hoveredSetRef     = useRef(new Set()); // tracks districts hovered this session
   const achievementFired  = useRef(false);     // ensures achievement fires once
 
@@ -105,13 +111,15 @@ export default function NeighborhoodMap({ onSelect }) {
     return baseStyle();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── GeoJSON fetch — extracted so retry button can call it ────────────────
+  // ── GeoJSON fetch — uses shared module-level cache ───────────────────────
+  // fetchGeoJson() returns the same Promise across all map instances so the
+  // network request is made only once per session. clearGeoJsonCache() on error
+  // lets the retry button trigger a fresh fetch.
   const fetchGeo = useCallback(() => {
     setGeoError(false);
-    fetch(GEOJSON_URL)
-      .then(r => r.json())
+    fetchGeoJson()
       .then(setGeo)
-      .catch(() => setGeoError(true));
+      .catch(() => { clearGeoJsonCache(); setGeoError(true); });
   }, []);
 
   // ── Load Leaflet + GeoJSON (browser only) ────────────────────────────────
@@ -132,6 +140,13 @@ export default function NeighborhoodMap({ onSelect }) {
   useEffect(() => {
     setMapVisible(true);
     return () => setMapVisible(false);
+  }, []);
+
+  // ── Show first-visit hint for map↔chart hover sync ────────────────────────
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem('chp_map_hint_seen')) setShowMapHint(true);
+    } catch { /* localStorage unavailable */ }
   }, []);
 
   // ── Fly to fit selected (and comparison) neighborhood(s) ─────────────────
@@ -176,6 +191,8 @@ export default function NeighborhoodMap({ onSelect }) {
   useEffect(() => {
     const layer = geoLayerRef.current;
     if (!layer || !geo) return;
+    // Clear any lingering hover ref — navigation resets the hover state.
+    hoveredLayerRef.current = null;
     layer.eachLayer(l => {
       const fid = slugify(l.feature.properties.GEONAME);
       if (selectedId && selectedId !== 'undefined' && fid === selectedId) {
@@ -204,9 +221,29 @@ export default function NeighborhoodMap({ onSelect }) {
     const cleanName    = feature.properties.GEONAME.replace(/\s*\(CD\d+\)/i, '').trim();
 
     layer.on('mouseover', () => {
+      // Reset the previously hovered layer before styling this one.
+      // Without this, rapid mouse movement or synthetic events from bringToFront()
+      // can leave multiple districts stuck in hoverStyle simultaneously.
+      const prev = hoveredLayerRef.current;
+      if (prev && prev !== layer) {
+        const prevFid = slugify(prev.feature.properties.GEONAME);
+        const sid = selectedIdRef.current;
+        const cid = comparisonIdRef.current;
+        if (sid && prevFid === sid)      prev.setStyle(selectedStyle());
+        else if (cid && prevFid === cid) prev.setStyle(comparisonStyle());
+        else                             prev.setStyle(baseStyle());
+      }
+      hoveredLayerRef.current = layer;
       layer.setStyle(hoverStyle());
       layer.bringToFront();
       setHoveredDistrict({ name: cleanName });
+
+      // Dismiss first-visit hint on first interaction
+      if (!mapHintShownRef.current) {
+        mapHintShownRef.current = true;
+        setShowMapHint(false);
+        try { localStorage.setItem('chp_map_hint_seen', '1'); } catch { /* ignore */ }
+      }
       window.dispatchEvent(new CustomEvent('chp:map-hover', {
         detail: { geoId: featureGeoId, name: cleanName },
       }));
@@ -216,27 +253,63 @@ export default function NeighborhoodMap({ onSelect }) {
         hoveredSetRef.current.add(fid);
         if (geo && hoveredSetRef.current.size >= geo.features.length) {
           achievementFired.current = true;
-          // Flash all districts blue, then restore after 600ms
+          window.dispatchEvent(new CustomEvent('chp:all-explored'));
+
+          // ── Borough wave animation ──────────────────────────────────────
+          // Each borough lights up in its own colour sequentially, then all
+          // merge into gold before restoring to normal map styles.
           const gl = geoLayerRef.current;
           if (gl) {
-            gl.eachLayer(l => l.setStyle(selectedStyle()));
+            const sid = selectedIdRef.current;
+            const cid = comparisonIdRef.current;
+
+            // Borough prefix → { fill, stroke } — colors sourced from BOROUGH_PALETTE in chartColors.js
+            const WAVE = [1, 2, 3, 4, 5].map(prefix => ({
+              prefix,
+              fill:   BOROUGH_PALETTE[prefix].fill,
+              stroke: BOROUGH_PALETTE[prefix].stroke,
+            }));
+            const STEP      = 180;  // ms between boroughs
+            const ALL_GOLD  = STEP * WAVE.length + 100;
+            const RESTORE   = ALL_GOLD + 900;
+
+            WAVE.forEach(({ prefix, fill, stroke }, i) => {
+              setTimeout(() => {
+                gl.eachLayer(l => {
+                  const geocode = parseInt(l.feature?.properties?.GEOCODE ?? '0', 10);
+                  if (Math.floor(geocode / 100) === prefix) {
+                    l.setStyle({ fillColor: fill, color: stroke, weight: 2, fillOpacity: 0.85 });
+                  }
+                });
+              }, i * STEP);
+            });
+
+            // All districts flip to user-pin gold simultaneously
             setTimeout(() => {
-              const sid = selectedIdRef.current;
-              const cid = comparisonIdRef.current;
+              gl.eachLayer(l => l.setStyle({
+                fillColor: MAP_USER_PIN.fill, color: MAP_USER_PIN.stroke, weight: 2, fillOpacity: 0.9,
+              }));
+            }, ALL_GOLD);
+
+            // Restore normal styles — read refs at restore time (not from the
+            // closure) so navigation during the animation doesn't apply stale state.
+            setTimeout(() => {
+              const restoreSid = selectedIdRef.current;
+              const restoreCid = comparisonIdRef.current;
               gl.eachLayer(l => {
-                const lfid = slugify(l.feature.properties.GEONAME);
-                if (sid && lfid === sid)      l.setStyle(selectedStyle());
-                else if (cid && lfid === cid) l.setStyle(comparisonStyle());
-                else                          l.setStyle(baseStyle());
+                const lfid = slugify(l.feature?.properties?.GEONAME ?? '');
+                if (restoreSid && lfid === restoreSid)      l.setStyle(selectedStyle());
+                else if (restoreCid && lfid === restoreCid) l.setStyle(comparisonStyle());
+                else                                         l.setStyle(baseStyle());
               });
-            }, 600);
+            }, RESTORE);
           }
-          window.dispatchEvent(new CustomEvent('chp:all-explored'));
         }
       }
     });
 
     layer.on('mouseout', () => {
+      if (hoveredLayerRef.current === layer) hoveredLayerRef.current = null;
       const sid = selectedIdRef.current;
       const cid = comparisonIdRef.current;
       if (sid && sid !== 'undefined' && fid === sid)        layer.setStyle(selectedStyle());
@@ -321,6 +394,21 @@ export default function NeighborhoodMap({ onSelect }) {
   return (
     <>
       <div className="relative h-full w-full overflow-hidden">
+
+        {/* First-visit hint — surfaces the map↔chart hover sync feature */}
+        {showMapHint && !hoveredDistrict && (
+          <div
+            className="absolute top-2 left-2 right-10 z-[1000] pointer-events-none"
+            aria-hidden="true"
+          >
+            <div className="bg-gray-900/85 text-white text-xs px-2.5 py-1.5 rounded-md leading-snug flex items-start gap-1.5">
+              <svg className="w-3 h-3 shrink-0 mt-px text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Hover a district to highlight it in the charts below
+            </div>
+          </div>
+        )}
 
         {/* Hover overlay — district name shown inline for short-viewport users */}
         {hoveredDistrict && (

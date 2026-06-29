@@ -17,7 +17,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { buildInsight } from '@/lib/utils/compareIndicator';
+import { displayName } from '@/lib/utils/formatGeography';
+import { useComparison } from '@/lib/context/ComparisonContext';
 import DistributionStrip from '@/components/data-display/DistributionStrip';
+import { CHOROPLETH_STOPS } from '@/lib/charts/chartColors';
 
 const ChoroplethMap = dynamic(
   () => import('@/components/maps/ChoroplethMap'),
@@ -30,7 +33,7 @@ const ChoroplethMap = dynamic(
 const DIRECTION_STYLES = {
   up:      { badge: 'bg-red-50 text-red-700 border-red-200',       arrow: '↑' },
   down:    { badge: 'bg-green-50 text-green-700 border-green-200', arrow: '↓' },
-  neutral: { badge: 'bg-gray-100 text-gray-500 border-gray-200',   arrow: '~' },
+  neutral: { badge: 'bg-gray-100 text-gray-600 border-gray-200',   arrow: '–' },
 };
 
 function cleanSource(source) {
@@ -48,7 +51,42 @@ export default function IndicatorFlyoutContent({
   geoId,
   sectionLabel,
 }) {
+  const { comparisonNeighborhood } = useComparison();
+
   const insight  = buildInsight(indicatorData, geoId, title);
+
+  // ── Comparison neighborhood value ─────────────────────────────────────────
+  const compRow = comparisonNeighborhood?.geoId != null
+    ? (indicatorData ?? []).find(r => r.GeoID === comparisonNeighborhood.geoId) ?? null
+    : null;
+  const compName = compRow ? displayName(compRow.Geography) : comparisonNeighborhood?.name ?? null;
+
+  // ── Comparison CD direction vs citywide ───────────────────────────────────
+  // Used to detect when selected and comparison are on opposite sides of
+  // citywide so the second sentence can acknowledge both relationships.
+  const compInsight = (() => {
+    if (!compRow || !insight) return null;
+    const cityVal = (indicatorData ?? []).find(r => r.GeoID === 0)?.Value;
+    if (cityVal == null) return null;
+    const diff    = compRow.Value - cityVal;
+    const relDiff = cityVal !== 0 ? Math.abs(diff / cityVal) : 0;
+    if (relDiff < 0.05) return { direction: 'neutral', label: 'similar to' };
+    if (diff > 0) return { direction: 'up',   label: relDiff > 0.25 ? 'much higher than' : 'higher than' };
+    return            { direction: 'down', label: relDiff > 0.25 ? 'much lower than'  : 'lower than'  };
+  })();
+
+  // ── CD rank among all 59 ────────────────────────────────────────────────────
+  // Sort CD-level rows descending by value so rank 1 = highest value.
+  // Directionality (higher vs lower is better) is intentionally not baked in —
+  // the distribution strip and insight badge already communicate that context.
+  const cdRank = (() => {
+    if (!indicatorData?.length || geoId == null) return null;
+    const cdRows = indicatorData
+      .filter(r => r.GeoType === 'CD' && r.Value != null && !isNaN(Number(r.Value)))
+      .sort((a, b) => Number(b.Value) - Number(a.Value));
+    const pos = cdRows.findIndex(r => r.GeoID === geoId);
+    return pos === -1 ? null : { rank: pos + 1, total: cdRows.length };
+  })();
   const [mapHoveredGeoId,   setMapHoveredGeoId]   = useState(null);
   const [stripHoveredGeoId, setStripHoveredGeoId] = useState(null);
 
@@ -83,12 +121,12 @@ export default function IndicatorFlyoutContent({
         {(sectionLabel || subtitle) && (
           <div className="px-5 pt-3 pb-2 flex flex-col gap-0.5">
             {sectionLabel && (
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest">
                 {sectionLabel}
               </p>
             )}
             {subtitle && (
-              <p className="text-xs text-gray-500 leading-snug">{subtitle}</p>
+              <p className="text-xs text-gray-600 leading-snug">{subtitle}</p>
             )}
           </div>
         )}
@@ -104,16 +142,17 @@ export default function IndicatorFlyoutContent({
             subtitle={subtitle}
             onHoverGeoId={setMapHoveredGeoId}
             stripHoveredGeoId={stripHoveredGeoId}
+            comparisonGeoId={comparisonNeighborhood?.geoId ?? null}
           />
           {/* Color legend — floats over map, bottom-left */}
           <div className="absolute bottom-3 left-3 z-[1000] flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-md px-2 py-1.5 shadow-sm border border-gray-200 pointer-events-none select-none">
-            <span className="text-xs text-gray-500">Low</span>
+            <span className="text-xs text-gray-600">Low</span>
             <div className="flex h-2 rounded overflow-hidden w-16">
-              {['#dbeafe', '#93c5fd', '#60a5fa', '#2563eb', '#1e3a8a'].map((c, i) => (
+              {CHOROPLETH_STOPS.map((c, i) => (
                 <div key={i} className="flex-1" style={{ backgroundColor: c }} />
               ))}
             </div>
-            <span className="text-xs text-gray-500">High</span>
+            <span className="text-xs text-gray-600">High</span>
           </div>
         </div>
 
@@ -122,31 +161,76 @@ export default function IndicatorFlyoutContent({
           {/* ── 3. Dynamic insight ──────────────────────────────────────────── */}
           {insight && (() => {
             const { badge, arrow } = DIRECTION_STYLES[insight.direction];
+            // Show the comparison's citywide direction only when it diverges from selected
+            const showCompDirection = compInsight && compInsight.direction !== insight.direction && compName;
             return (
               <div className="flex flex-col gap-1.5">
                 <p className="text-sm text-gray-700 leading-relaxed">
                   In {insight.name}, {insight.title.toLowerCase()} is{' '}
-                  <span className="font-semibold text-gray-900">{insight.cdDisplay}</span>.
+                  <span className="font-semibold text-blue-700">{insight.cdDisplay}</span>
+                  {compRow && compName && (
+                    <>
+                      {', compared to '}
+                      <span
+                        className="inline-block w-2 h-2 rounded-full bg-amber-400 shrink-0 align-middle mx-0.5"
+                        aria-hidden="true"
+                      />
+                      <span className="font-medium text-gray-800">{compName}</span>
+                      {' '}
+                      <span className="font-semibold text-amber-600">{compRow.DisplayValue}</span>
+                    </>
+                  )}
+                  .
                 </p>
-                <p className="text-sm text-gray-500 leading-relaxed">
+                <p className="text-sm text-gray-600 leading-relaxed">
                   <span
                     className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border mr-1.5 ${badge}`}
                     aria-label={`${insight.label} citywide`}
                   >
                     <span aria-hidden="true">{arrow}</span> {insight.label}
                   </span>
-                  the citywide rate of {insight.cityDisplay}.
+                  the citywide rate of {insight.cityDisplay}
+                  {showCompDirection && (() => {
+                    const { badge: compBadge, arrow: compArrow } = DIRECTION_STYLES[compInsight.direction];
+                    return (
+                      <>
+                        {', while '}
+                        <span
+                          className="inline-block w-2 h-2 rounded-full bg-amber-400 shrink-0 align-middle mx-0.5"
+                          aria-hidden="true"
+                        />
+                        <span className="font-medium text-gray-800">{compName}</span>
+                        {' is '}
+                        <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border mx-1 ${compBadge}`}>
+                          <span aria-hidden="true">{compArrow}</span> {compInsight.label}
+                        </span>
+                      </>
+                    );
+                  })()}
+                  .
                 </p>
               </div>
             );
           })()}
 
-          {/* ── 4. Distribution strip — boxed ───────────────────────────────── */}
+          {/* ── 4. CD rank ──────────────────────────────────────────────────── */}
+          {cdRank && (
+            <p className="text-xs text-gray-500 leading-snug">
+              Ranked{' '}
+              <span className="font-semibold text-gray-700">
+                {cdRank.rank} of {cdRank.total}
+              </span>{' '}
+              community districts by value
+            </p>
+          )}
+
+          {/* ── 5. Distribution strip — boxed ───────────────────────────────── */}
           {indicatorData?.length > 0 && (
             <div className="border border-gray-200 rounded-lg bg-gray-50 px-4 py-3.5">
               <DistributionStrip
                 indicatorData={indicatorData}
                 geoId={geoId}
+                comparisonGeoId={comparisonNeighborhood?.geoId ?? null}
                 mapHoveredGeoId={mapHoveredGeoId}
                 onHoverGeoId={setStripHoveredGeoId}
               />
@@ -156,14 +240,14 @@ export default function IndicatorFlyoutContent({
           {/* ── 5. Source row — no label, inline ? button ───────────────────── */}
           {sourceClean && (
             <div className="flex items-center gap-1.5 pt-1 border-t border-gray-100">
-              <p className="text-xs text-gray-500 leading-snug">
+              <p className="text-xs text-gray-600 leading-snug">
                 <span className="font-medium text-gray-600">Source:</span> {sourceClean}
               </p>
               {hasNotes && (
                 <button
                   onClick={() => setNotesOpen(true)}
                   aria-label="View source notes"
-                  className="w-4 h-4 flex items-center justify-center rounded-full border border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shrink-0 text-xs font-semibold"
+                  className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shrink-0 text-xs font-semibold"
                 >
                   ?
                 </button>
@@ -199,7 +283,7 @@ export default function IndicatorFlyoutContent({
             <div className="flex items-start justify-between px-6 pt-5 pb-4 border-b border-gray-100">
               <div>
                 <h3 className="text-sm font-semibold text-gray-900">Source &amp; notes</h3>
-                <p className="text-xs text-gray-500 mt-0.5">{title}</p>
+                <p className="text-xs text-gray-600 mt-0.5">{title}</p>
               </div>
               <button
                 onClick={() => setNotesOpen(false)}
@@ -214,7 +298,7 @@ export default function IndicatorFlyoutContent({
             <div className="px-6 py-5 flex flex-col gap-4 overflow-y-auto">
               {sourceClean && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Data source</p>
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">Data source</p>
                   <p className="text-sm text-gray-700 leading-relaxed">{sourceClean}</p>
                   {sourceUrl && (
                     <a
@@ -233,7 +317,7 @@ export default function IndicatorFlyoutContent({
               )}
               {description && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Notes</p>
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">Notes</p>
                   <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
                 </div>
               )}

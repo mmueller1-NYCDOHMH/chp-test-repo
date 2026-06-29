@@ -33,18 +33,18 @@
 import {
   COMMUNITY_SAFETY_ID,
   ECONOMIC_ID,
-  AVERTABLE_DEATHS_ID,
-  SUBSTANCE_USE_ID,
-  MENTAL_WELLNESS_ID,
+  EDUCATION_ID,
   ENVIRONMENTAL_RISK_ID,
   FOOD_ENVIRONMENT_ID,
   HOUSING_QUALITY_ID,
   TRANSPORTATION_SAFETY_ID,
   HEALTH_CARE_ACCESS_ID,
-  HEALTH_CARE_USE_ID,
+  INJURY_HOSPITALIZATIONS_ID,
   PREVENTION_ID,
   MATERNAL_ID,
   INFANT_CHILD_ID,
+  MENTAL_WELLNESS_ID,
+  SUBSTANCE_USE_ID,
   CHRONIC_CONDITIONS_ID,
   INFECTIOUS_DISEASE_ID,
   HEALTH_OUTCOMES_ID,
@@ -52,17 +52,16 @@ import {
 
 export const siteNav = [
 
-  // ── 1. Social & Economic Wellness ─────────────────────────────────────────
+  // ── 1. Social ─────────────────────────────────────────────────────────────
   {
-    id: 'social-economic',
-    label: 'Social & Economic Wellness',
-    anchor: '#cat-social-economic',
+    id: 'social',
+    label: 'Social',
+    anchor: '#cat-social',
+    contentSlug: 'social',     // matches /content/category-cards/{contentSlug}/
     subcategories: [
-      { id: COMMUNITY_SAFETY_ID,  label: 'Community Safety',  anchor: `#${COMMUNITY_SAFETY_ID}` },
-      { id: ECONOMIC_ID,          label: 'Economic',          anchor: `#${ECONOMIC_ID}` },
-      { id: AVERTABLE_DEATHS_ID,  label: 'Avertable Deaths',  anchor: `#${AVERTABLE_DEATHS_ID}` },
-      { id: SUBSTANCE_USE_ID,     label: 'Substance Use',     anchor: `#${SUBSTANCE_USE_ID}` },
-      { id: MENTAL_WELLNESS_ID,   label: 'Mental Wellness',   anchor: `#${MENTAL_WELLNESS_ID}` },
+      { id: COMMUNITY_SAFETY_ID, label: 'Community & safety', anchor: `#${COMMUNITY_SAFETY_ID}` },
+      { id: ECONOMIC_ID,         label: 'Economic',           anchor: `#${ECONOMIC_ID}` },
+      { id: EDUCATION_ID,        label: 'Education',          anchor: `#${EDUCATION_ID}` },
     ],
   },
 
@@ -71,46 +70,52 @@ export const siteNav = [
     id: 'neighborhood',
     label: 'Neighborhood',
     anchor: '#cat-neighborhood',
+    contentSlug: 'neighborhood',
     subcategories: [
-      { id: ENVIRONMENTAL_RISK_ID,    label: 'Environmental Risk',    anchor: `#${ENVIRONMENTAL_RISK_ID}` },
-      { id: FOOD_ENVIRONMENT_ID,      label: 'Food Environment',      anchor: `#${FOOD_ENVIRONMENT_ID}` },
-      { id: HOUSING_QUALITY_ID,       label: 'Housing Quality',       anchor: `#${HOUSING_QUALITY_ID}` },
-      { id: TRANSPORTATION_SAFETY_ID, label: 'Transportation Safety', anchor: `#${TRANSPORTATION_SAFETY_ID}` },
+      { id: ENVIRONMENTAL_RISK_ID,    label: 'Environmental risk', anchor: `#${ENVIRONMENTAL_RISK_ID}` },
+      { id: FOOD_ENVIRONMENT_ID,      label: 'Food',               anchor: `#${FOOD_ENVIRONMENT_ID}` },
+      { id: HOUSING_QUALITY_ID,       label: 'Housing quality',    anchor: `#${HOUSING_QUALITY_ID}` },
+      { id: TRANSPORTATION_SAFETY_ID, label: 'Transport & safety', anchor: `#${TRANSPORTATION_SAFETY_ID}` },
     ],
   },
 
-  // ── 3. Health Care ─────────────────────────────────────────────────────────
+  // ── 3. Health care ─────────────────────────────────────────────────────────
   {
     id: 'health-care',
-    label: 'Health Care',
+    label: 'Health care',
     anchor: '#cat-health-care',
+    contentSlug: 'health-care',
     subcategories: [
-      { id: HEALTH_CARE_ACCESS_ID, label: 'Access',     anchor: `#${HEALTH_CARE_ACCESS_ID}` },
-      { id: HEALTH_CARE_USE_ID,    label: 'Use',        anchor: `#${HEALTH_CARE_USE_ID}` },
-      { id: PREVENTION_ID,         label: 'Prevention', anchor: `#${PREVENTION_ID}` },
+      { id: HEALTH_CARE_ACCESS_ID,      label: 'Access to care',            anchor: `#${HEALTH_CARE_ACCESS_ID}` },
+      { id: INJURY_HOSPITALIZATIONS_ID, label: 'Injury & hospitalizations', anchor: `#${INJURY_HOSPITALIZATIONS_ID}` },
+      { id: PREVENTION_ID,              label: 'Prevention',                anchor: `#${PREVENTION_ID}` },
     ],
   },
 
-  // ── 4. Family Health ───────────────────────────────────────────────────────
+  // ── 4. Maternal & child health ─────────────────────────────────────────────
   {
-    id: 'family-health',
-    label: 'Family Health',
-    anchor: '#cat-family-health',
+    id: 'maternal-child-health',
+    label: 'Maternal & child health',
+    anchor: '#cat-maternal-child-health',
+    contentSlug: 'maternal-child-health',
     subcategories: [
       { id: MATERNAL_ID,     label: 'Maternal',      anchor: `#${MATERNAL_ID}` },
-      { id: INFANT_CHILD_ID, label: 'Infant & Child', anchor: `#${INFANT_CHILD_ID}` },
+      { id: INFANT_CHILD_ID, label: 'Infant & child', anchor: `#${INFANT_CHILD_ID}` },
     ],
   },
 
-  // ── 5. Diseases & Outcomes ─────────────────────────────────────────────────
+  // ── 5. Health conditions ───────────────────────────────────────────────────
   {
-    id: 'diseases-outcomes',
-    label: 'Diseases & Outcomes',
-    anchor: '#cat-diseases-outcomes',
+    id: 'health-conditions',
+    label: 'Health conditions',
+    anchor: '#cat-health-conditions',
+    contentSlug: 'health-conditions',
     subcategories: [
-      { id: CHRONIC_CONDITIONS_ID, label: 'Chronic Conditions', anchor: `#${CHRONIC_CONDITIONS_ID}` },
-      { id: INFECTIOUS_DISEASE_ID, label: 'Infectious Disease', anchor: `#${INFECTIOUS_DISEASE_ID}` },
-      { id: HEALTH_OUTCOMES_ID,    label: 'Health Outcomes',    anchor: `#${HEALTH_OUTCOMES_ID}` },
+      { id: MENTAL_WELLNESS_ID,    label: 'Mental health',      anchor: `#${MENTAL_WELLNESS_ID}` },
+      { id: SUBSTANCE_USE_ID,      label: 'Substance use',      anchor: `#${SUBSTANCE_USE_ID}` },
+      { id: CHRONIC_CONDITIONS_ID, label: 'Chronic conditions', anchor: `#${CHRONIC_CONDITIONS_ID}` },
+      { id: INFECTIOUS_DISEASE_ID, label: 'Infectious disease', anchor: `#${INFECTIOUS_DISEASE_ID}` },
+      { id: HEALTH_OUTCOMES_ID,    label: 'Health outcomes',    anchor: `#${HEALTH_OUTCOMES_ID}` },
     ],
   },
 

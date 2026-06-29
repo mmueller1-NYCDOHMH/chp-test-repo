@@ -9,7 +9,8 @@
  *
  * SHORTCUTS LISTED:
  *   /    — Focus neighborhood search
- *   i    — Open indicator detail flyout (while hovering a card)
+ *   f    — Focus indicator search
+ *   i    — Open indicator detail flyout (while hovering or focusing a card)
  *   Esc  — Close panel / clear search
  *   ?    — Toggle this menu
  *
@@ -31,12 +32,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 const SHORTCUTS = [
-  { keys: ['/'],   description: 'Search neighborhoods'            },
-  { keys: ['m'],   description: 'Open neighborhood picker modal'  },
-  { keys: ['e'],   description: 'Expand hovered chart'            },
-  { keys: ['i'],   description: 'Open indicator details'          },
-  { keys: ['Esc'], description: 'Close panel / clear search'      },
-  { keys: ['?'],   description: 'Show this shortcuts menu'        },
+  { keys: ['/'],   description: 'Search neighborhoods'                         },
+  { keys: ['f'],   description: 'Search indicators'                            },
+  { keys: ['m'],   description: 'Open neighborhood picker'                     },
+  { keys: ['j'],   description: 'Next section'                                 },
+  { keys: ['k'],   description: 'Previous section'                             },
+  { keys: ['e'],   description: 'Expand chart (while hovering or focusing it)' },
+  { keys: ['i'],   description: 'Open indicator details (hover or focus card)' },
+  { keys: ['Esc'], description: 'Close panel / clear search'                   },
+  { keys: ['?'],   description: 'Show this shortcuts menu'                     },
 ];
 
 export default function KeyboardShortcutsButton() {
@@ -106,7 +110,7 @@ export default function KeyboardShortcutsButton() {
           'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
           isOpen
             ? 'border-blue-300 bg-blue-50 text-blue-600'
-            : 'border-gray-300 bg-white text-gray-500 hover:border-gray-400 hover:bg-gray-100 hover:text-gray-700',
+            : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400 hover:bg-gray-100 hover:text-gray-700',
         ].join(' ')}
       >
         ?
@@ -124,7 +128,7 @@ export default function KeyboardShortcutsButton() {
             transition: 'opacity 150ms ease-out, transform 150ms ease-out',
           }}
         >
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-3 py-2.5 border-b border-gray-100">
+          <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest px-3 py-2.5 border-b border-gray-100">
             Keyboard shortcuts
           </p>
 

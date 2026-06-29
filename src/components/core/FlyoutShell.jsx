@@ -41,7 +41,8 @@
  *   of Tailwind purge
  * - Children remain server-renderable; only the shell is client
  */
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, lazy, Suspense, Fragment } from 'react';
+import { useParams } from 'next/navigation';
 import MarkdownRenderer from '@/components/content/MarkdownRenderer';
 
 // Lazy-load so Leaflet bundle only loads when an indicator flyout opens
@@ -60,6 +61,7 @@ export function useFlyout() {
 }
 
 export default function FlyoutShell({ children }) {
+  const params = useParams();
   const [flyout, setFlyout] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const panelRef    = useRef(null);
@@ -92,6 +94,20 @@ export default function FlyoutShell({ children }) {
 
   const isOpen = Boolean(flyout);
   const isIndicator = flyout?.kind === 'indicator';
+
+  // ── Copy link ─────────────────────────────────────────────────────────────
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const handleCopyLink = useCallback(() => {
+    const key = flyout?.indicatorKey;
+    if (!key) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('flyout', key);
+    navigator.clipboard.writeText(url.toString()).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    }).catch(() => {});
+  }, [flyout]);
 
   // Close on Escape + focus trap
   useEffect(() => {
@@ -129,17 +145,23 @@ export default function FlyoutShell({ children }) {
     return () => document.removeEventListener('keydown', onKey);
   }, [isOpen, close]);
 
-  // Lock body scroll while flyout is open.
-  // On desktop: overflow:hidden is fine and prevents background scroll.
-  // On iOS Safari: overflow:hidden on body ALSO kills scroll inside fixed panels
-  // (a known iOS bug). On mobile we instead pin the body with position:fixed
-  // and restore the scroll position on close — this freezes the background
-  // without breaking overflow-y:auto containers inside the flyout.
+  // Lock body scroll while flyout is open — mobile only.
+  //
+  // On mobile the flyout covers the full screen, so freezing background scroll
+  // is necessary. We use the iOS-safe position:fixed approach instead of
+  // overflow:hidden because overflow:hidden on body kills scroll inside fixed
+  // panels on iOS Safari (known bug).
+  //
+  // On desktop the flyout is a narrow side panel (420px from the right) and
+  // the sidebar remains visible and interactive beside it. Locking body scroll
+  // on desktop collapses the sidebar's flex-1 content area because removing the
+  // scrollbar changes the layout width and triggers a reflow that zeroes out the
+  // flex-1 min-h-0 height calculation. Desktop scroll is intentionally left
+  // unlocked so the sidebar stays fully usable while the flyout is open.
   useEffect(() => {
-    if (!isOpen) {
-      // Restore body (handles both approaches)
+    if (!isOpen || !isMobile) {
+      // Restore body if we previously pinned it (mobile close path)
       const savedTop = document.body.dataset.scrollY;
-      document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.top      = '';
       document.body.style.width    = '';
@@ -150,20 +172,15 @@ export default function FlyoutShell({ children }) {
       return;
     }
 
-    if (isMobile) {
-      // iOS-safe scroll lock: pin body at current scroll position
-      const scrollY = window.scrollY;
-      document.body.dataset.scrollY = String(scrollY);
-      document.body.style.position  = 'fixed';
-      document.body.style.top       = `-${scrollY}px`;
-      document.body.style.width     = '100%';
-    } else {
-      document.body.style.overflow = 'hidden';
-    }
+    // iOS-safe scroll lock: pin body at current scroll position
+    const scrollY = window.scrollY;
+    document.body.dataset.scrollY = String(scrollY);
+    document.body.style.position  = 'fixed';
+    document.body.style.top       = `-${scrollY}px`;
+    document.body.style.width     = '100%';
 
     return () => {
       const savedTop = document.body.dataset.scrollY;
-      document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.top      = '';
       document.body.style.width    = '';
@@ -194,7 +211,7 @@ export default function FlyoutShell({ children }) {
       {/* Backdrop — fades in immediately, panel follows 50ms later */}
       <div
         onClick={close}
-        aria-hidden={!isOpen}
+        aria-hidden="true"
         style={{
           opacity:       isOpen ? 1 : 0,
           pointerEvents: isOpen ? 'auto' : 'none',
@@ -233,19 +250,59 @@ export default function FlyoutShell({ children }) {
 
         {/* ── Panel header ─────────────────────────────────────── */}
         <div className="flex items-center justify-between px-5 py-2 shrink-0 gap-3">
-          <h2 className="text-sm font-semibold text-gray-900 leading-snug truncate">
+          <h2 className="text-sm font-semibold text-gray-900 leading-snug truncate min-w-0">
             {isIndicator ? flyout?.title : `About ${flyout?.title}`}
           </h2>
-          <button
-            type="button"
-            onClick={close}
-            aria-label="Close panel"
-            className="text-gray-400 hover:text-gray-700 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded p-1 shrink-0"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* View full page — indicator flyouts only */}
+            {isIndicator && flyout?.indicatorKey && (
+              <a
+                href={`/indicator/${flyout.indicatorKey}${params?.id ? `?geo=${params.id}` : ''}`}
+                aria-label={`View full page for ${flyout.title}`}
+                title="View full page"
+                className="inline-flex items-center gap-1 h-7 px-2 rounded border border-gray-200 text-xs font-medium text-gray-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap"
+              >
+                Full page
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            )}
+
+            {/* Copy link — indicator flyouts only */}
+            {isIndicator && flyout?.indicatorKey && (
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                aria-label="Copy link to this indicator"
+                title="Copy link"
+                className="inline-flex items-center gap-1 h-7 px-2 rounded border border-gray-200 text-xs font-medium text-gray-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap"
+              >
+                {linkCopied ? (
+                  <><span className="text-green-600 text-xs">✓</span> Copied</>
+                ) : (
+                  <>
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    Copy link
+                  </>
+                )}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={close}
+              aria-label="Close panel"
+              className="text-gray-400 hover:text-gray-700 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded p-1 shrink-0"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* ── Panel body — switches on kind ─────────────────────── */}

@@ -28,6 +28,7 @@
  * - Base layer is always in normal flow so the container never clips or reflows
  */
 import { useState, useEffect } from 'react';
+import { MAP_HOVER_TOOLTIP_BORDER_ACTIVE, MAP_HOVER_TOOLTIP_BORDER_IDLE } from '@/lib/charts/chartColors';
 
 function SnapshotRows({ rows }) {
   return (
@@ -35,7 +36,7 @@ function SnapshotRows({ rows }) {
       <div className="px-4 py-3 flex flex-col gap-2.5">
         {rows.map((item) => (
           <div key={item.key} className="flex items-baseline justify-between gap-3">
-            <span className="text-xs text-gray-500 leading-snug flex-1">
+            <span className="text-xs text-gray-600 leading-snug flex-1">
               {item.label}
             </span>
             <span className="text-xs font-semibold text-gray-900 tabular-nums shrink-0">
@@ -45,7 +46,7 @@ function SnapshotRows({ rows }) {
         ))}
       </div>
       <div className="px-4 pb-3">
-        <p className="text-xs text-gray-500">{rows[0]?.timePeriod ?? ' '}</p>
+        <p className="text-xs text-gray-600">{rows[0]?.timePeriod ?? ' '}</p>
       </div>
     </>
   );
@@ -82,7 +83,7 @@ export default function MapHoverTooltip({ indicatorSummaries = {}, selectedNeigh
       aria-live="polite"
       aria-atomic="true"
       className="mt-3 rounded-lg border overflow-hidden relative transition-colors duration-200"
-      style={{ borderColor: showHoverLayer ? '#bfdbfe' : '#f3f4f6' }}
+      style={{ borderColor: showHoverLayer ? MAP_HOVER_TOOLTIP_BORDER_ACTIVE : MAP_HOVER_TOOLTIP_BORDER_IDLE }}
     >
 
       {/* ── Hover layer — absolute overlay, fades in when mousing a different district */}
@@ -104,7 +105,7 @@ export default function MapHoverTooltip({ indicatorSummaries = {}, selectedNeigh
         </div>
         {hoveredRows.length > 0
           ? <SnapshotRows rows={hoveredRows} />
-          : <p className="text-xs text-gray-500 italic px-4 py-3">No data available</p>
+          : <p className="text-xs text-gray-600 italic px-4 py-3">No data available</p>
         }
       </div>
 
@@ -116,14 +117,14 @@ export default function MapHoverTooltip({ indicatorSummaries = {}, selectedNeigh
         {selectedNeighborhood && selectedRows.length > 0 ? (
           <>
             <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-0.5">
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-0.5">
                 At a Glance
               </p>
               <p className="text-sm font-semibold text-gray-900 leading-snug">
                 {selectedNeighborhood.name}
               </p>
               {selectedNeighborhood.borough && selectedNeighborhood.cdNumber && (
-                <p className="text-xs text-gray-400 mt-0.5">
+                <p className="text-xs text-gray-600 mt-0.5">
                   {selectedNeighborhood.borough} · CD {selectedNeighborhood.cdNumber}
                 </p>
               )}
@@ -133,10 +134,10 @@ export default function MapHoverTooltip({ indicatorSummaries = {}, selectedNeigh
         ) : (
           /* No neighborhood selected — placeholder keeps the panel present */
           <div className="px-4 py-5 bg-gray-50">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1.5">
               At a Glance
             </p>
-            <p className="text-xs text-gray-500 leading-relaxed">
+            <p className="text-xs text-gray-600 leading-relaxed">
               Select a neighborhood to see key health indicators.
             </p>
           </div>

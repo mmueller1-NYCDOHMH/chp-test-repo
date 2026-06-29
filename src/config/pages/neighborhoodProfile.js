@@ -5,47 +5,116 @@
  * Defines the structure and content configuration for a neighborhood profile page.
  *
  * DESCRIPTION:
- * This config drives the entire page layout. Each section is defined in its own
- * file under /config/sections/ and imported here. To add a new section, create
- * a file in /config/sections/, export the section object, and add it to the
- * sections array below.
+ * This config drives the entire page layout. The sections array is the
+ * ordered list of everything that renders on the page.
  *
- * Section order here = render order on the page. Keep it in sync with
- * the category/subcategory order in siteNav.js.
+ * ADDING A SECTION:
+ * Standard sections (header + chart grid) can be added with one line:
+ *   buildStandardSection(SECTION_ID_CONSTANT)
+ * Sections that need non-standard layouts keep their own file under /config/sections/.
  *
- * CATEGORY HEADERS:
- * Inline section objects with `category: true` render the overarching
- * category heading + intro text above each group of subcategory sections.
- * These are filtered out of the sidebar SectionNav (they are not scroll-spy
- * targets) but do render on the page as visual chapter dividers.
+ * ADDING A CATEGORY:
+ * 1. Add it to siteNav.js with a contentSlug
+ * 2. Create /content/category-cards/{contentSlug}/ with intro.md and optional
+ *    what-is-included.md, why-it-matters.md, how-to-read.md
+ * 3. Insert buildCategorySection(siteNav.find(c => c.id === '...')) here
  *
- * RESPONSIBILITIES:
- * - Declare page structure (ordered list of sections)
- * - No logic, no formatting — configuration only
+ * EDITING CATEGORY INTRO TEXT:
+ * Edit /content/category-cards/{contentSlug}/intro.md — no code changes needed.
  *
  * NOTES:
- * - Section files own their own inline documentation
  * - Rendering behavior is handled by CHPBuilder
+ * - See /CONTENT_GUIDE.md for step-by-step checklists
  */
 
-import { neighborhoodOverview }   from '../sections/neighborhoodOverview';
-import { communitySafety }        from '../sections/communitySafety';
-import { economicConditions }     from '../sections/economicConditions';
-import { avertableDeaths }        from '../sections/avertableDeaths';
-import { substanceUse }           from '../sections/substanceUse';
-import { mentalWellness }         from '../sections/mentalWellness';
-import { environmentalRisk }      from '../sections/environmentalRisk';
-import { foodEnvironment }        from '../sections/foodEnvironment';
-import { housingQuality }         from '../sections/housingQuality';
-import { transportationSafety }   from '../sections/transportationSafety';
-import { healthCareAccess }       from '../sections/healthCareAccess';
-import { healthCareUse }          from '../sections/healthCareUse';
-import { prevention }             from '../sections/prevention';
-import { maternal }               from '../sections/maternal';
-import { infantChild }            from '../sections/infantChild';
-import { chronicConditions }      from '../sections/chronicConditions';
-import { infectiousDisease }      from '../sections/infectiousDisease';
-import { healthOutcomes }         from '../sections/healthOutcomes';
+import { siteNav }              from '../nav/siteNav';
+import sectionTitles            from '../content/sectionTitles.json';
+import { neighborhoodOverview } from '../sections/neighborhoodOverview';
+import { education }            from '../sections/education';
+import { injuryHospitalizations } from '../sections/injuryHospitalizations';
+
+// ── Info card slots present in every category ─────────────────────────────────
+// Edit titles here to rename them everywhere at once.
+const INFO_CARDS = [
+  { title: "What's included",  key: 'what-is-included' },
+  { title: 'Why it matters',   key: 'why-it-matters'   },
+  { title: 'How to read this', key: 'how-to-read'      },
+];
+
+/**
+ * Builds the category header + info-card block for a top-level nav category.
+ * Reads content from /content/category-cards/{cat.contentSlug}/.
+ * Add/remove a card slot by editing INFO_CARDS above.
+ *
+ * @param {object} cat - a siteNav category entry (must have id, label, contentSlug)
+ */
+function buildCategorySection(cat) {
+  const slug = cat.contentSlug ?? cat.id;
+  return {
+    id:       `cat-${cat.id}`,
+    category: true,
+    layout:   'stacked',
+    children: [
+      {
+        id:   `cat-${cat.id}-header`,
+        type: 'categoryHeader',
+        props: {
+          title:          cat.label,
+          introContentKey: `${slug}/intro`,
+        },
+      },
+      {
+        id:   `cat-${cat.id}-info-cards`,
+        type: 'categoryInfoCards',
+        props: {
+          cards: INFO_CARDS.map(({ title, key }) => ({
+            title,
+            contentKey: `${slug}/${key}`,
+          })),
+        },
+      },
+    ],
+  };
+}
+
+/**
+ * Builds a standard section: a section-header block + an indicatorChartGrid.
+ * Reads the display title from /src/config/content/sectionTitles.json.
+ * Indicator list is loaded automatically from /content/sections/{id}.json.
+ *
+ * Use this for every section that follows the standard layout.
+ * Sections with non-standard layouts (overview hero, placeholder text, etc.)
+ * keep their own file in /config/sections/ and are imported explicitly above.
+ *
+ * @param {string} id - section ID constant from sectionIds.js
+ */
+function buildStandardSection(id) {
+  const title = sectionTitles[id] ?? id;
+  return {
+    id,
+    layout: 'cardRow',
+    children: [
+      {
+        id:    `${id}-header`,
+        type:  'sectionHeader',
+        props: { title },
+      },
+      {
+        id:    `${id}-charts`,
+        type:  'indicatorChartGrid',
+        props: {
+          sectionLabel: title,
+          // indicators loaded from /content/sections/{id}.json
+        },
+      },
+    ],
+  };
+}
+
+// ── Flat ordered category list — drives both category blocks and section groupings ──
+// To add a new top-level category: add it to siteNav.js (with contentSlug),
+// then insert buildCategorySection(cat) at the right position below.
+const [social, neighborhood, healthCare, maternalChildHealth, healthConditions] = siteNav;
 
 export const neighborhoodProfile = {
   id: 'neighborhood-profile',
@@ -53,162 +122,36 @@ export const neighborhoodProfile = {
   sections: [
     neighborhoodOverview,
 
-    // ── Social & Economic Wellness ────────────────────────────────────────────
-    {
-      id: 'cat-social-economic',
-      category: true,
-      layout: 'stacked',
-      children: [
-        {
-          id: 'cat-social-economic-header',
-          type: 'categoryHeader',
-          props: {
-            title: 'Social & Economic Wellness',
-            intro: 'Social and economic factors shape the conditions in which people live, work, and age. Indicators in this category reflect the economic pressures, safety, and educational opportunities available to residents across NYC neighborhoods.',
-          }
-        },
-        {
-          id: 'cat-social-economic-info-cards',
-          type: 'categoryInfoCards',
-          props: {
-            cards: [
-              { title: "What's included",  contentKey: 'social-economic/what-is-included' },
-              { title: 'Why it matters',   contentKey: 'social-economic/why-it-matters' },
-              { title: 'How to read this', contentKey: 'social-economic/how-to-read' },
-            ]
-          }
-        }
-      ]
-    },
-    communitySafety,
-    economicConditions,
-    avertableDeaths,
-    substanceUse,
-    mentalWellness,
+    // ── Social ────────────────────────────────────────────────────────────────
+    buildCategorySection(social),
+    buildStandardSection('community-safety'),
+    buildStandardSection('economic-conditions'),
+    education,                    // placeholder — no chart data yet
 
     // ── Neighborhood ──────────────────────────────────────────────────────────
-    {
-      id: 'cat-neighborhood',
-      category: true,
-      layout: 'stacked',
-      children: [
-        {
-          id: 'cat-neighborhood-header',
-          type: 'categoryHeader',
-          props: {
-            title: 'Neighborhood',
-            intro: 'The physical and built environment of a neighborhood has a direct impact on the health of its residents. These indicators reflect environmental quality, food access, housing conditions, and transportation infrastructure across NYC community districts.',
-          }
-        },
-        {
-          id: 'cat-neighborhood-info-cards',
-          type: 'categoryInfoCards',
-          props: {
-            cards: [
-              { title: "What's included",  contentKey: 'neighborhood/what-is-included' },
-              { title: 'Why it matters',   contentKey: 'neighborhood/why-it-matters' },
-              { title: 'How to read this', contentKey: 'neighborhood/how-to-read' },
-            ]
-          }
-        }
-      ]
-    },
-    environmentalRisk,
-    foodEnvironment,
-    housingQuality,
-    transportationSafety,
+    buildCategorySection(neighborhood),
+    buildStandardSection('environmental-risk'),
+    buildStandardSection('food-environment'),
+    buildStandardSection('housing-quality'),
+    buildStandardSection('transportation-safety'),
 
-    // ── Health Care ───────────────────────────────────────────────────────────
-    {
-      id: 'cat-health-care',
-      category: true,
-      layout: 'stacked',
-      children: [
-        {
-          id: 'cat-health-care-header',
-          type: 'categoryHeader',
-          props: {
-            title: 'Health Care',
-            intro: 'Access to affordable, high-quality health care is essential to keeping communities healthy. These indicators measure insurance coverage, unmet need, health care utilization patterns, and preventive service uptake across NYC neighborhoods.',
-          }
-        },
-        {
-          id: 'cat-health-care-info-cards',
-          type: 'categoryInfoCards',
-          props: {
-            cards: [
-              { title: "What's included",  contentKey: 'health-care/what-is-included' },
-              { title: 'Why it matters',   contentKey: 'health-care/why-it-matters' },
-              { title: 'How to read this', contentKey: 'health-care/how-to-read' },
-            ]
-          }
-        }
-      ]
-    },
-    healthCareAccess,
-    healthCareUse,
-    prevention,
+    // ── Health care ───────────────────────────────────────────────────────────
+    buildCategorySection(healthCare),
+    buildStandardSection('health-care-access'),
+    injuryHospitalizations,       // kept explicit: section title differs from sectionTitles key
+    buildStandardSection('prevention'),
 
-    // ── Family Health ─────────────────────────────────────────────────────────
-    {
-      id: 'cat-family-health',
-      category: true,
-      layout: 'stacked',
-      children: [
-        {
-          id: 'cat-family-health-header',
-          type: 'categoryHeader',
-          props: {
-            title: 'Family Health',
-            intro: 'The health of mothers and children reflects the quality and equity of care in a neighborhood. These indicators capture outcomes during pregnancy, birth, and early childhood across NYC community districts.',
-          }
-        },
-        {
-          id: 'cat-family-health-info-cards',
-          type: 'categoryInfoCards',
-          props: {
-            cards: [
-              { title: "What's included",  contentKey: 'family-health/what-is-included' },
-              { title: 'Why it matters',   contentKey: 'family-health/why-it-matters' },
-              { title: 'How to read this', contentKey: 'family-health/how-to-read' },
-            ]
-          }
-        }
-      ]
-    },
-    maternal,
-    infantChild,
+    // ── Maternal & child health ───────────────────────────────────────────────
+    buildCategorySection(maternalChildHealth),
+    buildStandardSection('maternal'),
+    buildStandardSection('infant-child'),
 
-    // ── Diseases & Outcomes ───────────────────────────────────────────────────
-    {
-      id: 'cat-diseases-outcomes',
-      category: true,
-      layout: 'stacked',
-      children: [
-        {
-          id: 'cat-diseases-outcomes-header',
-          type: 'categoryHeader',
-          props: {
-            title: 'Diseases & Outcomes',
-            intro: 'Chronic diseases and infectious conditions are the leading causes of death and disability in New York City. Indicators here track the prevalence of long-term conditions, infectious disease burden, and key population-level health outcomes across neighborhoods.',
-          }
-        },
-        {
-          id: 'cat-diseases-outcomes-info-cards',
-          type: 'categoryInfoCards',
-          props: {
-            cards: [
-              { title: "What's included",  contentKey: 'diseases-outcomes/what-is-included' },
-              { title: 'Why it matters',   contentKey: 'diseases-outcomes/why-it-matters' },
-              { title: 'How to read this', contentKey: 'diseases-outcomes/how-to-read' },
-            ]
-          }
-        }
-      ]
-    },
-    chronicConditions,
-    infectiousDisease,
-    healthOutcomes,
-  ]
-
+    // ── Health conditions ─────────────────────────────────────────────────────
+    buildCategorySection(healthConditions),
+    buildStandardSection('mental-wellness'),
+    buildStandardSection('substance-use'),
+    buildStandardSection('chronic-conditions'),
+    buildStandardSection('infectious-disease'),
+    buildStandardSection('health-outcomes'),
+  ],
 };

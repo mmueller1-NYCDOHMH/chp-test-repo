@@ -37,10 +37,13 @@
  * - Columns stay at 2; add layout options here if 3-col ever needed
  * - Compact spec: height 160, width 340 — sized for a half-width card
  * - Expanded spec: height 360, width 700 — sized for the modal panel
+ * - Indicator notes/descriptions live in /content/indicators/{key}.md —
+ *   edit those files directly; no code changes needed.
  */
 
 import { loadIndicatorData } from '@/lib/data/loadIndicatorData';
 import { buildBarChartSpec } from '@/lib/charts/buildBarChartSpec';
+import { getIndicatorDescription } from '@/lib/utils/getIndicatorDescription';
 import ExpandableChartCard from '@/components/charts/ExpandableChartCard';
 
 const COMPACT_WIDTH  = 'container'; // responsive — fits the card width
@@ -90,14 +93,15 @@ export default function IndicatorChartGrid({ charts = [], context, sectionLabel 
       key:             chart.indicatorKey,
       title:           base.title,
       subtitle:        base.subtitle,
-      source:          chart.source       ?? null,
-      sourceUrl:       chart.sourceUrl    ?? null,
-      description:     chart.description  ?? null,
+      source:          chart.source    ?? null,
+      sourceUrl:       chart.sourceUrl ?? null,
+      // Loaded from /content/indicators/{key}.md — edit that file to update notes.
+      description:     getIndicatorDescription(chart.indicatorKey),
       indicatorData:   data,
       geoId,
       ariaDescription: buildAriaDescription({ ...base }),
       compactSpec:     buildBarChartSpec({ data, geoId, title: base.title, subtitle: base.subtitle, width: COMPACT_WIDTH,  height: COMPACT_HEIGHT }),
-      expandedSpec:    buildBarChartSpec({ data, geoId, title: base.title, subtitle: base.subtitle, width: EXPANDED_WIDTH, height: EXPANDED_HEIGHT }),
+      expandedSpec:    buildBarChartSpec({ data, geoId, title: base.title, subtitle: base.subtitle, width: EXPANDED_WIDTH, height: EXPANDED_HEIGHT, expanded: true }),
     };
   });
 

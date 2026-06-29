@@ -32,6 +32,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { siteNav }           from '@/config/nav/siteNav';
 import { scrollToSection as scrollUtil } from '@/lib/utils/scrollToSection';
 import { DEFAULT_NEIGHBORHOOD_ID } from '@/lib/utils/constants';
+import { TOPICNAV_SEPARATOR } from '@/lib/charts/chartColors';
 
 // Fallback neighborhood when navigating to a section from a non-profile page.
 // Matches the default redirect in /app/page.js.
@@ -272,7 +273,7 @@ export default function TopicNav() {
              Active state is driven by tappedCategoryId (set on tap only),
              NOT by scroll-spy activeId. Scroll-spy fires continuously and
              causes subpixel font-rendering jitter in the grid.             */}
-        <div className="md:hidden grid grid-cols-2 gap-1.5 px-3 py-2.5" role="menubar" aria-label="Health topics">
+        <div className="md:hidden grid grid-cols-2 gap-1.5 px-3 py-2.5" aria-label="Health topics">
           {siteNav.map((category, index) => {
             const isActive  = tappedCategoryId === category.id;
             const anchor    = category.anchor
@@ -300,7 +301,6 @@ export default function TopicNav() {
               <button
                 key={category.id}
                 ref={el => { categoryBtnRefs.current[index] = el; }}
-                role="menuitem"
                 aria-current={isActive ? 'location' : undefined}
                 onClick={handleMobileTap}
                 className={[
@@ -322,7 +322,6 @@ export default function TopicNav() {
         {/* ── Desktop: horizontal scrolling nav ───────────────────────────── */}
         <ul
           className="hidden md:flex items-stretch px-4 overflow-x-auto scrollbar-none"
-          role="menubar"
           aria-label="Health topics"
         >
           {siteNav.map((category, index) => {
@@ -332,7 +331,6 @@ export default function TopicNav() {
             return (
               <li
                 key={category.id}
-                role="none"
                 className="shrink-0 flex items-stretch flex-1"
                 onMouseEnter={e => {
                   const btn = e.currentTarget.querySelector('button');
@@ -344,15 +342,15 @@ export default function TopicNav() {
                 {index > 0 && (
                   <span className="self-stretch flex items-center select-none px-0.5" aria-hidden="true">
                     <svg width="10" height="50" viewBox="0 0 10 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M2 4 L8 25 L2 46" stroke="#D1D5DB" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M2 4 L8 25 L2 46" stroke={TOPICNAV_SEPARATOR} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </span>
                 )}
                 <button
                   ref={el => { categoryBtnRefs.current[index] = el; }}
-                  role="menuitem"
-                  aria-haspopup="menu"
+                  aria-haspopup="true"
                   aria-expanded={isOpen}
+                  aria-current={isActive ? 'location' : undefined}
                   onClick={() => { if (category.anchor) scrollToSection(category.anchor); }}
                   onKeyDown={e => handleCategoryKeyDown(e, category, categoryBtnRefs.current[index])}
                   className={[
@@ -388,7 +386,7 @@ export default function TopicNav() {
             const isSubActive = activeId === sub.id;
 
             return (
-              <li key={sub.id} role="none">
+              <li key={sub.id}>
                 <button
                   ref={el => { dropdownItemRefs.current[subIdx] = el; }}
                   role="menuitem"
@@ -408,7 +406,7 @@ export default function TopicNav() {
                   <span>{sub.label}</span>
 
                   {sub.dummy && (
-                    <span className="text-xs text-gray-500 font-normal tracking-wide ml-3 shrink-0">
+                    <span className="text-xs text-gray-600 font-normal tracking-wide ml-3 shrink-0">
                       coming soon
                     </span>
                   )}

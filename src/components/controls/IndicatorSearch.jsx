@@ -33,7 +33,7 @@ import { highlight }              from '@/lib/utils/highlight';
 // ── Example query suggestions for the empty state ──────────────────────────
 const SUGGESTIONS = ['asthma', 'poverty', 'obesity', 'infant', 'safety'];
 
-export default function IndicatorSearch({ onNavigate }) {
+export default function IndicatorSearch({ onNavigate, categoryFilter = null, onClearFilter, activeNeighborhood = null }) {
   const [query, setQuery]           = useState('');
   const [focusedIndex, setFocused]  = useState(-1);
   const inputRef                    = useRef(null);
@@ -45,16 +45,21 @@ export default function IndicatorSearch({ onNavigate }) {
 
   // ── Flat filtered results ─────────────────────────────────────────────────
   const results = useMemo(() => {
+    // Apply category filter first (from TopicNav activation), then query
+    const base = categoryFilter
+      ? searchIndex.filter(ind => ind.categoryLabel === categoryFilter)
+      : searchIndex;
+
     const q = query.trim().toLowerCase();
-    if (!q) return searchIndex;
-    return searchIndex.filter(
+    if (!q) return base;
+    return base.filter(
       ind =>
         ind.title.toLowerCase().includes(q) ||
         ind.subtitle.toLowerCase().includes(q) ||
         ind.subcategoryLabel.toLowerCase().includes(q) ||
         ind.categoryLabel.toLowerCase().includes(q)
     );
-  }, [query]);
+  }, [query, categoryFilter]);
 
   // ── Grouped results for rendering ────────────────────────────────────────
   const grouped = useMemo(() => {
@@ -131,6 +136,9 @@ export default function IndicatorSearch({ onNavigate }) {
     }
   }
 
+  const baseCount     = categoryFilter
+    ? searchIndex.filter(ind => ind.categoryLabel === categoryFilter).length
+    : searchIndex.length;
   const totalCount    = searchIndex.length;
   const filteredCount = results.length;
   const isFiltered    = query.trim().length > 0;
@@ -164,7 +172,7 @@ export default function IndicatorSearch({ onNavigate }) {
           <button
             onClick={() => { setQuery(''); inputRef.current?.focus(); }}
             aria-label="Clear search"
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-500 transition-colors"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-gray-600 hover:text-gray-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -173,16 +181,47 @@ export default function IndicatorSearch({ onNavigate }) {
         )}
       </div>
 
+      {/* ── Category filter chip ────────────────────────────────── */}
+      {categoryFilter && (
+        <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5">
+          <svg className="w-3 h-3 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 8h10M11 12h2" />
+          </svg>
+          <span className="text-xs font-medium text-blue-700 flex-1 leading-none">{categoryFilter}</span>
+          <button
+            onClick={onClearFilter}
+            aria-label={`Remove ${categoryFilter} filter`}
+            className="text-blue-400 hover:text-blue-700 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded"
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* ── Active neighborhood context ─────────────────────────── */}
+      {activeNeighborhood && !categoryFilter && (
+        <div className="flex items-center gap-1.5 text-xs text-gray-600">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" aria-hidden="true" />
+          <span>
+            Viewing <span className="font-medium text-gray-800">{activeNeighborhood.name}</span>
+          </span>
+        </div>
+      )}
+
       {/* ── Result count ────────────────────────────────────────── */}
       <p
-        className="text-xs text-gray-500"
+        className="text-xs text-gray-600"
         role="status"
         aria-live="polite"
       >
         {isFiltered
           ? filteredCount === 0
             ? 'No results'
-            : `${filteredCount} of ${totalCount} indicators`
+            : `${filteredCount} of ${baseCount} indicators`
+          : categoryFilter
+          ? `${baseCount} indicators`
           : `${totalCount} indicators`
         }
       </p>
@@ -202,8 +241,8 @@ export default function IndicatorSearch({ onNavigate }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
             </svg>
             <div>
-              <p className="text-sm font-medium text-gray-500">No indicators found</p>
-              <p className="text-xs text-gray-500 mt-1">Try a different search term</p>
+              <p className="text-sm font-medium text-gray-600">No indicators found</p>
+              <p className="text-xs text-gray-600 mt-1">Try a different search term</p>
             </div>
             <div className="flex flex-wrap gap-1.5 justify-center mt-1">
               {SUGGESTIONS.map(s => (
@@ -222,7 +261,7 @@ export default function IndicatorSearch({ onNavigate }) {
             let globalIdx = 0;
             return Object.entries(grouped).map(([subcat, inds]) => (
               <div key={subcat} role="group" aria-label={subcat}>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5 px-1" aria-hidden="true">
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1.5 px-1" aria-hidden="true">
                   {subcat}
                 </p>
                 <div className="flex flex-col gap-0.5">
@@ -249,7 +288,7 @@ export default function IndicatorSearch({ onNavigate }) {
                           {highlight(ind.title, query.trim())}
                         </p>
                         {ind.subtitle && (
-                          <p className="text-xs text-gray-500 leading-snug mt-0.5 line-clamp-1">
+                          <p className="text-xs text-gray-600 leading-snug mt-0.5 line-clamp-1">
                             {ind.subtitle}
                           </p>
                         )}
@@ -265,7 +304,7 @@ export default function IndicatorSearch({ onNavigate }) {
 
       {/* ── Keyboard hint ───────────────────────────────────────── */}
       {results.length > 0 && (
-        <p className="text-xs text-gray-500 text-center pt-1 border-t border-gray-100 shrink-0">
+        <p className="text-xs text-gray-600 text-center pt-1 border-t border-gray-100 shrink-0">
           ↑↓ navigate · Enter select · Esc clear
         </p>
       )}

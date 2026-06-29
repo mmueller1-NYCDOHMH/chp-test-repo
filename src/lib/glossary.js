@@ -2,49 +2,23 @@
  * FILE: glossary.js
  *
  * PURPOSE:
- * Plain-language definitions for health data terms used in chart subtitles,
- * indicator descriptions, and section headers.
+ * Loads glossary terms and provides the parseGlossaryTerms utility.
  *
- * Used by GlossaryTerm.jsx to render inline tooltips. Each key is a term
- * exactly as it appears in the UI (case-insensitive match at render time).
+ * EDITING GLOSSARY TERMS:
+ * Terms and definitions live in /content/glossary.json — edit that file
+ * directly. No code changes needed to add, remove, or update a term.
+ *
+ * This file only contains the parsing logic that turns plain subtitle
+ * strings into glossary-linked segments for GlossaryTerm.jsx.
  */
 
-// All keys are lowercase — matching is case-insensitive via .toLowerCase() at parse time.
-export const glossary = {
-  'age-adjusted rate': {
-    short: 'A rate adjusted to remove the effect of age differences between populations, so comparisons across neighborhoods are fair.',
-  },
-  'age-adjusted': {
-    short: 'Adjusted to account for age differences between populations, allowing fair comparisons across neighborhoods.',
-  },
-  'per 100,000': {
-    short: 'Expressed per 100,000 people — a standard way to compare rates across places with different population sizes.',
-  },
-  'per 1,000': {
-    short: 'Expressed per 1,000 people — a standard way to compare rates across places with different population sizes.',
-  },
-  'bmi ≥ 30': {
-    short: 'Body Mass Index of 30 or above — the clinical threshold used to classify obesity in adults.',
-  },
-  'community district': {
-    short: 'One of NYC\'s 59 officially designated geographic planning units, each with its own Community Board.',
-  },
-  'community districts': {
-    short: 'NYC\'s 59 officially designated geographic planning units, each with its own Community Board.',
-  },
-  'limited english proficiency': {
-    short: 'People who reported speaking English less than "very well" on the American Community Survey.',
-  },
-  'premature death': {
-    short: 'Death occurring before age 65 — used as a measure of preventable mortality.',
-  },
-  'low birthweight': {
-    short: 'A birth weight below 5 lbs 8 oz (2,500 grams) — associated with health risks for infants.',
-  },
-  'preterm birth': {
-    short: 'Birth occurring before 37 weeks of pregnancy.',
-  },
-};
+import glossaryData from '../../content/glossary.json';
+
+// Strip the internal _note key; export only the term entries.
+const { _note: _removed, ...glossaryTerms } = glossaryData;
+
+// Re-export for any consumer that needs direct access to the raw terms object.
+export const glossary = glossaryTerms;
 
 /**
  * Parse a string and return an array of segments — alternating plain strings
@@ -70,7 +44,7 @@ export function parseGlossaryTerms(text) {
   const parts = text.split(pattern);
 
   return parts.map(part => {
-    const lc = part.toLowerCase();
+    const lc    = part.toLowerCase();
     const entry = glossary[lc];
     if (entry) return { term: part, definition: entry.short };
     return part;

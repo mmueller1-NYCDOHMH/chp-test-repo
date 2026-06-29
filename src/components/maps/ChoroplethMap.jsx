@@ -38,12 +38,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { slugify } from '@/lib/utils/slugify';
-import { GEOJSON_URL } from '@/lib/utils/constants';
+import { CHOROPLETH_STOPS, MAP_STYLES } from '@/lib/charts/chartColors';
+import { fetchGeoJson } from '@/lib/utils/fetchGeoJson';
 
 const NYC_CENTER = [40.7128, -74.006];
 const NYC_ZOOM   = 10;
 
-const COLOR_STOPS = ['#dbeafe', '#93c5fd', '#60a5fa', '#2563eb', '#1e3a8a'];
+const COLOR_STOPS = CHOROPLETH_STOPS;
 
 function valueToColor(t) {
   if (t <= 0) return COLOR_STOPS[0];
@@ -69,15 +70,16 @@ function blendHex(a, b, t) {
   return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${bl.toString(16).padStart(2,'0')}`;
 }
 
-export default function ChoroplethMap({ indicatorData = [], onHoverGeoId, stripHoveredGeoId = null }) {
+export default function ChoroplethMap({ indicatorData = [], onHoverGeoId, stripHoveredGeoId = null, comparisonGeoId = null }) {
   const [leaflet, setLeaflet]     = useState(null);
   const [geo, setGeo]             = useState(null);
   const [geoError, setGeoError]   = useState(false);
 
   // Keep stable refs so Leaflet event handlers never go stale
-  const onHoverGeoIdRef    = useRef(onHoverGeoId);
+  const onHoverGeoIdRef      = useRef(onHoverGeoId);
   const stripHoveredGeoIdRef = useRef(stripHoveredGeoId);
-  const geoJsonLayerRef    = useRef(null); // holds the Leaflet GeoJSON layer instance
+  const comparisonGeoIdRef   = useRef(comparisonGeoId);
+  const geoJsonLayerRef      = useRef(null); // holds the Leaflet GeoJSON layer instance
 
   useEffect(() => { onHoverGeoIdRef.current = onHoverGeoId; }, [onHoverGeoId]);
 
@@ -91,6 +93,16 @@ export default function ChoroplethMap({ indicatorData = [], onHoverGeoId, stripH
   // featureStyle is recreated each render so omit from deps — the ref values are current
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stripHoveredGeoId]);
+
+  // When comparison neighborhood changes, imperatively restyle all features
+  useEffect(() => {
+    comparisonGeoIdRef.current = comparisonGeoId;
+    if (!geoJsonLayerRef.current) return;
+    geoJsonLayerRef.current.eachLayer(layer => {
+      if (layer.feature) layer.setStyle(featureStyle(layer.feature));
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [comparisonGeoId]);
 
   const params     = useParams();
   const selectedId = params?.id ? String(params.id) : null;
@@ -114,24 +126,31 @@ export default function ChoroplethMap({ indicatorData = [], onHoverGeoId, stripH
       setLeaflet({ MapContainer: mod.MapContainer, TileLayer: mod.TileLayer, GeoJSON: mod.GeoJSON, useMap: mod.useMap });
     });
 
-    fetch(GEOJSON_URL)
-      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+    fetchGeoJson()
       .then(setGeo)
       .catch(() => setGeoError(true));
   }, []);
 
   // ── Style helpers ─────────────────────────────────────────────────────────
   function featureStyle(feature) {
-    const geoId         = parseInt(feature.properties.GEOCODE, 10);
-    const row           = valueMap[geoId];
-    const isSelected    = selectedId && slugify(feature.properties.GEONAME) === selectedId;
+    const geoId          = parseInt(feature.properties.GEOCODE, 10);
+    const row            = valueMap[geoId];
+    const isSelected     = selectedId && slugify(feature.properties.GEONAME) === selectedId;
+    const isComparison   = comparisonGeoIdRef.current != null && comparisonGeoIdRef.current === geoId;
     const isStripHovered = stripHoveredGeoIdRef.current === geoId;
 
     return {
-      fillColor:   row ? valueToColor((row.Value - minVal) / range) : '#e5e7eb',
-      fillOpacity: row ? (isStripHovered ? 1 : 0.82) : 0.3,
-      color:       isSelected ? '#111827' : isStripHovered ? '#111827' : '#9ca3af',
-      weight:      isSelected ? 3.5 : isStripHovered ? 2 : 0.8,
+      fillColor:   isComparison   ? '#fbbf24'  // amber-400 fill for comparison CD
+                 : row            ? valueToColor((row.Value - minVal) / range)
+                 :                  MAP_STYLES.base.fillColor,
+      fillOpacity: isComparison   ? 0.65
+                 : row            ? (isStripHovered ? 1 : 0.82)
+                 :                  0.3,
+      color:       isSelected     ? '#111827'
+                 : isComparison   ? '#d97706'  // amber-600 — light border only
+                 : isStripHovered ? '#111827'
+                 :                  '#9ca3af',
+      weight:      isSelected ? 3.5 : isComparison ? 1 : isStripHovered ? 2 : 0.8,
     };
   }
 

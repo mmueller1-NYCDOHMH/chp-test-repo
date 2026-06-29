@@ -13,8 +13,14 @@
  *   - First Sunday of November → NYC Marathon day
  * All other days show the default subtitle.
  *
- * Date detection runs on the client so the correct local date is used
- * regardless of CDN caching or server timezone.
+ * EDITING COPY:
+ * All subtitle strings live in /content/site/header.json — no code changes needed.
+ * The {year} and {age} placeholders in dohAnniversary.subtitle are filled
+ * in at runtime by this component.
+ *
+ * EDITING BRAND COLOR:
+ * The header background uses var(--color-brand) from globals.css.
+ * Change --color-brand there to update the header color site-wide.
  *
  * NOTES:
  * - Client component — date must be read at runtime, not render time
@@ -23,6 +29,7 @@
 
 import Image from 'next/image';
 import Link  from 'next/link';
+import headerContent from '../../../content/site/header.json';
 
 /**
  * Returns the day-of-month for the first Sunday of a given month/year.
@@ -30,51 +37,58 @@ import Link  from 'next/link';
  */
 function firstSundayOfMonth(year, month /* 0-indexed */) {
   const first = new Date(year, month, 1);
-  // getDay() returns 0 for Sunday; shift so Sunday lands at offset 0
   return 1 + (7 - first.getDay()) % 7;
 }
 
 /**
  * Returns a special subtitle string for notable dates, or null for normal days.
- * Caller falls back to the default subtitle when this returns null.
+ * Subtitle strings are loaded from /content/site/header.json.
  */
 function getSpecialSubtitle(now = new Date()) {
   const month = now.getMonth() + 1; // 1-indexed
   const day   = now.getDate();
   const year  = now.getFullYear();
+  const { specialDates } = headerContent;
 
   // ── World Health Day — April 7 ────────────────────────────────────────────
-  if (month === 4 && day === 7) {
-    return 'Today is World Health Day. Health equity starts at the neighborhood level.';
+  const whd = specialDates.worldHealthDay;
+  if (month === whd.month && day === whd.day) {
+    return whd.subtitle;
   }
 
   // ── NYC Dept of Health founding — February 26, 1866 ──────────────────────
   // On this date the NY State Legislature enacted the Metropolitan Health Law,
   // establishing the Metropolitan Board of Health — the direct predecessor of
   // today's NYC Dept of Health & Mental Hygiene.
-  if (month === 2 && day === 26) {
-    const age = year - 1866;
-    return `On this day in 1866, NYC established its Board of Health — one of the first public health agencies in the US. ${age} years of protecting the city.`;
+  const doh = specialDates.dohAnniversary;
+  if (month === doh.month && day === doh.day) {
+    const age = year - doh.foundingYear;
+    return doh.subtitle
+      .replace('{year}', doh.foundingYear)
+      .replace('{age}',  age);
   }
 
   // ── NYC Marathon — first Sunday of November ───────────────────────────────
   // ~50,000 runners pass through neighborhoods across all five boroughs.
-  const marathonDay = firstSundayOfMonth(year, 10); // October index = 10 → November
-  if (month === 11 && day === marathonDay) {
-    return 'Marathon day. The race route passes through a dozen of these 59 community districts — each with its own health story.';
+  const marathon    = specialDates.nycMarathon;
+  const marathonDay = firstSundayOfMonth(year, marathon.month - 1);
+  if (month === marathon.month && day === marathonDay) {
+    return marathon.subtitle;
   }
 
   return null;
 }
 
-const DEFAULT_SUBTITLE =
-  '50+ measures of neighborhood health across all 59 community districts. Because our health starts where we live, work, and play.';
+const DEFAULT_SUBTITLE = headerContent.defaultSubtitle;
 
 export default function PageHeader() {
   const subtitle = getSpecialSubtitle() ?? DEFAULT_SUBTITLE;
 
   return (
-    <header className="bg-blue-700 text-white px-4 sm:px-10 py-2.5 w-full flex items-center justify-between gap-4">
+    <header
+      className="text-white px-4 sm:px-10 py-2.5 w-full flex items-center justify-between gap-4"
+      style={{ backgroundColor: 'var(--color-brand)' }}
+    >
       <div className="min-w-0">
         <p className="text-xs font-medium text-blue-100 mb-0.5 tracking-wide uppercase">
           New York City

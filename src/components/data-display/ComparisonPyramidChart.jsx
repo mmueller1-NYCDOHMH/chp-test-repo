@@ -34,7 +34,12 @@ export default function ComparisonPyramidChart({
   neighborhoodLabel = 'Neighborhood',
   segments = [],
   timePeriod,
+  rightLabel = 'Citywide',
+  comparisonMode = false,
 }) {
+  const rightBarClass    = comparisonMode ? 'bg-amber-400'  : 'bg-slate-300';
+  const rightLegendClass = comparisonMode ? 'bg-amber-400'  : 'bg-slate-300';
+
   if (!segments.length) {
     return (
       <div className="flex flex-col gap-3 min-w-0">
@@ -59,21 +64,19 @@ export default function ComparisonPyramidChart({
       <div className="text-xs font-semibold text-gray-700 leading-snug">{title}</div>
 
       {/* ── Legend ───────────────────────────────────────────── */}
-      <div className="flex justify-between text-xs text-gray-500 font-medium">
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-600" aria-hidden="true" />
+      <div className="flex justify-between">
+        <span className="text-xs font-semibold tracking-wider uppercase leading-tight text-blue-700">
           {neighborhoodLabel}
         </span>
-        <span className="flex items-center gap-1.5">
-          NYC Citywide
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-slate-300" aria-hidden="true" />
+        <span className={`text-xs font-semibold tracking-wider uppercase leading-tight ${comparisonMode ? 'text-amber-700' : 'text-gray-600'}`}>
+          {rightLabel}
         </span>
       </div>
 
       {/* ── Bars ─────────────────────────────────────────────── */}
       <div
         role="img"
-        aria-label={`${title}: ${neighborhoodLabel} vs NYC Citywide`}
+        aria-label={`${title}: ${neighborhoodLabel} vs ${rightLabel}`}
         className="flex flex-col gap-2"
       >
         {segments.map((s, i) => {
@@ -85,7 +88,7 @@ export default function ComparisonPyramidChart({
 
               {/* Left half — neighborhood, bar grows rightward toward center */}
               <div className="flex-1 flex items-center justify-end gap-1 pr-1">
-                <span className="text-[10px] sm:text-xs text-gray-500 tabular-nums shrink-0 w-7 sm:w-8 text-right">
+                <span className="text-xs text-gray-600 tabular-nums shrink-0 w-7 sm:w-8 text-right">
                   {s.neighborhoodValue != null ? `${s.neighborhoodValue}%` : '—'}
                 </span>
                 {/* Bar track — fills from right edge toward center */}
@@ -101,7 +104,7 @@ export default function ComparisonPyramidChart({
               </div>
 
               {/* Center label — narrower on mobile to give bars more room */}
-              <div className="shrink-0 w-20 sm:w-28 px-1 text-center text-[10px] sm:text-xs text-gray-600 leading-tight">
+              <div className="shrink-0 w-20 sm:w-28 px-1 text-center text-xs text-gray-600 leading-tight">
                 {s.label}
               </div>
 
@@ -110,13 +113,13 @@ export default function ComparisonPyramidChart({
                 <div className="flex-1 h-4 sm:h-5">
                   <AnimatedBar
                     widthPct={cPct}
-                    className="bg-slate-300 h-full rounded-r-sm"
-                    title={`NYC Citywide: ${s.citywideValue}%`}
+                    className={`${rightBarClass} h-full rounded-r-sm`}
+                    title={`${rightLabel}: ${s.citywideValue}%`}
                     delay={0}
                     origin="left center"
                   />
                 </div>
-                <span className="text-[10px] sm:text-xs text-gray-500 tabular-nums shrink-0 w-7 sm:w-8 text-right">
+                <span className="text-xs text-gray-600 tabular-nums shrink-0 w-7 sm:w-8 text-right">
                   {s.citywideValue != null ? `${s.citywideValue}%` : '—'}
                 </span>
               </div>
@@ -128,12 +131,12 @@ export default function ComparisonPyramidChart({
 
       {/* ── Accessible table (screen readers) ───────────────── */}
       <table className="sr-only">
-        <caption>{title} — {neighborhoodLabel} vs NYC Citywide</caption>
+        <caption>{title} — {neighborhoodLabel} vs {rightLabel}</caption>
         <thead>
           <tr>
             <th scope="col">Category</th>
             <th scope="col">{neighborhoodLabel}</th>
-            <th scope="col">NYC Citywide</th>
+            <th scope="col">{rightLabel}</th>
           </tr>
         </thead>
         <tbody>
@@ -149,7 +152,7 @@ export default function ComparisonPyramidChart({
 
       {/* ── Time period footnote ─────────────────────────────── */}
       {timePeriod && (
-        <div className="text-xs text-gray-500 border-t border-gray-100 pt-2.5">{timePeriod}</div>
+        <div className="text-xs text-gray-600 border-t border-gray-100 pt-2.5">{timePeriod}</div>
       )}
 
     </div>

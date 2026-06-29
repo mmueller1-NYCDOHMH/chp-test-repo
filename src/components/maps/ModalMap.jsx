@@ -35,32 +35,37 @@
  */
 import { useEffect, useRef } from 'react';
 import { slugify } from '@/lib/utils/slugify';
-import { GEOJSON_URL } from '@/lib/utils/constants';
+import { MODAL_MAP_STYLES, BOROUGH_PALETTE } from '@/lib/charts/chartColors';
+import { fetchGeoJson } from '@/lib/utils/fetchGeoJson';
 
 const NYC_CENTER = [40.7128, -74.006];
 const NYC_ZOOM   = 10;
 const CD_ZOOM    = 13;
 
-// ── Style definitions ──────────────────────────────────────────────────────
-const BASE_STYLE     = { color: '#6b7280', weight: 1,   fillColor: '#e5e7eb', fillOpacity: 0.5 };
-const HOVER_STYLE    = { color: '#111827', weight: 2,   fillColor: '#c7d2fe', fillOpacity: 0.75 };
-const SELECTED_STYLE = { color: '#1d4ed8', weight: 2.5, fillColor: '#93c5fd', fillOpacity: 0.8 };
+// ── Style definitions — sourced from chartColors.js ────────────────────────
+const BASE_STYLE     = MODAL_MAP_STYLES.base;
+const HOVER_STYLE    = MODAL_MAP_STYLES.hover;
+const SELECTED_STYLE = MODAL_MAP_STYLES.selected;
 
-export default function ModalMap({ neighborhoods = [], hoveredId, onSelect, onHover }) {
+export default function ModalMap({ neighborhoods = [], hoveredId, visitedIds, onSelect, onHover }) {
   const containerRef    = useRef(null);  // DOM node for the Leaflet map
   const mapRef          = useRef(null);  // L.Map instance
   const layerRefs       = useRef({});   // { slugifiedName: L.Path } per feature
+  // geoId lookup: slugifiedName → numeric geocode (needed for borough color)
+  const geoIdRefs       = useRef({});
 
   // Keep callback refs stable so closures inside useEffect never go stale
   const neighborhoodsRef = useRef(neighborhoods);
   const onSelectRef      = useRef(onSelect);
   const onHoverRef       = useRef(onHover);
   const hoveredIdRef     = useRef(hoveredId);
+  const visitedIdsRef    = useRef(visitedIds);
 
   useEffect(() => { neighborhoodsRef.current = neighborhoods; }, [neighborhoods]);
-  useEffect(() => { onSelectRef.current = onSelect; },         [onSelect]);
-  useEffect(() => { onHoverRef.current = onHover; },           [onHover]);
-  useEffect(() => { hoveredIdRef.current = hoveredId; },       [hoveredId]);
+  useEffect(() => { onSelectRef.current = onSelect; },           [onSelect]);
+  useEffect(() => { onHoverRef.current = onHover; },             [onHover]);
+  useEffect(() => { hoveredIdRef.current = hoveredId; },         [hoveredId]);
+  useEffect(() => { visitedIdsRef.current = visitedIds; },       [visitedIds]);
 
   // ── Initialise Leaflet map (runs once) ────────────────────────────────────
   useEffect(() => {
@@ -71,7 +76,7 @@ export default function ModalMap({ neighborhoods = [], hoveredId, onSelect, onHo
 
     Promise.all([
       import('leaflet'),
-      fetch(GEOJSON_URL).then(r => r.json()),
+      fetchGeoJson(),
     ]).then(([leafletModule, geo]) => {
       if (cancelled || !containerRef.current) return;
 
@@ -89,22 +94,51 @@ export default function ModalMap({ neighborhoods = [], hoveredId, onSelect, onHo
         { attribution: '&copy; OpenStreetMap contributors &copy; CARTO' }
       ).addTo(mapInstance);
 
-      // Helper: compute current style for a feature id
+      // Helper: compute visited-CD borough style given a numeric geoId.
+      function visitedStyle(geoId) {
+        const boroughKey = geoId ? Math.floor(geoId / 100) : null;
+        const palette    = boroughKey ? BOROUGH_PALETTE[boroughKey] : null;
+        return palette
+          ? { ...BASE_STYLE, fillColor: palette.fill, color: palette.stroke, weight: 1.5, fillOpacity: 0.55 }
+          : null;
+      }
+
+      // Style function for initial layer creation.
+      // Reads geoId directly from the feature because onEachFeature (which populates
+      // geoIdRefs) hasn't run yet at this point — Leaflet calls style() before
+      // onEachFeature() for each feature, so the ref lookup would always miss.
+      function initialStyleFor(feature) {
+        const fid = slugify(feature.properties.GEONAME);
+        if (fid === hoveredIdRef.current) return HOVER_STYLE;
+        if (visitedIdsRef.current?.has(fid)) {
+          const style = visitedStyle(parseInt(feature.properties.GEOCODE, 10));
+          if (style) return style;
+        }
+        return BASE_STYLE;
+      }
+
+      // Style function for event handlers (mouseover/mouseout).
+      // At that point geoIdRefs is fully populated, so ref lookup is safe.
       function styleFor(fid) {
         if (fid === hoveredIdRef.current) return HOVER_STYLE;
+        if (visitedIdsRef.current?.has(fid)) {
+          const style = visitedStyle(geoIdRefs.current[fid]);
+          if (style) return style;
+        }
         return BASE_STYLE;
       }
 
       L.geoJSON(geo, {
-        style: (feature) => styleFor(slugify(feature.properties.GEONAME)),
+        style: initialStyleFor,
 
         onEachFeature(feature, layer) {
           const fid      = slugify(feature.properties.GEONAME);
           const cleanName = feature.properties.GEONAME
             .replace(/\s*\(CD\d+\)/i, '').trim();
 
-          // Store ref so we can update styles externally
+          // Store refs so we can update styles externally
           layerRefs.current[fid] = layer;
+          geoIdRefs.current[fid] = parseInt(feature.properties.GEOCODE, 10);
 
           layer.bindTooltip(cleanName, { sticky: true, className: 'chp-map-tooltip' });
 
@@ -137,18 +171,26 @@ export default function ModalMap({ neighborhoods = [], hoveredId, onSelect, onHo
     };
   }, []); // intentionally empty — map is created once
 
-  // ── Sync highlight styles when hoveredId prop changes ─────────────────────
+  // ── Sync highlight styles when hoveredId or visitedIds prop changes ─────────
   useEffect(() => {
     Object.entries(layerRefs.current).forEach(([fid, layer]) => {
       if (!layer?.setStyle) return;
       if (fid === hoveredId) {
         layer.setStyle(HOVER_STYLE);
         layer.bringToFront();
+      } else if (visitedIds?.has(fid)) {
+        const geoId      = geoIdRefs.current[fid];
+        const boroughKey = geoId ? Math.floor(geoId / 100) : null;
+        const palette    = boroughKey ? BOROUGH_PALETTE[boroughKey] : null;
+        layer.setStyle(palette
+          ? { ...BASE_STYLE, fillColor: palette.fill, color: palette.stroke, weight: 1.5, fillOpacity: 0.55 }
+          : BASE_STYLE
+        );
       } else {
         layer.setStyle(BASE_STYLE);
       }
     });
-  }, [hoveredId]);
+  }, [hoveredId, visitedIds]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (

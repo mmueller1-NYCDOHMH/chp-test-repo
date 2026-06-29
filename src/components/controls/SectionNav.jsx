@@ -35,14 +35,6 @@ import { useEffect, useRef, useState } from 'react';
 import { siteNav } from '@/config/nav/siteNav';
 import { scrollToSection } from '@/lib/utils/scrollToSection';
 
-/** Convert a kebab-case id to Title Case for display when no title is given */
-function humanize(id) {
-  return id
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
 /**
  * Build grouped sections from the flat sections array + siteNav hierarchy.
  * Only groups with at least one matching section are returned.
@@ -56,9 +48,11 @@ function buildGroups(sections) {
     .map(category => ({
       id:    category.id,
       label: category.label,
+      // Each item pairs the section config with the label from siteNav,
+      // so siteNav.js is the single source of truth for nav labels.
       items: category.subcategories
         .filter(sub => !sub.dummy && sectionMap.has(sub.id))
-        .map(sub => sectionMap.get(sub.id)),
+        .map(sub => ({ section: sectionMap.get(sub.id), label: sub.label })),
     }))
     .filter(group => group.items.length > 0);
 }
@@ -116,6 +110,41 @@ export default function SectionNav({ sections = [] }) {
     return () => observer.disconnect();
   }, [sections]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── J / K shortcuts — jump to previous / next section ──────────────────
+  // activeIdRef keeps the listener stable — no re-registration on every scroll.
+  const activeIdRef = useRef(activeId);
+  useEffect(() => { activeIdRef.current = activeId; }, [activeId]);
+
+  useEffect(() => {
+    if (!sections.length) return;
+    const orderedIds = buildGroups(sections).flatMap(g => g.items.map(i => i.section.id));
+    if (!orderedIds.length) return;
+
+    function onKey(e) {
+      if (e.key !== 'j' && e.key !== 'k') return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) return;
+
+      e.preventDefault();
+      const current = activeIdRef.current;
+      const cur     = orderedIds.indexOf(current);
+      const next    = e.key === 'j'
+        ? (cur === -1 ? 0 : Math.min(cur + 1, orderedIds.length - 1))
+        : (cur === -1 ? 0 : Math.max(cur - 1, 0));
+      const nextId  = orderedIds[next];
+      if (!nextId || nextId === current) return;
+
+      scrollToSection(`#${nextId}`);
+      setActiveId(nextId);
+      activeIdRef.current = nextId; // update ref immediately so rapid presses work
+      window.dispatchEvent(new CustomEvent('chp:section-activated', { detail: { id: nextId } }));
+    }
+
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [sections]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!sections.length) return null;
 
   const groups = buildGroups(sections);
@@ -137,8 +166,7 @@ export default function SectionNav({ sections = [] }) {
 
             {/* Subcategory links */}
             <ul className="space-y-0.5">
-              {group.items.map(section => {
-                const label    = section.navTitle || section.title || humanize(section.id);
+              {group.items.map(({ section, label }) => {
                 const isActive = activeId === section.id;
 
                 return (

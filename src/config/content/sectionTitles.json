@@ -1,0 +1,22 @@
+{
+  "_note": "Display titles for each subcategory section heading on the neighborhood profile page. Keys match section ID constants in sectionIds.js. To rename a section heading: edit the value here — no code changes needed.",
+
+  "neighborhood-overview":  "Neighborhood Overview",
+  "community-safety":       "Community & Safety",
+  "economic-conditions":    "Economic Conditions",
+  "avertable-deaths":       "Avertable Deaths",
+  "substance-use":          "Substance Use",
+  "mental-wellness":        "Mental Wellness",
+  "environmental-risk":     "Environmental Risk",
+  "food-environment":       "Food Environment",
+  "housing-quality":        "Housing Quality",
+  "transportation-safety":  "Transportation Safety",
+  "health-care-access":     "Access to Care",
+  "health-care-use":        "Health Care Use",
+  "prevention":             "Prevention",
+  "maternal":               "Maternal Health",
+  "infant-child":           "Infant & Child Health",
+  "chronic-conditions":     "Chronic Conditions",
+  "infectious-disease":     "Infectious Disease",
+  "health-outcomes":        "Health Outcomes"
+}

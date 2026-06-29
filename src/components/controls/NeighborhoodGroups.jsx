@@ -31,8 +31,12 @@
  * @prop {Function} [onHover]     - (id | null) => void, for map/list hover sync
  * @prop {string}   [activeId]    - Neighborhood id matching the current page;
  *                                  shows a "current" badge on that item.
- * @prop {string}   [colorScheme] - 'blue' (default) | 'amber'
- * @prop {string}   [size]        - 'sm' (default) | 'xs'
+ * @prop {string}   [colorScheme]   - 'blue' (default) | 'amber'
+ * @prop {string}   [size]          - 'sm' (default) | 'xs'
+ * @prop {string}   [optionIdPrefix] - When provided, each option gets
+ *                                    id="{optionIdPrefix}-{globalIdx}".
+ *                                    Used by parent comboboxes for
+ *                                    aria-activedescendant.
  */
 
 import { highlight } from '@/lib/utils/highlight';
@@ -57,13 +61,14 @@ export default function NeighborhoodGroups({
   query,
   focusedIndex,
   itemRefs,
-  startIndex    = 0,
+  startIndex      = 0,
   onSelect,
   onSetFocused,
   onHover,
   activeId,
-  colorScheme   = 'blue',
-  size          = 'sm',
+  colorScheme     = 'blue',
+  size            = 'sm',
+  optionIdPrefix,
 }) {
   const scheme   = SCHEMES[colorScheme] ?? SCHEMES.blue;
   const textSize = size === 'xs' ? 'text-xs' : 'text-sm';
@@ -85,6 +90,7 @@ export default function NeighborhoodGroups({
           return (
             <li
               key={n.id}
+              id={optionIdPrefix ? `${optionIdPrefix}-${idx}` : undefined}
               ref={el => { itemRefs.current[idx] = el; }}
               role="option"
               aria-selected={isFocused || isActive}

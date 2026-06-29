@@ -10,13 +10,14 @@
  * Hovering any dot shows a tooltip with that district's name and value.
  *
  * PROPS:
- *   indicatorData  — full indicator data array (CD rows + citywide row)
- *   geoId          — numeric GeoID of the selected neighborhood
- *
- * TO UNDO:
- *   1. Delete this file.
- *   2. Remove the import + marked block from IndicatorFlyoutContent.jsx.
- *   That's it — no other files are affected.
+ *   indicatorData    — full indicator data array (CD rows + citywide row)
+ *   geoId            — numeric GeoID of the selected neighborhood
+ *   comparisonGeoId  — optional numeric GeoID of the comparison neighborhood;
+ *                      renders an amber dot at that value's position
+ *   mapHoveredGeoId  — optional GeoID currently hovered on the choropleth map;
+ *                      highlights the matching dot when no dot is directly hovered
+ *   onHoverGeoId     — (geoId: number|null) => void; fired on dot hover so the
+ *                      choropleth map can highlight the corresponding CD
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -28,12 +29,12 @@ const DOT_KEYFRAMES = `
     to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   }
   @keyframes chp-dot-pulse {
-    0%, 100% { box-shadow: 0 0 0 2px #1d4ed8; }
-    50%       { box-shadow: 0 0 0 6px rgba(29,78,216,0.15); }
+    0%, 100% { box-shadow: 0 0 0 2px var(--color-brand); }
+    50%       { box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-brand) 15%, transparent); }
   }
 `;
 
-export default function DistributionStrip({ indicatorData = [], geoId, mapHoveredGeoId = null, onHoverGeoId }) {
+export default function DistributionStrip({ indicatorData = [], geoId, comparisonGeoId = null, mapHoveredGeoId = null, onHoverGeoId }) {
   const [hovered,  setHovered]  = useState(null);
   const [entered,  setEntered]  = useState(false);
   const hideTimer = useRef(null);
@@ -60,17 +61,18 @@ export default function DistributionStrip({ indicatorData = [], geoId, mapHovere
   // Map hover takes effect only when the user isn't already hovering a dot directly
   const activeHoverId = hovered?.GeoID ?? mapHoveredGeoId;
 
-  const { cdRows, citywide, selected, min, max, minRow, maxRow } = useMemo(() => {
-    const cdRows   = indicatorData.filter(r => r.GeoType === 'CD' && r.Value != null);
-    const citywide = indicatorData.find(r => r.GeoID === 0);
-    const selected = cdRows.find(r => r.GeoID === geoId);
-    const values   = cdRows.map(r => r.Value);
-    const min      = values.length ? Math.min(...values) : 0;
-    const max      = values.length ? Math.max(...values) : 1;
-    const minRow   = cdRows.find(r => r.Value === min);
-    const maxRow   = cdRows.find(r => r.Value === max);
-    return { cdRows, citywide, selected, min, max, minRow, maxRow };
-  }, [indicatorData, geoId]);
+  const { cdRows, citywide, selected, comparison, min, max, minRow, maxRow } = useMemo(() => {
+    const cdRows    = indicatorData.filter(r => r.GeoType === 'CD' && r.Value != null);
+    const citywide  = indicatorData.find(r => r.GeoID === 0);
+    const selected  = cdRows.find(r => r.GeoID === geoId);
+    const comparison = comparisonGeoId != null ? cdRows.find(r => r.GeoID === comparisonGeoId) ?? null : null;
+    const values    = cdRows.map(r => r.Value);
+    const min       = values.length ? Math.min(...values) : 0;
+    const max       = values.length ? Math.max(...values) : 1;
+    const minRow    = cdRows.find(r => r.Value === min);
+    const maxRow    = cdRows.find(r => r.Value === max);
+    return { cdRows, citywide, selected, comparison, min, max, minRow, maxRow };
+  }, [indicatorData, geoId, comparisonGeoId]);
 
   if (!cdRows.length) return null;
 
@@ -161,7 +163,7 @@ export default function DistributionStrip({ indicatorData = [], geoId, mapHovere
                   left:       `${pct(row.Value)}%`,
                   width:      isSelected ? 10 : 6,
                   height:     isSelected ? 10 : 6,
-                  background: isSelected ? '#1d4ed8' : isHovered ? '#374151' : '#d1d5db',
+                  background: isSelected ? 'var(--color-brand)' : isHovered ? '#374151' : '#d1d5db',
                   border:     isSelected ? '2px solid white' : 'none',
                   zIndex:     isSelected ? 3 : isHovered ? 4 : 1,
                   // Entrance animation; hover transform takes over once entered
@@ -172,7 +174,7 @@ export default function DistributionStrip({ indicatorData = [], geoId, mapHovere
                         animation:  isSelected
                           ? `chp-dot-pulse 500ms ease-in-out ${pulseDelay}ms 2`
                           : 'none',
-                        boxShadow:  isSelected ? '0 0 0 2px #1d4ed8' : 'none',
+                        boxShadow:  isSelected ? '0 0 0 2px var(--color-brand)' : 'none',
                       }
                     : {
                         animation:  `chp-dot-in 200ms cubic-bezier(0.34,1.56,0.64,1) ${entranceDelay}ms both`,
@@ -186,6 +188,38 @@ export default function DistributionStrip({ indicatorData = [], geoId, mapHovere
               />
             );
           })}
+
+          {/* Comparison neighborhood dot — amber */}
+          {comparison && (() => {
+            const isHovered    = activeHoverId === comparison.GeoID;
+            const compPct      = pct(comparison.Value);
+            const cleanName    = comparison.Geography.replace(/\s*\(CD\d+\)/i, '').trim();
+            const displayVal   = comparison.DisplayValue ?? comparison.Value;
+            return (
+              <div
+                key={`comp-${comparison.GeoID}`}
+                role="img"
+                aria-label={`${cleanName} (comparison): ${displayVal}`}
+                aria-describedby={isHovered ? 'distribution-tooltip' : undefined}
+                tabIndex={0}
+                className="absolute top-1/2 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1"
+                style={{
+                  left:       `${compPct}%`,
+                  width:      10,
+                  height:     10,
+                  background: '#fbbf24',
+                  border:     '2px solid white',
+                  zIndex:     isHovered ? 5 : 3,
+                  transform:  `translate(-50%, -50%) scale(${isHovered ? 1.4 : 1})`,
+                  transition: 'transform 120ms ease, background 120ms ease',
+                }}
+                onMouseEnter={() => handleMouseEnter(comparison)}
+                onMouseLeave={handleMouseLeave}
+                onFocus={() => handleMouseEnter(comparison)}
+                onBlur={handleMouseLeave}
+              />
+            );
+          })()}
 
           {/* Citywide dashed tick */}
           {citywidePct != null && (
@@ -241,7 +275,7 @@ export default function DistributionStrip({ indicatorData = [], geoId, mapHovere
                 top:  labelsClose ? 14 : 0,
               }}
             >
-              NYC {citywide.DisplayValue ?? citywide.Value}
+              Citywide {citywide.DisplayValue ?? citywide.Value}
             </span>
           )}
         </div>

@@ -22,7 +22,7 @@
  *   onHover        — optional (neighborhoodId | null) => void  (for map sync)
  */
 
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback, useId } from 'react';
 import { useRouter, useParams, usePathname } from 'next/navigation';
 import { useComparison } from '@/lib/context/ComparisonContext';
 import { searchAddresses } from '@/lib/geoclient/geocode';
@@ -34,6 +34,10 @@ const DEBOUNCE_MS        = 200; // reduced from 350ms for faster address feedbac
 const ADDRESS_MIN_LENGTH = 5;   // Geoclient needs enough context to identify a street
 
 export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover }) {
+  const uid          = useId();
+  const listboxId    = `${uid}-listbox`;
+  const optPrefix    = `${uid}-opt`;
+
   const [query,          setQuery]        = useState('');
   const [focusedIndex,   setFocused]      = useState(-1);
   const [dropVisible,    setDropVisible]  = useState(false);
@@ -87,6 +91,11 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
   // NOTE: Geoclient /search is a geocoder, not an autocomplete API — it needs
   // a reasonably complete address to return results. For true keystroke-level
   // suggestions, swap searchAddresses() for a Places Autocomplete API.
+  //
+  // Borough context: when the user is already on a neighborhood page, appending
+  // that borough to the query helps Geoclient resolve short/ambiguous inputs
+  // like "125th st" → "125th st Manhattan". Only appended when the user hasn't
+  // already typed the borough name.
   useEffect(() => {
     clearTimeout(debounceRef.current);
     if (query.trim().length < ADDRESS_MIN_LENGTH) {
@@ -96,13 +105,22 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
     }
     setAddressLoading(true);
     debounceRef.current = setTimeout(async () => {
-      const hits = await searchAddresses(query, neighborhoods);
+      const activeNeighborhood = activeId
+        ? neighborhoods.find(n => String(n.id) === activeId)
+        : null;
+      const borough = activeNeighborhood?.borough ?? '';
+      const geocodeQuery =
+        borough && !query.toLowerCase().includes(borough.toLowerCase())
+          ? `${query.trim()} ${borough}`
+          : query.trim();
+
+      const hits = await searchAddresses(geocodeQuery, neighborhoods);
       setAddressResults(hits);
       setAddressLoading(false);
     }, DEBOUNCE_MS);
 
     return () => clearTimeout(debounceRef.current);
-  }, [query, neighborhoods]);
+  }, [query, neighborhoods, activeId]);
 
   // Flat list combining neighborhoods + addresses for keyboard nav
   const flatAll = useMemo(() => [
@@ -179,6 +197,16 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
   const showAddressSection = addressResults.length > 0;
   const isNYCEasterEgg     = query.trim().toLowerCase() === 'nyc';
 
+  // Check trophy once per render (fast localStorage read, gated on easter egg being active)
+  const trophyEarned = isNYCEasterEgg && (() => {
+    try { return localStorage.getItem('chp_trophy_earned') === '1'; } catch { return false; }
+  })();
+
+  const activeNeighborhood = activeId
+    ? neighborhoods.find(n => String(n.id) === activeId)
+    : null;
+  const activeBoroughHint  = activeNeighborhood?.borough ?? null;
+
   return (
     <div ref={containerRef} className="relative">
 
@@ -198,11 +226,13 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
           value={query}
           onChange={e => { setQuery(e.target.value); onHover?.(null); }}
           onKeyDown={handleKeyDown}
-          placeholder="Search by neighborhood or address…"
+          placeholder={activeBoroughHint ? `Neighborhood or address in ${activeBoroughHint}…` : 'Search by neighborhood or address…'}
           aria-label="Search neighborhoods or address"
           aria-keyshortcuts="/"
           aria-expanded={isOpen}
           aria-autocomplete="list"
+          aria-controls={listboxId}
+          aria-activedescendant={focusedIndex >= 0 ? `${optPrefix}-${focusedIndex}` : undefined}
           role="combobox"
           className="w-full pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
@@ -217,7 +247,7 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
             <button
               onClick={() => { setQuery(''); setAddressResults([]); onHover?.(null); inputRef.current?.focus(); }}
               aria-label="Clear search"
-              className="text-gray-400 hover:text-gray-600 transition-colors focus-visible:outline-none"
+              className="p-1.5 -m-1.5 text-gray-400 hover:text-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -234,7 +264,7 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
       {/* ── Dropdown ───────────────────────────────────────────────────────── */}
       {isOpen && isNYCEasterEgg && (
         <div
-          className="absolute z-[9999] w-full bg-white border border-blue-200 mt-1.5 rounded-lg shadow-lg overflow-hidden"
+          className={`absolute z-[9999] w-full bg-white mt-1.5 rounded-lg shadow-lg overflow-hidden border ${trophyEarned ? 'border-amber-300' : 'border-blue-200'}`}
           style={{
             opacity:    dropVisible ? 1 : 0,
             transform:  dropVisible ? 'translateY(0)' : 'translateY(-4px)',
@@ -244,12 +274,20 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
           <button
             onClick={() => {
               setQuery('');
+              // If all 59 explored, fire the achievement event so the map animates
+              if (trophyEarned) {
+                window.dispatchEvent(new CustomEvent('chp:all-explored'));
+              }
               window.dispatchEvent(new CustomEvent('chp:open-intro-modal'));
             }}
-            className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
+            className={`w-full text-left px-4 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset ${
+              trophyEarned
+                ? 'hover:bg-amber-50 focus-visible:ring-amber-500'
+                : 'hover:bg-blue-50 focus-visible:ring-blue-500'
+            }`}
           >
-            {/* Mini NYC skyline */}
-            <svg width="100%" height="28" viewBox="0 0 280 28" aria-hidden="true" className="mb-2 text-blue-300">
+            {/* Mini NYC skyline — amber tint when trophy earned */}
+            <svg width="100%" height="28" viewBox="0 0 280 28" aria-hidden="true" className={`mb-2 ${trophyEarned ? 'text-amber-300' : 'text-blue-300'}`}>
               <rect x="0"   y="20" width="14" height="8"  fill="currentColor" opacity="0.5"/>
               <rect x="16"  y="14" width="10" height="14" fill="currentColor" opacity="0.6"/>
               <rect x="28"  y="8"  width="6"  height="20" fill="currentColor" opacity="0.8"/>
@@ -277,13 +315,25 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
               <rect x="260" y="12" width="8"  height="16" fill="currentColor" opacity="0.6"/>
               <rect x="270" y="20" width="10" height="8"  fill="currentColor" opacity="0.4"/>
             </svg>
-            <p className="text-xs font-medium text-blue-700">All 59 community districts — you know your NYC</p>
-            <p className="text-xs text-blue-400 mt-0.5">See all neighborhoods →</p>
+            {trophyEarned ? (
+              <>
+                <p className="text-xs font-semibold text-amber-700 flex items-center gap-1.5">
+                  <span>🏆</span> You&rsquo;ve explored all 59 neighborhoods!
+                </p>
+                <p className="text-xs text-amber-500 mt-0.5">Replay the borough wave →</p>
+              </>
+            ) : (
+              <>
+                <p className="text-xs font-medium text-blue-700">All 59 community districts — you know your NYC</p>
+                <p className="text-xs text-blue-400 mt-0.5">Browse all neighborhoods →</p>
+              </>
+            )}
           </button>
         </div>
       )}
       {isOpen && !isNYCEasterEgg && (
         <ul
+          id={listboxId}
           role="listbox"
           aria-label="Search results"
           className="absolute z-[9999] w-full bg-white border border-gray-200 mt-1.5 rounded-lg shadow-lg max-h-72 overflow-auto py-1"
@@ -314,6 +364,7 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
                     onSetFocused={setFocused}
                     onHover={onHover}
                     activeId={activeId}
+                    optionIdPrefix={optPrefix}
                   />
 
                   {/* ── Address section ───────────────────────────────── */}
@@ -323,10 +374,10 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
                       {flatNeighborhoods.length > 0 && (
                         <div className="border-t border-gray-100 mx-2 mt-1" />
                       )}
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-3 pt-2.5 pb-1 select-none">
+                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest px-3 pt-2.5 pb-1 select-none">
                         Addresses
                       </p>
-                      <p className="text-xs text-gray-400 px-3 pb-2">Searching…</p>
+                      <p className="text-xs text-gray-600 px-3 pb-2">Searching…</p>
                     </li>
                   )}
                   {/* No-results hint — shown after search completes with no hits */}
@@ -335,10 +386,10 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
                       {flatNeighborhoods.length > 0 && (
                         <div className="border-t border-gray-100 mx-2 mt-1" />
                       )}
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-3 pt-2.5 pb-1 select-none">
+                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest px-3 pt-2.5 pb-1 select-none">
                         Addresses
                       </p>
-                      <p className="text-xs text-gray-400 px-3 pb-2">Try a more complete address, e.g. 123 Main St Brooklyn</p>
+                      <p className="text-xs text-gray-600 px-3 pb-2">Try a more complete address, e.g. 123 Main St Brooklyn</p>
                     </li>
                   )}
                   {showAddressSection && (
@@ -357,6 +408,7 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
                           return (
                             <li
                               key={`addr-${i}`}
+                              id={`${optPrefix}-${idx}`}
                               ref={el => { itemRefs.current[idx] = el; }}
                               role="option"
                               aria-selected={isFocused}
@@ -373,7 +425,7 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
                               <span className="font-medium leading-snug">
                                 {highlight(item.label, query.trim())}
                               </span>
-                              <span className={`leading-snug mt-0.5 ${isFocused ? 'text-blue-500' : 'text-gray-400'}`}>
+                              <span className={`leading-snug mt-0.5 ${isFocused ? 'text-blue-600' : 'text-gray-500'}`}>
                                 {item.neighborhood.name} · CD {item.neighborhood.cdNumber}
                               </span>
                             </li>

@@ -32,7 +32,7 @@
  * - Only CD rows are indexed (GeoType === 'CD'); citywide/borough rows excluded
  */
 
-import { indicators } from '@/config/registries/indicatorRegistry';
+import { indicatorMeta } from '@/config/indicatorMeta';
 import { loadIndicatorData } from './loadIndicatorData';
 
 export function getIndicatorSummaries(keys = null) {
@@ -40,8 +40,8 @@ export function getIndicatorSummaries(keys = null) {
   const summaries = {};
 
   const indicatorList = keys
-    ? Object.values(indicators).filter(ind => keys.includes(ind.key))
-    : Object.values(indicators);
+    ? Object.values(indicatorMeta).filter(ind => keys.includes(ind.key))
+    : Object.values(indicatorMeta);
 
   for (const indicator of indicatorList) {
     const rows = loadIndicatorData(indicator.key);

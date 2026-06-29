@@ -14,7 +14,7 @@ export const BOROUGH_ORDER = [
   'Manhattan',
   'Brooklyn',
   'Queens',
-  'The Bronx',
+  'Bronx',
   'Staten Island',
 ];
 
