@@ -1,0 +1,18 @@
+[
+  {"GeoType":"CD","GeoID":102,"Geography":"Greenwich Village and Soho","Value":9,"DisplayValue":"9*","ValueType":"Count","Status":"*"},
+  {"GeoType":"CD","GeoID":102,"Geography":"Greenwich Village and Soho","Value":2,"DisplayValue":"2*","ValueType":"Rate","Status":"*"},
+  {"GeoType":"CD","GeoID":205,"Geography":"Fordham and University Heights","Value":24,"DisplayValue":"24","ValueType":"Count"},
+  {"GeoType":"CD","GeoID":205,"Geography":"Fordham and University Heights","Value":4,"DisplayValue":"4","ValueType":"Rate"},
+  {"GeoType":"CD","GeoID":206,"Geography":"Belmont and East Tremont","Value":24,"DisplayValue":"24","ValueType":"Count"},
+  {"GeoType":"CD","GeoID":206,"Geography":"Belmont and East Tremont","Value":7,"DisplayValue":"7","ValueType":"Rate"},
+  {"GeoType":"CD","GeoID":208,"Geography":"Riverdale and Fieldston","Value":18,"DisplayValue":"18","ValueType":"Count"},
+  {"GeoType":"CD","GeoID":208,"Geography":"Riverdale and Fieldston","Value":4,"DisplayValue":"4","ValueType":"Rate"},
+  {"GeoType":"CD","GeoID":210,"Geography":"Throgs Neck and Co-op City","Value":4,"DisplayValue":"4","ValueType":"Rate"},
+  {"GeoType":"CD","GeoID":210,"Geography":"Throgs Neck and Co-op City","Value":25,"DisplayValue":"25","ValueType":"Count"},
+  {"GeoType":"CD","GeoID":304,"Geography":"Bushwick","Value":15,"DisplayValue":"15","ValueType":"Count"},
+  {"GeoType":"CD","GeoID":304,"Geography":"Bushwick","Value":3,"DisplayValue":"3","ValueType":"Rate"},
+  {"GeoType":"CD","GeoID":308,"Geography":"Crown Heights and Prospect Heights","Value":17,"DisplayValue":"17","ValueType":"Count"},
+  {"GeoType":"CD","GeoID":308,"Geography":"Crown Heights and Prospect Heights","Value":4,"DisplayValue":"4","ValueType":"Rate"},
+  {"GeoType":"CD","GeoID":413,"Geography":"Queens Village","Value":26,"DisplayValue":"26","ValueType":"Count"},
+  {"GeoType":"CD","GeoID":413,"Geography":"Queens Village","Value":3,"DisplayValue":"3","ValueType":"Rate"}
+]

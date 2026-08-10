@@ -1,0 +1,14 @@
+[
+  {"GeoType":"CD","GeoID":203,"Geography":"Morrisania and Crotona","Value":6,"DisplayValue":"6","ValueType":"Rate"},
+  {"GeoType":"CD","GeoID":203,"Geography":"Morrisania and Crotona","Value":22,"DisplayValue":"22","ValueType":"Count"},
+  {"GeoType":"CD","GeoID":205,"Geography":"Fordham and University Heights","Value":25,"DisplayValue":"25","ValueType":"Count"},
+  {"GeoType":"CD","GeoID":205,"Geography":"Fordham and University Heights","Value":4,"DisplayValue":"4","ValueType":"Rate"},
+  {"GeoType":"CD","GeoID":307,"Geography":"Sunset Park","Value":22,"DisplayValue":"22","ValueType":"Count"},
+  {"GeoType":"CD","GeoID":307,"Geography":"Sunset Park","Value":4,"DisplayValue":"4","ValueType":"Rate"},
+  {"GeoType":"CD","GeoID":403,"Geography":"Jackson Heights","Value":3,"DisplayValue":"3","ValueType":"Rate"},
+  {"GeoType":"CD","GeoID":403,"Geography":"Jackson Heights","Value":27,"DisplayValue":"27","ValueType":"Count"},
+  {"GeoType":"CD","GeoID":404,"Geography":"Elmhurst and Corona","Value":3,"DisplayValue":"3","ValueType":"Rate"},
+  {"GeoType":"CD","GeoID":404,"Geography":"Elmhurst and Corona","Value":27,"DisplayValue":"27","ValueType":"Count"},
+  {"GeoType":"CD","GeoID":409,"Geography":"Kew Gardens and Woodhaven","Value":3,"DisplayValue":"3","ValueType":"Rate"},
+  {"GeoType":"CD","GeoID":409,"Geography":"Kew Gardens and Woodhaven","Value":23,"DisplayValue":"23","ValueType":"Count"}
+]
