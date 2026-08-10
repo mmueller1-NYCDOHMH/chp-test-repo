@@ -7,12 +7,22 @@
  * Single search input that combines neighborhood name filtering and
  * NYC address lookup (via Geoclient) into one dropdown.
  *
- * DROPDOWN STRUCTURE:
- *   Neighborhood matches — instant, local filter, grouped by borough
- *   Address matches      — debounced Geoclient results, shown below neighborhoods
+ * DISPLAY STATES (mirrors ComparisonNeighborhoodSelector):
+ *   Populated — when a neighborhood is active (from the /neighborhood/[id]
+ *   route) and the user isn't editing, collapses to a pill showing that
+ *   neighborhood's name. Click the pill, or press "/", to reopen the search.
  *
- * Neighborhood results appear immediately; address results appear alongside them
- * once Geoclient responds. Both sections share a single flat keyboard index.
+ *   Editing — dropdown opens as soon as the control is focused/activated
+ *   (not gated on typing). Empty query shows the full borough-grouped list
+ *   to browse; typing narrows it. Address results append below once
+ *   Geoclient responds. Both sections share a single flat keyboard index.
+ *
+ * KEYBOARD:
+ *   /       — global shortcut (wired in Sidebar.jsx) — jump into edit mode
+ *             and focus the input, even from the collapsed pill state
+ *   ↓ / ↑   — move through results
+ *   Enter   — select focused (or first) result
+ *   Escape  — clear query; if already empty, collapse out of edit mode
  *
  * PROPS:
  *   neighborhoods  — array of { id, name, borough, geoId, cdNumber }
@@ -33,12 +43,37 @@ import NeighborhoodGroups from '@/components/controls/NeighborhoodGroups';
 const DEBOUNCE_MS        = 200; // reduced from 350ms for faster address feedback
 const ADDRESS_MIN_LENGTH = 5;   // Geoclient needs enough context to identify a street
 
+// ── Pill — shown when a neighborhood is active and the user isn't editing ─────
+// Mirrors ComparisonNeighborhoodSelector's ComparisonPill, using the app's
+// brand color (bg-brand-tint / text-brand) instead of the comparison rust
+// palette. Keeps the "/" hint visible so the keyboard shortcut still reads
+// as available even while collapsed.
+function SelectedNeighborhoodPill({ neighborhood, onEdit }) {
+  return (
+    <button
+      onClick={onEdit}
+      aria-label={`Viewing ${neighborhood.name}. Click to change neighborhood.`}
+      aria-keyshortcuts="/"
+      className="w-full flex items-center gap-2 bg-brand-tint border border-brand rounded-lg pl-3 pr-2.5 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+    >
+      <span className="w-2 h-2 rounded-full bg-brand shrink-0" aria-hidden="true" />
+      <span className="flex-1 text-sm font-medium text-brand truncate">
+        {neighborhood.name}
+      </span>
+      <kbd className="text-xs text-gray-500 border border-gray-200 rounded px-1 py-0.5 font-mono leading-none pointer-events-none select-none">
+        /
+      </kbd>
+    </button>
+  );
+}
+
 export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover }) {
   const uid          = useId();
   const listboxId    = `${uid}-listbox`;
   const optPrefix    = `${uid}-opt`;
 
   const [query,          setQuery]        = useState('');
+  const [isEditing,      setIsEditing]    = useState(false);
   const [focusedIndex,   setFocused]      = useState(-1);
   const [dropVisible,    setDropVisible]  = useState(false);
   const [addressResults, setAddressResults] = useState([]); // [{ label, neighborhood }]
@@ -54,25 +89,49 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
   const pathname = usePathname();
   const activeId = params?.id ? String(params.id) : null;
 
+  const selectedNeighborhood = activeId
+    ? neighborhoods.find(n => String(n.id) === activeId)
+    : null;
+
   // Clear stale query whenever the route changes (e.g. map click navigated away
-  // while a query was typed but not submitted)
+  // while a query was typed but not submitted), and collapse back to the
+  // populated/pill state for the newly-active neighborhood.
   useEffect(() => {
     setQuery('');
     setAddressResults([]);
+    setIsEditing(false);
   }, [pathname]);
   const { setComparisonNeighborhood } = useComparison();
 
-  const isOpen = query.length > 0;
+  // Global "/" shortcut (wired in Sidebar.jsx) — jump into edit mode and
+  // focus the input even when this is currently collapsed to a pill showing
+  // the active neighborhood.
+  useEffect(() => {
+    function handleFocusRequest() {
+      setIsEditing(true);
+      setTimeout(() => inputRef.current?.focus(), 30);
+    }
+    window.addEventListener('chp:focus-neighborhood-search', handleFocusRequest);
+    return () => window.removeEventListener('chp:focus-neighborhood-search', handleFocusRequest);
+  }, []);
+
+  // Dropdown is open any time the control is in edit mode — matches
+  // ComparisonNeighborhoodSelector, which opens on focus rather than
+  // waiting for the first keystroke.
+  const isOpen = isEditing;
 
   // ── Neighborhood filtering (instant) ──────────────────────────────────────
+  // Empty query while editing shows the full borough-grouped list to browse,
+  // same as ComparisonNeighborhoodSelector.
   const { grouped, flatNeighborhoods } = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return { grouped: [], flatNeighborhoods: [] };
 
-    const filtered = neighborhoods.filter(n =>
-      n.name.toLowerCase().includes(q) ||
-      n.borough.toLowerCase().includes(q)
-    );
+    const filtered = q
+      ? neighborhoods.filter(n =>
+          n.name.toLowerCase().includes(q) ||
+          n.borough.toLowerCase().includes(q)
+        )
+      : neighborhoods;
 
     const map = {};
     BOROUGH_ORDER.forEach(b => { map[b] = []; });
@@ -148,22 +207,25 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
     }
   }, [focusedIndex]);
 
-  // Close on outside click
+  // Close on outside click — only relevant while editing
   useEffect(() => {
+    if (!isEditing) return;
     function handleMouseDown(e) {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsEditing(false);
         setQuery('');
         setAddressResults([]);
       }
     }
     document.addEventListener('mousedown', handleMouseDown);
     return () => document.removeEventListener('mousedown', handleMouseDown);
-  }, []);
+  }, [isEditing]);
 
   // ── Selection ─────────────────────────────────────────────────────────────
   const handleSelect = useCallback((neighborhood) => {
     setQuery('');
     setAddressResults([]);
+    setIsEditing(false);
     onHover?.(null);
     if (onSelect) {
       onSelect(neighborhood);
@@ -187,10 +249,28 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
       const target = focusedIndex >= 0 ? flatAll[focusedIndex] : flatAll[0];
       if (target) handleSelect(target.neighborhood);
     } else if (e.key === 'Escape') {
-      setQuery('');
-      setAddressResults([]);
-      inputRef.current?.blur();
+      if (query) {
+        setQuery('');
+        setAddressResults([]);
+      } else {
+        setIsEditing(false);
+        inputRef.current?.blur();
+      }
     }
+  }
+
+  // ── Populated state ───────────────────────────────────────────────────────
+  // When a neighborhood is active (route param resolved) and the user isn't
+  // actively editing, collapse to a pill showing that selection — matches
+  // ComparisonNeighborhoodSelector. Click the pill (or press "/") to reopen
+  // the search and change it.
+  if (selectedNeighborhood && !isEditing) {
+    return (
+      <SelectedNeighborhoodPill
+        neighborhood={selectedNeighborhood}
+        onEdit={() => setIsEditing(true)}
+      />
+    );
   }
 
   const hasResults         = flatAll.length > 0;
@@ -201,11 +281,6 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
   const trophyEarned = isNYCEasterEgg && (() => {
     try { return localStorage.getItem('chp_trophy_earned') === '1'; } catch { return false; }
   })();
-
-  const activeNeighborhood = activeId
-    ? neighborhoods.find(n => String(n.id) === activeId)
-    : null;
-  const activeBoroughHint  = activeNeighborhood?.borough ?? null;
 
   return (
     <div ref={containerRef} className="relative">
@@ -224,9 +299,10 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
           ref={inputRef}
           type="text"
           value={query}
-          onChange={e => { setQuery(e.target.value); onHover?.(null); }}
+          onChange={e => { setQuery(e.target.value); setIsEditing(true); onHover?.(null); }}
+          onFocus={() => setIsEditing(true)}
           onKeyDown={handleKeyDown}
-          placeholder={activeBoroughHint ? `Neighborhood or address in ${activeBoroughHint}…` : 'Search by neighborhood or address…'}
+          placeholder="Neighborhood or address"
           aria-label="Search neighborhoods or address"
           aria-keyshortcuts="/"
           aria-expanded={isOpen}

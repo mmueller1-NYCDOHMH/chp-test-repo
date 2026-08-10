@@ -87,6 +87,9 @@ export default function ModalMap({ neighborhoods = [], hoveredId, visitedIds, on
         zoom:             NYC_ZOOM,
         scrollWheelZoom:  true,
         zoomControl:      true,
+        // Hides the bottom-right Leaflet/OSM attribution banner, matching
+        // NeighborhoodMap.jsx and ChoroplethMap.jsx (both already set this).
+        attributionControl: false,
       });
 
       L.tileLayer(

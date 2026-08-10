@@ -10,8 +10,10 @@
  * DESCRIPTION:
  * Accepts a flat array of indicator records (one per CD) and a GeoJSON of
  * all 59 CDs. Each feature is colored on a sequential blue scale based on
- * where its value falls between the dataset min and max. The currently
- * selected neighborhood (from URL params) gets a stronger highlight border.
+ * where its value falls between the dataset min and max, EXCEPT the
+ * selected and comparison CDs, which get a solid semantic fill (SELECTED /
+ * COMPARISON from chartColors.js) instead of their value-scale color, so
+ * they're findable at a glance rather than blending into the gradient.
  * Hovering shows a tooltip with the district name and its value, and fires
  * onHoverGeoId so sibling components (e.g. DistributionStrip) can react.
  *
@@ -26,6 +28,13 @@
  *   indicatorData  — array of { GeoID, Value, Geography, DisplayValue }
  *                    Only CD-level rows are used (GeoType === 'CD')
  *   subtitle       — unit label shown in the legend (e.g. "% below poverty")
+ *   geoId          — numeric GeoID of the primary/selected neighborhood.
+ *                    Compared directly against each feature's parsed
+ *                    GEOCODE (see NOTES) rather than slug-matching against
+ *                    the route param — slug matching was fragile (silently
+ *                    fell through to the value-scale color on any mismatch)
+ *                    and comparisonGeoId already uses numeric GeoID, so this
+ *                    keeps both consistent.
  *   onHoverGeoId   — optional (geoId: number | null) => void, fired on CD hover
  *
  * NOTES:
@@ -36,13 +45,13 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { slugify } from '@/lib/utils/slugify';
-import { CHOROPLETH_STOPS, MAP_STYLES } from '@/lib/charts/chartColors';
+import { CHOROPLETH_STOPS, MAP_STYLES, SELECTED, COMPARISON } from '@/lib/charts/chartColors';
 import { fetchGeoJson } from '@/lib/utils/fetchGeoJson';
 
 const NYC_CENTER = [40.7128, -74.006];
 const NYC_ZOOM   = 10;
+const NYC_ZOOM_MOBILE = 9.3; // slightly more zoomed out below 767px
+const MOBILE_BREAKPOINT = 767;
 
 const COLOR_STOPS = CHOROPLETH_STOPS;
 
@@ -70,10 +79,11 @@ function blendHex(a, b, t) {
   return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${bl.toString(16).padStart(2,'0')}`;
 }
 
-export default function ChoroplethMap({ indicatorData = [], onHoverGeoId, stripHoveredGeoId = null, comparisonGeoId = null }) {
+export default function ChoroplethMap({ indicatorData = [], geoId = null, onHoverGeoId, stripHoveredGeoId = null, comparisonGeoId = null }) {
   const [leaflet, setLeaflet]     = useState(null);
   const [geo, setGeo]             = useState(null);
   const [geoError, setGeoError]   = useState(false);
+  const [zoom, setZoom]           = useState(NYC_ZOOM); // default to desktop; corrected on mount
 
   // Keep stable refs so Leaflet event handlers never go stale
   const onHoverGeoIdRef      = useRef(onHoverGeoId);
@@ -104,9 +114,6 @@ export default function ChoroplethMap({ indicatorData = [], onHoverGeoId, stripH
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [comparisonGeoId]);
 
-  const params     = useParams();
-  const selectedId = params?.id ? String(params.id) : null;
-
   // Build a GeoID → value lookup from CD-level rows only
   const valueMap = {};
   let minVal = Infinity, maxVal = -Infinity;
@@ -131,41 +138,62 @@ export default function ChoroplethMap({ indicatorData = [], onHoverGeoId, stripH
       .catch(() => setGeoError(true));
   }, []);
 
+  // ── Responsive zoom ──────────────────────────────────────────────────────
+  // Leaflet reads zoom only once on mount, so MapContainer needs a `key` tied
+  // to the breakpoint to force it to re-init if the viewport crosses 767px
+  // (e.g. device rotation) rather than silently ignoring the new zoom prop.
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
+    const applyZoom = () => setZoom(mql.matches ? NYC_ZOOM_MOBILE : NYC_ZOOM);
+    applyZoom();
+    mql.addEventListener('change', applyZoom);
+    return () => mql.removeEventListener('change', applyZoom);
+  }, []);
+
   // ── Style helpers ─────────────────────────────────────────────────────────
   function featureStyle(feature) {
-    const geoId          = parseInt(feature.properties.GEOCODE, 10);
-    const row            = valueMap[geoId];
-    const isSelected     = selectedId && slugify(feature.properties.GEONAME) === selectedId;
-    const isComparison   = comparisonGeoIdRef.current != null && comparisonGeoIdRef.current === geoId;
-    const isStripHovered = stripHoveredGeoIdRef.current === geoId;
+    const featureGeoId   = parseInt(feature.properties.GEOCODE, 10);
+    const row            = valueMap[featureGeoId];
+    const isSelected     = geoId != null && geoId === featureGeoId;
+    const isComparison   = comparisonGeoIdRef.current != null && comparisonGeoIdRef.current === featureGeoId;
+    const isStripHovered = stripHoveredGeoIdRef.current === featureGeoId;
 
     return {
-      fillColor:   isComparison   ? '#fbbf24'  // amber-400 fill for comparison CD
+      // Selected CD is now a solid fill (like comparison) rather than a
+      // value-colored fill with just a highlight border — makes it findable
+      // at a glance instead of blending into the choropleth gradient.
+      fillColor:   isSelected     ? SELECTED     // same purple used for the primary CD everywhere else
+                 : isComparison   ? COMPARISON   // same rust used for comparison CD everywhere else
                  : row            ? valueToColor((row.Value - minVal) / range)
                  :                  MAP_STYLES.base.fillColor,
-      fillOpacity: isComparison   ? 0.65
+      // Selected/comparison fillOpacity is high (0.75) rather than fully
+      // opaque — keeps a touch of translucency but avoids the wash-out that
+      // happened at lower opacities (e.g. 5646F5 reading as pale lavender at
+      // 0.35 over the CartoDB light basemap).
+      fillOpacity: isSelected     ? 0.75
+                 : isComparison   ? 0.75
                  : row            ? (isStripHovered ? 1 : 0.82)
                  :                  0.3,
-      color:       isSelected     ? '#111827'
-                 : isComparison   ? '#d97706'  // amber-600 — light border only
+      color:       isSelected     ? SELECTED
+                 : isComparison   ? COMPARISON
                  : isStripHovered ? '#111827'
                  :                  '#9ca3af',
-      weight:      isSelected ? 3.5 : isComparison ? 1 : isStripHovered ? 2 : 0.8,
+      weight:      isSelected ? 2 : isComparison ? 1 : isStripHovered ? 2 : 0.8,
     };
   }
 
   function onEachFeature(feature, layer) {
-    const geoId     = parseInt(feature.properties.GEOCODE, 10);
-    const row       = valueMap[geoId];
-    const cleanName = feature.properties.GEONAME.replace(/\s*\(CD\d+\)/i, '').trim();
-    const label     = row ? `${cleanName}: ${row.DisplayValue ?? row.Value}` : cleanName;
+    const featureGeoId = parseInt(feature.properties.GEOCODE, 10);
+    const row          = valueMap[featureGeoId];
+    const cleanName    = feature.properties.GEONAME.replace(/\s*\(CD\d+\)/i, '').trim();
+    const label        = row ? `${cleanName}: ${row.DisplayValue ?? row.Value}` : cleanName;
 
     layer.bindTooltip(label, { sticky: true });
 
     layer.on('mouseover', () => {
       layer.setStyle({ weight: 2, color: '#111827', fillOpacity: 1 });
       layer.bringToFront();
-      onHoverGeoIdRef.current?.(geoId);
+      onHoverGeoIdRef.current?.(featureGeoId);
     });
     layer.on('mouseout', () => {
       layer.setStyle(featureStyle(feature));
@@ -197,8 +225,9 @@ export default function ChoroplethMap({ indicatorData = [], onHoverGeoId, stripH
   return (
     <div className="relative h-full w-full overflow-hidden">
       <MapContainer
+        key={zoom}
         center={NYC_CENTER}
-        zoom={NYC_ZOOM}
+        zoom={zoom}
         scrollWheelZoom={false}
         touchZoom={false}
         dragging={false}
@@ -212,7 +241,7 @@ export default function ChoroplethMap({ indicatorData = [], onHoverGeoId, stripH
         />
         {geo && (
           <GeoJSON
-            key={selectedId ?? 'none'}
+            key={geoId ?? 'none'}
             data={geo}
             style={featureStyle}
             onEachFeature={onEachFeature}

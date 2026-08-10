@@ -114,7 +114,7 @@ function buildStandardSection(id) {
 // ── Flat ordered category list — drives both category blocks and section groupings ──
 // To add a new top-level category: add it to siteNav.js (with contentSlug),
 // then insert buildCategorySection(cat) at the right position below.
-const [social, neighborhood, healthCare, maternalChildHealth, healthConditions] = siteNav;
+const [social, neighborhood, healthCare, maternalChildHealth, mentalHealthSubstanceUse, healthConditions] = siteNav;
 
 export const neighborhoodProfile = {
   id: 'neighborhood-profile',
@@ -146,10 +146,13 @@ export const neighborhoodProfile = {
     buildStandardSection('maternal'),
     buildStandardSection('infant-child'),
 
-    // ── Health conditions ─────────────────────────────────────────────────────
-    buildCategorySection(healthConditions),
+    // ── Mental health & substance use ─────────────────────────────────────────
+    buildCategorySection(mentalHealthSubstanceUse),
     buildStandardSection('mental-wellness'),
     buildStandardSection('substance-use'),
+
+    // ── Health conditions ─────────────────────────────────────────────────────
+    buildCategorySection(healthConditions),
     buildStandardSection('chronic-conditions'),
     buildStandardSection('infectious-disease'),
     buildStandardSection('health-outcomes'),

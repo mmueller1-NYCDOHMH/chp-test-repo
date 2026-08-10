@@ -33,13 +33,26 @@
  */
 
 // ── Bar chart semantic colors ──────────────────────────────────────────────
-export const SELECTED    = '#2563EB';  // blue-600   — selected neighborhood bar
-export const COMPARISON  = '#D97706';  // amber-600  — comparison neighborhood bar
-export const CITYWIDE    = '#E24B4A';  // custom red — citywide reference
-export const BOROUGH     = '#0D9488';  // teal-600   — borough reference
-export const HOVER_MAP   = '#93c5fd';  // blue-300   — bar hovered via sidebar map
-export const HOVER_CHART = '#c7d2fe';  // indigo-200 — bar hovered in chart
-export const BAR_DEFAULT = '#D1D5DB';  // gray-300   — all other bars
+// Updated 2026-08-04 — data vis palette pass. Applies across the ranked bar
+// chart (buildBarChartSpec.js), the butterfly/pyramid comparison chart
+// (ComparisonPyramidChart.jsx), and the dot distribution strips
+// (DistributionStrip.jsx, ComparisonStatTilesClient.jsx's MicroStrip) so all
+// data vis stays visually consistent. Each value chosen to meet WCAG AA
+// against a white background.
+export const SELECTED    = '#5646F5';  // Primary CD — most prominent/saturated; draws the eye
+export const COMPARISON  = '#C94D18';  // Comparison CD — clearly distinct from primary, not attention-grabbing
+export const CITYWIDE    = '#5F7699';  // NYC tick (indicator card) / bar (expanded view) — dark enough to read, not eye-catching
+export const BOROUGH     = '#757575';  // Borough tick (indicator card) / bar (expanded view) — same treatment, one step lighter than NYC
+// HOVER_MAP / HOVER_CHART — updated to match --color-brand (globals.css), the
+// same blue used for header, primary nav, and brand buttons site-wide, so
+// hover states read as one consistent theme color instead of an unrelated
+// light blue/indigo. Both hover triggers (sidebar map vs. direct chart hover)
+// intentionally share this value now. Rendered at 85% opacity (rgba, not a
+// flat hex) — the full-strength navy read as too heavy/solid for a hover
+// state against the light gray default bars.
+export const HOVER_MAP   = 'rgba(30, 58, 138, 0.85)';  // brand blue — bar hovered via sidebar map
+export const HOVER_CHART = 'rgba(30, 58, 138, 0.85)';  // brand blue — bar hovered directly in chart
+export const BAR_DEFAULT = '#C7CCDB';  // Default/unselected CDs — neutral, doesn't compete, still has contrast for exports
 export const BAR_INVALID = '#9CA3AF';  // gray-400   — suppressed / null value bars
 
 // ── Choropleth map gradient ────────────────────────────────────────────────
@@ -63,22 +76,29 @@ export const MAP_STYLES = {
     fillOpacity: 0.5,
   },
   hover: {
-    fillColor:   '#c7d2fe',  // indigo-200 — matches HOVER_CHART
+    fillColor:   '#1E3A8A',  // brand blue — matches HOVER_MAP / HOVER_CHART
     color:       '#111827',  // gray-900
     weight:      2,
     fillOpacity: 0.7,
   },
   selected: {
-    fillColor:   '#93c5fd',  // blue-300   — matches HOVER_MAP
-    color:       '#1d4ed8',  // blue-700
+    // Same SELECTED purple used for the primary CD everywhere else (bars,
+    // dots, pyramid chart). fillOpacity 0.75 — high enough that the exact hue
+    // still reads as SELECTED against the light CartoDB basemap (full 0.35
+    // washed it out to a pale blue/lavender; this keeps some translucency
+    // without losing the color).
+    fillColor:   SELECTED,
+    color:       SELECTED,
     weight:      3,
-    fillOpacity: 0.8,
+    fillOpacity: 0.75,
   },
   comparison: {
-    fillColor:   '#fcd34d',  // amber-300
-    color:       '#b45309',  // amber-700
+    // Same COMPARISON rust used for the comparison CD everywhere else. Same
+    // opacity reasoning as selected above.
+    fillColor:   COMPARISON,
+    color:       COMPARISON,
     weight:      3,
-    fillOpacity: 0.8,
+    fillOpacity: 0.75,
   },
 };
 
@@ -95,7 +115,6 @@ export const MODAL_MAP_STYLES = {
   },
   selected: {
     ...MAP_STYLES.selected,
-    color:  '#1d4ed8',
     weight: 2.5,
   },
 };

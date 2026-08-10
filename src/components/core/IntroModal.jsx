@@ -43,13 +43,29 @@
  * - Client component (uses useState, useEffect, localStorage)
  * - ModalMap is dynamically imported (ssr:false) — same Leaflet constraint as
  *   NeighborhoodMap; Leaflet cannot be bundled for SSR
+ * - Accent colors use the brand tokens (text-brand / bg-brand-tint /
+ *   border-brand from globals.css), matching TopicNav, Sidebar, and
+ *   UnifiedSearch — not Tailwind's default blue-*. Exceptions, both
+ *   deliberate: (1) most focus-visible rings stay ring-blue-500, the same
+ *   a11y convention used everywhere else; (2) the neighborhood search
+ *   input's resting border is border-gray-200, matching UnifiedSearch's
+ *   identical "Find neighborhood" input in the sidebar — but its FOCUS ring
+ *   is ring-brand, not ring-blue-500, because this input autofocuses ~60ms
+ *   after the modal opens (see the inputRef.current?.focus() effect below).
+ *   Since users see it focused far more often than resting, the focus color
+ *   is what actually reads as "the search border" — it needed to be brand,
+ *   even though that now differs from UnifiedSearch's blue-500 focus ring.
  */
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import AddressSearch from '@/components/controls/AddressSearch';
 import { BOROUGH_ORDER } from '@/lib/utils/constants';
 import { highlight } from '@/lib/utils/highlight';
+
+// Everything outside the modal — id set on the app shell root in PageLayout.jsx
+const APP_SHELL_ID = 'chp-app-shell';
 
 // Dynamic import keeps Leaflet out of the SSR bundle
 const ModalMap = dynamic(
@@ -175,6 +191,30 @@ export default function IntroModal({ neighborhoods = [] }) {
     return () => { clearTimeout(id); document.removeEventListener('keydown', onKey); };
   }, [isOpen, dismiss]);
 
+  // Hide the rest of the app from assistive tech while the modal is open.
+  // The modal is portaled to document.body (see the render below), so it sits
+  // outside this subtree and is unaffected by inert/aria-hidden here. Both
+  // attributes are set together: inert is what actually stops focus and AT
+  // exposure in modern browsers, aria-hidden is a fallback for anything that
+  // doesn't support inert yet. Without this, aria-modal="true" alone isn't
+  // reliably honored by every screen reader — the background stayed reachable
+  // via the virtual cursor.
+  useEffect(() => {
+    const appShell = document.getElementById(APP_SHELL_ID);
+    if (!appShell) return;
+    if (isOpen) {
+      appShell.setAttribute('inert', '');
+      appShell.setAttribute('aria-hidden', 'true');
+    } else {
+      appShell.removeAttribute('inert');
+      appShell.removeAttribute('aria-hidden');
+    }
+    return () => {
+      appShell.removeAttribute('inert');
+      appShell.removeAttribute('aria-hidden');
+    };
+  }, [isOpen]);
+
   // Reset focused index when query changes
   useEffect(() => { setFocusedIndex(-1); }, [query]);
 
@@ -249,7 +289,10 @@ export default function IntroModal({ neighborhoods = [] }) {
 
   if (!isMounted) return null;
 
-  return (
+  // Portaled to document.body so it sits outside #chp-app-shell — required
+  // for the inert/aria-hidden effect above to hide the background without
+  // also hiding the modal itself (inert would otherwise cascade to children).
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -293,12 +336,14 @@ export default function IntroModal({ neighborhoods = [] }) {
 
         {/* ── Header (full-width) ──────────────────────────────────────────── */}
         <div className="px-5 pt-5 pb-4 md:px-8 md:pt-7 md:pb-5 border-b border-gray-100 shrink-0">
-          <p className="text-sm font-semibold text-blue-600 uppercase tracking-widest mb-1.5">
+          <p className="text-sm font-semibold text-brand uppercase tracking-widest mb-1.5">
             {modalCopy.deptLabel}
           </p>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2 leading-tight">
+          {/* h2, not h1 — the page underneath (PageHeader) owns the page's h1.
+              This modal is a transient overlay, not a new document. */}
+          <h2 className="text-2xl font-bold text-gray-900 mb-2 leading-tight">
             {modalCopy.title}
-          </h1>
+          </h2>
           <p className="text-gray-600 text-sm leading-relaxed max-w-2xl">
             {modalCopy.subtitle}
           </p>
@@ -312,7 +357,7 @@ export default function IntroModal({ neighborhoods = [] }) {
               <a
                 href={modalCopy.footer.aboutHref}
                 onClick={dismiss}
-                className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded w-fit"
+                className="text-sm font-medium text-brand hover:underline transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded w-fit"
               >
                 {modalCopy.footer.aboutLabel} →
               </a>
@@ -355,8 +400,8 @@ export default function IntroModal({ neighborhoods = [] }) {
                   className={[
                     'flex-1 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500',
                     searchTab === tab.id
-                      ? 'border-b-2 border-blue-600 text-blue-700 bg-blue-50'
-                      : 'border-b-2 border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50',
+                      ? 'border-b-2 border-brand text-brand bg-brand-tint'
+                      : 'border-b-2 border-transparent text-gray-500 hover:text-brand hover:bg-brand-tint',
                   ].join(' ')}
                 >
                   {tab.label}
@@ -390,7 +435,7 @@ export default function IntroModal({ neighborhoods = [] }) {
                       aria-autocomplete="list"
                       aria-controls="intro-neighborhood-list"
                       aria-activedescendant={focusedIndex >= 0 ? `intro-result-${focusedIndex}` : undefined}
-                      className="w-full pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                     />
                     {query && (
                       <button
@@ -405,7 +450,7 @@ export default function IntroModal({ neighborhoods = [] }) {
                     )}
                   </div>
                   {visitedIds && (
-                    <p className="text-sm text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5 mt-2 text-center leading-snug">
+                    <p className="text-sm text-brand bg-brand-tint border border-brand rounded-lg px-2.5 py-1.5 mt-2 text-center leading-snug">
                       Showing {filtered.length} unvisited neighborhoods
                     </p>
                   )}
@@ -449,7 +494,7 @@ export default function IntroModal({ neighborhoods = [] }) {
                                 className={[
                                   'w-full text-left text-sm px-3 py-1.5 rounded-lg transition-colors cursor-pointer',
                                   isFocused || isHovered
-                                    ? 'bg-blue-50 text-blue-700'
+                                    ? 'bg-brand-tint text-brand'
                                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900',
                                 ].join(' ')}
                               >
@@ -506,19 +551,28 @@ export default function IntroModal({ neighborhoods = [] }) {
 
         {/* ── Footer (full-width) ──────────────────────────────────────────── */}
         <div className="px-8 py-3.5 border-t border-gray-100 shrink-0 flex items-center justify-between gap-4">
-          <p className="text-sm text-gray-400 leading-snug">{modalCopy.footer.attribution}</p>
+          <p className="text-sm text-gray-500 leading-snug">{modalCopy.footer.attribution}</p>
           <button
             onClick={() => {
               const pick = neighborhoods[Math.floor(Math.random() * neighborhoods.length)];
               if (pick) handleSelect(pick);
             }}
-            className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded shrink-0"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-brand border border-brand rounded-lg px-3 py-1.5 hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shrink-0"
           >
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="4" />
+              <circle cx="8" cy="8" r="1" fill="currentColor" stroke="none" />
+              <circle cx="16" cy="8" r="1" fill="currentColor" stroke="none" />
+              <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+              <circle cx="8" cy="16" r="1" fill="currentColor" stroke="none" />
+              <circle cx="16" cy="16" r="1" fill="currentColor" stroke="none" />
+            </svg>
             {modalCopy.footer.randomButton}
           </button>
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -23,7 +23,6 @@
  *   state from refs to avoid stale closures.
  * - Expand modal inherits the current center/zoom rather than resetting to NYC.
  * - Re-center button snaps back to the selected CD after manual pan/zoom.
- * - Hover overlay shows district name inline over the map (short viewport fix).
  * - touchstart dispatches chp:map-hover so MapHoverTooltip works on mobile.
  * - On mouseout, selected/comparison layers are re-raised so they're never
  *   covered by an adjacent hovered district.
@@ -406,18 +405,6 @@ export default function NeighborhoodMap({ onSelect }) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               Hover a district to highlight it in the charts below
-            </div>
-          </div>
-        )}
-
-        {/* Hover overlay — district name shown inline for short-viewport users */}
-        {hoveredDistrict && (
-          <div
-            className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none"
-            aria-hidden="true"
-          >
-            <div className="bg-gray-900/90 text-white text-xs font-medium px-2.5 py-1 rounded-md whitespace-nowrap">
-              {hoveredDistrict.name}
             </div>
           </div>
         )}

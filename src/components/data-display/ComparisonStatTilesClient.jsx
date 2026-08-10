@@ -26,6 +26,7 @@
 
 import { useComparison } from '@/lib/context/ComparisonContext';
 import AnimatedValue      from '@/components/data-display/AnimatedValue';
+import { SELECTED, COMPARISON, CITYWIDE, BAR_DEFAULT } from '@/lib/charts/chartColors';
 
 // Delta badge styles use CSS custom properties defined in globals.css.
 // To change health-direction colors, update --color-health-* vars there.
@@ -73,8 +74,8 @@ function MicroStrip({ rows = [], geoId }) {
               top:        20,
               width:      isSelected ? 10 : 5,
               height:     isSelected ? 10 : 5,
-              background: isSelected ? 'var(--color-brand)' : '#cbd5e1',
-              boxShadow:  isSelected ? '0 0 0 2px #fff, 0 0 0 3px var(--color-brand)' : 'none',
+              background: isSelected ? SELECTED : BAR_DEFAULT,
+              boxShadow:  isSelected ? `0 0 0 2px #fff, 0 0 0 3px ${SELECTED}` : 'none',
               transform:  'translate(-50%, -50%)',
               zIndex:     isSelected ? 3 : 1,
             }}
@@ -112,7 +113,7 @@ function MicroStrip({ rows = [], geoId }) {
                 top:        12,
                 bottom:     26,
                 width:      1,
-                background: 'repeating-linear-gradient(to bottom, #94a3b8 0 3px, transparent 3px 6px)',
+                background: `repeating-linear-gradient(to bottom, ${CITYWIDE} 0 3px, transparent 3px 6px)`,
                 zIndex:     2,
                 transform:  'translateX(-50%)',
               }}
@@ -127,8 +128,8 @@ function MicroStrip({ rows = [], geoId }) {
                 whiteSpace: 'nowrap',
               }}
             >
-              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide leading-none">Citywide</span>
-              <span className="text-[10px] text-gray-500 leading-none mt-0.5">{citywide.DisplayValue ?? citywide.Value}</span>
+              <span className="text-xs font-semibold uppercase tracking-wide leading-none" style={{ color: CITYWIDE }}>Citywide</span>
+              <span className="text-[10px] leading-none mt-0.5" style={{ color: CITYWIDE }}>{citywide.DisplayValue ?? citywide.Value}</span>
             </span>
           </>
         );
@@ -173,10 +174,10 @@ function StatTileSplit({ label, unit, displayValue, delta, compValue, nycValue }
 
       {/* Values row */}
       <div className="flex items-baseline">
-        <div className="text-2xl font-semibold text-blue-700 leading-none">
+        <div className="text-2xl font-semibold leading-none" style={{ color: SELECTED }}>
           <AnimatedValue key={displayValue} value={displayValue ?? '—'} delay={0} />
         </div>
-        <div className="ml-auto text-2xl font-semibold text-amber-600 leading-none">
+        <div className="ml-auto text-2xl font-semibold leading-none" style={{ color: COMPARISON }}>
           <AnimatedValue key={compValue} value={compValue ?? '—'} delay={0} />
         </div>
       </div>
@@ -239,8 +240,16 @@ export default function ComparisonStatTilesClient({
 
   const isComparing = !!comparisonNeighborhood;
 
+  // 3-column breakpoint is lg (1024px), not sm (640px): the desktop
+  // Sidebar (a fixed 360px <aside>) appears at md (768px), so a tablet in
+  // the 768–1023px range — iPad portrait is 744–834px depending on model —
+  // only has viewport-360-64(main padding) ≈ 280–410px of content width.
+  // At sm:grid-cols-3 that's ~85–125px per tile, too narrow for the number
+  // + label + delta pill + MicroStrip. Staying single-column full-width
+  // through that range, and only going 3-up once there's genuinely enough
+  // room (lg, 1024px: ≈600px content ÷ 3 ≈ 190px/tile), fixes it.
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 items-stretch">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
       {tilesWithComparison.map((tile, i) => {
         const spanClass =
           tilesWithComparison.length % 2 !== 0 && i === tilesWithComparison.length - 1

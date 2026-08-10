@@ -17,7 +17,7 @@ import { NEIGHBORHOOD_OVERVIEW_ID } from '../registries/sectionIds';
 
 export const neighborhoodOverview = {
   id: NEIGHBORHOOD_OVERVIEW_ID,
-  layout: 'stacked',
+  layout: 'stackedNoCard',
   children: [
     {
       id: 'neighborhood-overview-hero',

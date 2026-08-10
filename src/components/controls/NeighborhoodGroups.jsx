@@ -49,10 +49,13 @@ const SCHEMES = {
     badgeText: 'text-blue-500',
   },
   amber: {
-    focused:   'bg-amber-50 text-amber-800',
-    default:   'text-gray-700 hover:bg-amber-50 hover:text-amber-800',
-    mark:      'bg-amber-100 text-amber-900',
-    badgeText: 'text-amber-600',
+    // "amber" scheme name kept for the colorScheme prop's existing API, but the
+    // actual colors now come from the COMPARISON rust family (chartColors.js /
+    // globals.css --color-comparison-*), not Tailwind's amber palette.
+    focused:   'bg-comparison-tint text-comparison-text',
+    default:   'text-gray-700 hover:bg-comparison-tint hover:text-comparison-text',
+    mark:      'bg-comparison-border text-comparison-text',
+    badgeText: 'text-comparison-hover',
   },
 };
 

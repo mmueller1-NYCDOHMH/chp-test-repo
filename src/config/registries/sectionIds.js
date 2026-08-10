@@ -64,9 +64,12 @@ export const MATERNAL_ID     = 'maternal';
 export const INFANT_CHILD_ID = 'infant-child';
 
 
-// ── Health conditions ─────────────────────────────────────────────────────────
+// ── Mental health & substance use ─────────────────────────────────────────────
 export const MENTAL_WELLNESS_ID     = 'mental-wellness';
 export const SUBSTANCE_USE_ID       = 'substance-use';
+
+
+// ── Health conditions ─────────────────────────────────────────────────────────
 export const CHRONIC_CONDITIONS_ID  = 'chronic-conditions';
 export const INFECTIOUS_DISEASE_ID  = 'infectious-disease';
 export const HEALTH_OUTCOMES_ID     = 'health-outcomes';

@@ -13,23 +13,38 @@
  * Chart design:
  * - All 59 community districts shown as bars, sorted by value (low → high)
  * - Citywide shown as a labeled reference marker above its sorted position
- * - Borough shown as a labeled reference marker above its sorted position (amber)
- * - Selected neighborhood bar is highlighted in blue; others are gray
+ *   (compact mode: dashed rule mark, strokeDash [4,2], to read as a
+ *   reference line rather than a data bar)
+ * - Borough shown as a labeled reference marker above its sorted position
+ *   (same dashed rule mark treatment)
+ * - Selected neighborhood bar is highlighted (SELECTED); others are neutral gray
+ * - Compact mode also prints the selected neighborhood's own value, and the
+ *   comparison neighborhood's value (when one is chosen), directly above
+ *   their bars (no hover required) — text label only. Unlike Citywide/
+ *   Borough, these two have no dashed lead-line; their highlighted bar color
+ *   already marks which bar they belong to.
  * - Tooltip shows neighborhood name, value, and time period
  * - When Citywide and Borough ticks fall within OVERLAP_THRESHOLD rank
- *   positions of each other, their labels are merged into a single combined
- *   label to prevent visual collision.
- * - In expanded mode (expanded:true), a CD tick is added above the selected
- *   neighborhood's bar showing its name and value.
+ *   positions of each other, their labels are stacked vertically to prevent
+ *   visual collision. The selected CD's label always sits one level above
+ *   Citywide/Borough, and the comparison CD's label one level above that
+ *   (comparison is a runtime signal, so its rank isn't known at build time —
+ *   stacking it a fixed level above selected is a safe default).
+ * - In expanded mode (expanded:true), reference/selected/comparison values
+ *   move to the HTML legend above the chart instead of inline text labels.
  *
- * Spec structure:
+ * Colors are imported from chartColors.js — see that file for the semantic
+ * palette (SELECTED / COMPARISON / CITYWIDE / BOROUGH / BAR_DEFAULT).
+ *
+ * Spec structure (compact mode):
  *   layer:
- *     [0] text mark  ← Citywide / Borough labels (combined when close)
- *     [1] rule mark  ← Citywide tick line (red)
- *     [2] rule mark  ← Borough tick line (amber)
- *     [3] rule mark  ← CD tick line (blue, expanded only)
- *     [4] text mark  ← CD label above bar (blue, expanded only)
- *     [5] bar mark   ← all bars with highlight + hover
+ *     [0] text mark  ← Citywide label
+ *     [1] text mark  ← Borough label
+ *     [2] text mark  ← Selected CD value label
+ *     [3] text mark  ← Comparison CD value label
+ *     [4] rule mark  ← Citywide tick line
+ *     [5] rule mark  ← Borough tick line
+ *     [6] bar mark   ← all bars with highlight + hover
  *
  * INPUTS:
  * @param {Object}      options
@@ -146,9 +161,10 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, width = 'conta
   const BASE_DY  = -30;
   const DY_STEP  = 20;   // pixels per level (positive = moves text upward)
 
-  const sorted     = [...dataWithBorough].sort((a, b) => (a.Value ?? 0) - (b.Value ?? 0));
-  const nycIdx     = sorted.findIndex(r => r.GeoType === 'Citywide');
-  const boroughIdx = sorted.findIndex(r => r.GeoType === 'Borough');
+  const sorted      = [...dataWithBorough].sort((a, b) => (a.Value ?? 0) - (b.Value ?? 0));
+  const nycIdx      = sorted.findIndex(r => r.GeoType === 'Citywide');
+  const boroughIdx  = sorted.findIndex(r => r.GeoType === 'Borough');
+  const selectedIdx = geoId != null ? sorted.findIndex(r => r.GeoID === geoId) : -1;
 
   // ── Edge-aware label alignment (compact chart text labels only) ────────────
   // Labels centered on bars at the far left/right overflow the chart canvas.
@@ -158,11 +174,12 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, width = 'conta
   const rightCutoff = edgeValues.length > EDGE ? edgeValues[edgeValues.length - EDGE] : (edgeValues[edgeValues.length - 1] ?? 0);
   const alignExpr   = `datum.Value != null && datum.Value <= ${leftCutoff} ? 'left' : datum.Value != null && datum.Value >= ${rightCutoff} ? 'right' : 'center'`;
 
-  // ── dy stacking for NYC / Borough labels (compact chart only) ─────────────
+  // ── dy stacking for NYC / Borough / Selected labels (compact chart only) ──
   // In expanded mode labels are rendered in an HTML legend; no stacking needed.
   const knownTicks = [
-    ...(nycIdx     >= 0 ? [{ rank: nycIdx,     role: 'nyc',     defaultLevel: 0 }] : []),
-    ...(boroughIdx >= 0 ? [{ rank: boroughIdx, role: 'borough', defaultLevel: 0 }] : []),
+    ...(nycIdx      >= 0 ? [{ rank: nycIdx,      role: 'nyc',      defaultLevel: 0 }] : []),
+    ...(boroughIdx  >= 0 ? [{ rank: boroughIdx,  role: 'borough',  defaultLevel: 0 }] : []),
+    ...(selectedIdx >= 0 ? [{ rank: selectedIdx, role: 'selected', defaultLevel: 0 }] : []),
   ].sort((a, b) => a.rank - b.rank);
 
   const levelByRole = {};
@@ -180,15 +197,26 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, width = 'conta
     }
   }
 
-  const nycDy = BASE_DY - (levelByRole.nyc     ?? 0) * DY_STEP;
+  const nycDy = BASE_DY - (levelByRole.nyc      ?? 0) * DY_STEP;
   const borDy = BASE_DY - (levelByRole.borough  ?? 0) * DY_STEP;
-
-  // ── Label transforms (compact chart only — expanded uses HTML legend) ──────
-  const nycLabelCalc = "datum.GeoType === 'Citywide' ? 'Citywide · ' + datum.DisplayValue : ''";
-  const borLabelCalc = "datum.GeoType === 'Borough'  ? datum.Geography + ' · ' + datum.DisplayValue : ''";
+  const selDy = BASE_DY - (levelByRole.selected ?? 0) * DY_STEP;
 
   // Vega expression test for the comparison CD
   const compTest = 'comparisonGeoId !== null && datum.GeoID === comparisonGeoId';
+
+  // Comparison CD is a runtime signal (set interactively, not known at spec
+  // build time), so its rank can't be included in the overlap-stacking pass
+  // above. It's always placed one level above the selected CD label instead —
+  // a safe default that never collides with the selected label.
+  const compDy = selDy - DY_STEP;
+
+  // ── Label transforms (compact chart only — expanded uses HTML legend) ──────
+  const nycLabelCalc  = "datum.GeoType === 'Citywide' ? 'Citywide · ' + datum.DisplayValue : ''";
+  const borLabelCalc  = "datum.GeoType === 'Borough'  ? datum.Geography + ' · ' + datum.DisplayValue : ''";
+  // Selected CD's own value, shown above its bar so users don't have to hover to read it.
+  const selLabelCalc  = `${highlightTest} ? datum.DisplayValue : ''`;
+  // Comparison CD's own value — same treatment, driven by the comparisonGeoId signal.
+  const compLabelCalc = `${compTest} ? datum.DisplayValue : ''`;
 
   // In expanded mode ticks are replaced by bar coloring — no rule mark layers needed.
   const expandedLayers = [];
@@ -226,9 +254,12 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, width = 'conta
 
     transform: [
       { calculate: 'datum.DisplayValue', as: 'valueLabel' },
-      // NYC and Borough label fields used by the compact chart text layers.
-      { calculate: nycLabelCalc, as: 'nycLabel' },
-      { calculate: borLabelCalc, as: 'borLabel' },
+      // NYC, Borough, Selected, and Comparison label fields used by the
+      // compact chart text layers.
+      { calculate: nycLabelCalc,  as: 'nycLabel' },
+      { calculate: borLabelCalc,  as: 'borLabel' },
+      { calculate: selLabelCalc,  as: 'selLabel' },
+      { calculate: compLabelCalc, as: 'compLabel' },
     ],
 
     height: height,
@@ -258,9 +289,10 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, width = 'conta
     },
 
     layer: [
-              // ── NYC / Borough text labels — compact chart only ────────────
-              // In expanded mode all labels live in the HTML legend above the
-              // chart, so these layers are omitted to avoid crowding.
+              // ── NYC / Borough / Selected / Comparison text labels ─────────
+              // Compact chart only — in expanded mode all labels live in the
+              // HTML legend above the chart, so these layers are omitted to
+              // avoid crowding.
               ...(!expanded ? [
                 {
                   mark: { type: 'text', dy: nycDy, fontSize: 11, fontWeight: 'bold' },
@@ -290,13 +322,48 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, width = 'conta
                     align: { expr: alignExpr },
                   },
                 },
+                // Selected neighborhood's own value, shown directly above its
+                // highlighted bar — text label only, no dashed lead-line.
+                {
+                  mark: { type: 'text', dy: selDy, fontSize: 11, fontWeight: 'bold' },
+                  encoding: {
+                    text: {
+                      condition: { test: highlightTest, field: 'selLabel' },
+                      value: '',
+                    },
+                    color: {
+                      condition: { test: highlightTest, value: SELECTED },
+                      value: 'transparent',
+                    },
+                    align: { expr: alignExpr },
+                  },
+                },
+                // Comparison neighborhood's own value — same treatment, driven
+                // by the comparisonGeoId signal set interactively. Text label
+                // only, no dashed lead-line.
+                {
+                  mark: { type: 'text', dy: compDy, fontSize: 11, fontWeight: 'bold' },
+                  encoding: {
+                    text: {
+                      condition: { test: compTest, field: 'compLabel' },
+                      value: '',
+                    },
+                    color: {
+                      condition: { test: compTest, value: COMPARISON },
+                      value: 'transparent',
+                    },
+                    align: { expr: alignExpr },
+                  },
+                },
               ] : []),
 
               // ── NYC / Borough tick rules — compact chart only ─────────────
               // In expanded mode the reference rows are colored bars instead.
+              // Selected/Comparison intentionally have no rule mark here —
+              // their highlighted bar color already marks their position.
               ...(!expanded ? [
                 {
-                  mark: { type: 'rule', yOffset: -18, strokeWidth: 2 },
+                  mark: { type: 'rule', yOffset: -18, strokeWidth: 2, strokeDash: [4, 2] },
                   encoding: {
                     color: {
                       condition: { test: "datum.GeoType === 'Citywide'", value: CITYWIDE },
@@ -305,7 +372,7 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, width = 'conta
                   },
                 },
                 {
-                  mark: { type: 'rule', yOffset: -18, strokeWidth: 2 },
+                  mark: { type: 'rule', yOffset: -18, strokeWidth: 2, strokeDash: [4, 2] },
                   encoding: {
                     color: {
                       condition: { test: "datum.GeoType === 'Borough'", value: BOROUGH },

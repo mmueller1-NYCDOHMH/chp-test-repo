@@ -4,14 +4,47 @@
  * FILE: StickyContextBar.jsx
  *
  * PURPOSE:
- * Compact sticky bar that persists below TopicNav as the user scrolls.
+ * Compact sticky bar that persists below TopicNav as the user scrolls. Also
+ * carries two utility controls — About this tool and keyboard shortcuts —
+ * that stay reachable while scrolled instead of disappearing with the header.
  *
  * DESCRIPTION:
- * Shows two pieces of persistent context:
- *   Left  — neighborhood name + borough (revealed only after the page header
- *            scrolls out of view, so it doesn't duplicate visible content)
- *   Right — current subcategory breadcrumb (Category › Subcategory),
- *            updated by scroll-spy as sections enter the viewport
+ *   Left  — a "browse map" icon (reopens the full neighborhood-picker map
+ *           modal — see WHY THE MAP ICON below), the current subcategory
+ *           breadcrumb (Category › Subcategory, updated by scroll-spy as
+ *           sections enter the viewport), and a copy-link button.
+ *   Right — About this tool and keyboard shortcuts.
+ *
+ * LANGUAGE SELECTOR MOVED OUT:
+ * LanguageToggle used to render here too, but this bar returns null when
+ * there are no `sections` (see bottom) — so it never rendered on /about or
+ * any other static page. Language now lives in PageHeader instead, which has
+ * no such guard and renders on every route. About/shortcuts stayed here
+ * since both are only meaningful in the context of browsing a profile page.
+ *
+ * WHY NO NEIGHBORHOOD NAME:
+ * This used to also show the neighborhood name + borough on the left,
+ * revealed once the page header scrolled out of view. Dropped because that
+ * same info is already visible elsewhere on the page (sidebar, page header
+ * before scrolling) — showing it a third time cost width without adding
+ * meaning.
+ *
+ * WHY THE MAP ICON:
+ * Clicking the neighborhood name used to reopen the full map-based picker
+ * (IntroModal) — the only way back to it once you'd scrolled past the header
+ * on mobile, since the mobile FAB's bottom sheet is search-only (no Leaflet
+ * map, to avoid a double-init crash — see Sidebar.jsx). Removing the name
+ * would have silently removed that entry point, so its onClick moved to a
+ * dedicated icon instead of disappearing.
+ *
+ * UTILITY CONTROLS NOTE:
+ * This bar returns null when there are no sections (see bottom), so it does
+ * not render on /about or other static pages — About/shortcuts are only
+ * reachable here, on neighborhood profile pages, once this bar exists in the
+ * DOM (it's always in the DOM on those pages, sticky-visible whether or not
+ * you've scrolled). Language used to have the same gap; fixed by moving
+ * LanguageToggle to PageHeader instead (see LANGUAGE SELECTOR MOVED OUT
+ * above), which has no `sections` guard.
  *
  * TOP OFFSET:
  * The bar must stick immediately below the TopicNav. Because TopicNav text
@@ -24,22 +57,17 @@
  * clipping the TopicNav height. Also listens for the `chp:section-activated`
  * custom event fired on programmatic scrolls from TopicNav clicks.
  *
- * HEADER VISIBILITY:
- * An IntersectionObserver watches the <header> element. The neighborhood name
- * and borough are hidden while the header is in view and revealed once it
- * scrolls off-screen, preventing duplicate context.
- *
  * PROPS:
- *   neighborhoods — array of neighborhood objects (from getNeighborhoods)
- *   sections      — flat array of non-category section configs
+ *   sections — flat array of non-category section configs
  *
  * NOTES:
- * - Client component — uses useParams, useEffect, useState, useRef
+ * - Client component — uses useEffect, useState, useRef
  */
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { siteNav } from '@/config/nav/siteNav';
 import { useComparison } from '@/lib/context/ComparisonContext';
+import KeyboardShortcutsButton from './KeyboardShortcutsButton';
 
 const FALLBACK_NAV_HEIGHT = 56;
 
@@ -52,19 +80,12 @@ function resolveBreadcrumb(sectionId) {
   return null;
 }
 
-export default function StickyContextBar({ neighborhoods = [], sections = [] }) {
-  const params       = useParams();
-  const activeId     = params?.id ? String(params.id) : null;
-  const neighborhood = activeId
-    ? neighborhoods.find(n => String(n.id) === activeId)
-    : null;
-
+export default function StickyContextBar({ sections = [] }) {
   const { comparisonNeighborhood, setComparisonNeighborhood } = useComparison();
 
   const [activeSectionId, setActiveSectionId] = useState(null);
   const [topOffset, setTopOffset]             = useState(FALLBACK_NAV_HEIGHT);
   const [scrollProgress, setScrollProgress]   = useState(0);
-  const [headerVisible, setHeaderVisible]     = useState(true);
   const [copied, setCopied]                   = useState(false);
 
   const handleShare = useCallback(() => {
@@ -92,19 +113,6 @@ export default function StickyContextBar({ neighborhoods = [], sections = [] }) 
     update();
     window.addEventListener('scroll', update, { passive: true });
     return () => window.removeEventListener('scroll', update);
-  }, []);
-
-  // ── Watch page header visibility ────────────────────────────────────────
-  useEffect(() => {
-    const header = document.querySelector('header');
-    if (!header) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setHeaderVisible(entry.isIntersecting),
-      { threshold: 0 },
-    );
-    observer.observe(header);
-    return () => observer.disconnect();
   }, []);
 
   // ── Measure TopicNav height so we stick immediately below it ────────────
@@ -181,50 +189,52 @@ export default function StickyContextBar({ neighborhoods = [], sections = [] }) 
       {/* Scroll progress bar — 2px strip at the very bottom of this sticky bar */}
       <div
         aria-hidden="true"
-        className="absolute bottom-0 left-0 h-[2px] bg-blue-500 transition-[width] duration-75 ease-linear"
+        className="absolute bottom-0 left-0 h-[2px] bg-brand transition-[width] duration-75 ease-linear"
         style={{ width: `${scrollProgress * 100}%` }}
       />
 
-      <div className="max-w-5xl w-full mx-auto px-4 md:px-8 flex items-center justify-between h-9">
+      <div className="max-w-5xl w-full mx-auto px-4 md:px-8 flex items-center justify-between h-9 gap-3">
 
-        {/* Left — neighborhood name + borough, revealed once header scrolls away */}
+        {/* Left — browse-map icon, active section breadcrumb, copy link */}
         <div className="flex items-center gap-2 min-w-0 overflow-hidden">
-          {neighborhood && !headerVisible ? (
-            <div
-              className="flex items-center gap-2 min-w-0 transition-all duration-200 ease-out"
-              style={{
-                opacity: headerVisible ? 0 : 1,
-                transform: headerVisible ? 'translateY(-4px)' : 'translateY(0)',
-              }}
-            >
-              <button
-                onClick={handleOpenPicker}
-                aria-label={`${neighborhood.name} — click to switch neighborhood`}
-                className="text-xs font-semibold text-gray-900 truncate hover:text-blue-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
-              >
-                {neighborhood.name}
-              </button>
-              <span className="text-xs text-gray-600 shrink-0">{neighborhood.borough}</span>
+          {/* Reopens the full map picker — see WHY THE MAP ICON above */}
+          <button
+            onClick={handleOpenPicker}
+            aria-label="Browse map — change neighborhood"
+            title="Change neighborhood"
+            className="shrink-0 p-1 -m-1 text-gray-400 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+            </svg>
+          </button>
 
-              {/* Share button */}
-              <button
-                onClick={handleShare}
-                aria-label="Copy link to this neighborhood"
-                title="Copy link"
-                className="shrink-0 ml-1 p-1 -m-1 text-gray-400 hover:text-blue-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
-              >
-                {copied ? (
-                  <span className="text-xs font-medium text-blue-600">Copied!</span>
-                ) : (
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                  </svg>
-                )}
-              </button>
+          {breadcrumb ? (
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-xs text-gray-600 truncate">{breadcrumb.catLabel}</span>
+              <span className="text-xs text-gray-400 shrink-0">›</span>
+              <span className="text-xs text-brand font-medium truncate">{breadcrumb.subLabel}</span>
             </div>
-          ) : !neighborhood ? (
-            <span className="text-xs text-gray-600">Community Health Profiles</span>
-          ) : null}
+          ) : (
+            <span className="text-xs text-gray-600 truncate">Community Health Profiles</span>
+          )}
+
+          {/* Copy link */}
+          <button
+            onClick={handleShare}
+            aria-label="Copy link to this section"
+            title="Copy link"
+            className="shrink-0 p-1 -m-1 text-gray-400 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+          >
+            {copied ? (
+              <span className="text-xs font-medium text-brand">Copied!</span>
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            )}
+          </button>
         </div>
 
         {/* Centre — comparison pill: only on mobile (md+ has sidebar which already shows it) */}
@@ -250,14 +260,16 @@ export default function StickyContextBar({ neighborhoods = [], sections = [] }) 
           </div>
         )}
 
-        {/* Right — active section breadcrumb (only when in a siteNav section) */}
-        {breadcrumb && (
-          <div className="flex items-center gap-1.5 text-xs text-gray-600 shrink-0 ml-auto">
-            <span className="hidden sm:inline">{breadcrumb.catLabel}</span>
-            <span className="hidden sm:inline">›</span>
-            <span className="text-blue-600 font-medium">{breadcrumb.subLabel}</span>
-          </div>
-        )}
+        {/* Right — utility controls (About/shortcuts only — language lives in PageHeader) */}
+        <div className="flex items-center gap-3 shrink-0 ml-auto">
+          <Link
+            href="/about"
+            className="hidden sm:inline text-xs font-medium text-gray-600 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+          >
+            About this tool
+          </Link>
+          <KeyboardShortcutsButton />
+        </div>
 
       </div>
     </div>

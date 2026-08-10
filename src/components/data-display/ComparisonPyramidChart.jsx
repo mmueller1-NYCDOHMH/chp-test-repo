@@ -24,10 +24,12 @@
  * NOTES:
  * - Server component — no "use client"
  * - Includes a hidden accessible table for screen readers
- * - Color tokens / final palette belong to Phase A (design layer)
+ * - Colors come from chartColors.js (SELECTED / COMPARISON / CITYWIDE) so
+ *   this chart stays in sync with the ranked bar chart's palette.
  */
 
 import AnimatedBar from './AnimatedBar';
+import { SELECTED, COMPARISON, CITYWIDE } from '@/lib/charts/chartColors';
 
 export default function ComparisonPyramidChart({
   title,
@@ -37,8 +39,7 @@ export default function ComparisonPyramidChart({
   rightLabel = 'Citywide',
   comparisonMode = false,
 }) {
-  const rightBarClass    = comparisonMode ? 'bg-amber-400'  : 'bg-slate-300';
-  const rightLegendClass = comparisonMode ? 'bg-amber-400'  : 'bg-slate-300';
+  const rightColor = comparisonMode ? COMPARISON : CITYWIDE;
 
   if (!segments.length) {
     return (
@@ -64,11 +65,17 @@ export default function ComparisonPyramidChart({
       <div className="text-xs font-semibold text-gray-700 leading-snug">{title}</div>
 
       {/* ── Legend ───────────────────────────────────────────── */}
-      <div className="flex justify-between">
-        <span className="text-xs font-semibold tracking-wider uppercase leading-tight text-blue-700">
+      {/* min-w-0 + truncate on both sides: rightLabel used to only ever be
+          "Citywide" or a short toggle state, but with neighborhood
+          comparison now reachable on mobile, rightLabel can be any
+          neighborhood name (some are long, e.g. hyphenated multi-area CD
+          names) — truncate with ellipsis instead of wrapping/colliding with
+          the other side at narrow widths. */}
+      <div className="flex justify-between gap-2">
+        <span className="min-w-0 truncate text-xs font-semibold tracking-wider uppercase leading-tight" style={{ color: SELECTED }}>
           {neighborhoodLabel}
         </span>
-        <span className={`text-xs font-semibold tracking-wider uppercase leading-tight ${comparisonMode ? 'text-amber-700' : 'text-gray-600'}`}>
+        <span className="min-w-0 truncate text-right text-xs font-semibold tracking-wider uppercase leading-tight" style={{ color: rightColor }}>
           {rightLabel}
         </span>
       </div>
@@ -84,18 +91,18 @@ export default function ComparisonPyramidChart({
           const cPct = ((s.citywideValue    ?? 0) / max) * 100;
 
           return (
-            <div key={s.key} className="flex items-center gap-0" aria-hidden="true">
-
+            <div key={s.key} className="flex items-center gap-0 min-w-0" aria-hidden="true">
               {/* Left half — neighborhood, bar grows rightward toward center */}
-              <div className="flex-1 flex items-center justify-end gap-1 pr-1">
-                <span className="text-xs text-gray-600 tabular-nums shrink-0 w-7 sm:w-8 text-right">
+              <div className="flex-1 min-w-0 flex items-center justify-end gap-1 pr-1">
+                                <span className="text-xs text-gray-600 tabular-nums shrink-0 w-7 sm:w-8 text-right">
                   {s.neighborhoodValue != null ? `${s.neighborhoodValue}%` : '—'}
                 </span>
                 {/* Bar track — fills from right edge toward center */}
                 <div className="flex-1 flex justify-end h-4 sm:h-5">
                   <AnimatedBar
                     widthPct={nPct}
-                    className="bg-blue-600 h-full rounded-l-sm"
+                    color={SELECTED}
+                    className="h-full rounded-l-sm"
                     title={`${neighborhoodLabel}: ${s.neighborhoodValue}%`}
                     delay={0}
                     origin="right center"
@@ -109,11 +116,12 @@ export default function ComparisonPyramidChart({
               </div>
 
               {/* Right half — citywide, bar grows leftward from center */}
-              <div className="flex-1 flex items-center gap-1 pl-1">
+              <div className="flex-1 min-w-0 flex items-center gap-1 pl-1">
                 <div className="flex-1 h-4 sm:h-5">
                   <AnimatedBar
                     widthPct={cPct}
-                    className={`${rightBarClass} h-full rounded-r-sm`}
+                    color={rightColor}
+                    className="h-full rounded-r-sm"
                     title={`${rightLabel}: ${s.citywideValue}%`}
                     delay={0}
                     origin="left center"
@@ -130,8 +138,8 @@ export default function ComparisonPyramidChart({
       </div>
 
       {/* ── Accessible table (screen readers) ───────────────── */}
-      <table className="sr-only">
-        <caption>{title} — {neighborhoodLabel} vs {rightLabel}</caption>
+      <table className="sr-only table-fixed">
+    <caption>{title} — {neighborhoodLabel} vs {rightLabel}</caption>
         <thead>
           <tr>
             <th scope="col">Category</th>

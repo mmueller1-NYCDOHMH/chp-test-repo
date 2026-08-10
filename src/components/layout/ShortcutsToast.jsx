@@ -5,14 +5,15 @@
  *
  * PURPOSE:
  * First-visit hint surfacing the keyboard shortcuts that are otherwise only
- * discoverable by finding the ? button in the sidebar footer.
+ * discoverable by finding the ? button in the site header (HeaderHelpMenu).
  *
  * BEHAVIOR:
  * - Renders once per user (gated on 'chp_shortcuts_hint_seen' in localStorage)
  * - Auto-dismisses after 4 seconds
  * - Close button dismisses immediately
  * - Does not render on mobile (shortcuts are desktop-only)
- * - Positioned at the bottom of the sidebar, just above the footer
+ * - Positioned at the bottom of the sidebar, just above the sticky
+ *   "neighborhoods explored" badge (bottom-[44px] matches that badge's height)
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -57,7 +58,7 @@ export default function ShortcutsToast() {
       role="status"
       aria-live="polite"
       aria-label="Keyboard shortcuts tip"
-      className="hidden md:block absolute bottom-[52px] left-0 right-0 px-4 pointer-events-none z-20"
+      className="hidden md:block absolute bottom-[44px] left-0 right-0 px-4 pointer-events-none z-20"
       style={{
         opacity,
         transition: 'opacity 250ms ease-out',

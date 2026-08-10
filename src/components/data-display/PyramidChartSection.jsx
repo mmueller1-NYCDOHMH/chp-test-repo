@@ -51,8 +51,17 @@ export default function PyramidChartSection({ charts = [], neighborhoodLabel, ge
         </div>
       )}
 
-      {/* Charts grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+      {/* Charts grid.
+          2-up breakpoint is lg (1024px), not md (768px): the desktop
+          Sidebar (a fixed 360px <aside>) also appears at md, so a tablet in
+          the 768–1023px range — iPad portrait is 744–834px depending on
+          model — only has ≈280–410px of content width. Split 2-up at that
+          width, each chart's fixed-width label (w-28=112px) + value
+          (w-8×2=64px) columns alone eat ~176px, leaving almost nothing for
+          the bars themselves. Staying single-column (full width per chart)
+          through that range, and only splitting once there's enough room
+          (lg: ≈600px content ÷ 2 ≈ 300px/chart), fixes it. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {charts.map(chart => (
           <ComparisonPyramidChartClient
             key={`${chart.indicatorKey}-${neighborhoodLabel}`}

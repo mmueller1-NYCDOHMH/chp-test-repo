@@ -92,7 +92,7 @@ function ExpandedChartLegend({ indicatorData, geoId, comparisonNeighborhood }) {
   if (!items.length) return null;
 
   return (
-    <div className="px-7 pb-3 flex flex-col gap-1.5">
+    <div className="px-7 pb-3 flex flex-row flex-wrap items-center gap-x-5 gap-y-1.5">
       {items.map((item, i) => (
         <div key={i} className="flex items-center gap-2 min-w-0">
           <span
@@ -103,7 +103,7 @@ function ExpandedChartLegend({ indicatorData, geoId, comparisonNeighborhood }) {
           <span className="text-xs text-gray-700 whitespace-nowrap">
             {item.label}
             {item.value && (
-              <span className="text-gray-400 ml-1">· {item.value}</span>
+              <span className="text-gray-600 ml-1">· {item.value}</span>
             )}
           </span>
         </div>
@@ -322,7 +322,7 @@ export default function ExpandableChartCard({
         // Value (gray suffix)
         if (item.value) {
           const labelW = ctx.measureText(item.label).width;
-          ctx.fillStyle = '#9CA3AF';
+          ctx.fillStyle = '#4B5563';
           ctx.fillText(` · ${item.value}`, tx + labelW, ty);
         }
       });
@@ -480,7 +480,7 @@ export default function ExpandableChartCard({
               onClick={() => setIsExpanded(true)}
               aria-label={`Expand chart: ${title}`}
               aria-haspopup="dialog"
-              className="hidden sm:flex w-9 h-9 items-center justify-center rounded-md border border-gray-200 text-gray-400 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="hidden sm:flex w-9 h-9 items-center justify-center rounded-md border border-brand text-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
@@ -492,7 +492,7 @@ export default function ExpandableChartCard({
               onClick={handleDetails}
               aria-label={`Details about ${title}`}
               title={`Details (i)`}
-              className="inline-flex items-center gap-1 h-8 sm:h-9 px-2.5 rounded-md border border-gray-200 text-xs font-medium text-gray-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap"
+              className="inline-flex items-center gap-1 h-8 sm:h-9 px-2.5 rounded-md border border-brand text-xs font-medium text-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap"
             >
               Details
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -503,7 +503,7 @@ export default function ExpandableChartCard({
         </div>
 
         {/* ── Chart ───────────────────────────────────────────────────────── */}
-        <div className="px-4 sm:px-5 pb-4">
+        <div className="px-4 sm:px-5 pb-4 min-w-0">
           {(!indicatorData || indicatorData.length === 0) ? (
             <div
               className="w-full flex items-center justify-center bg-gray-50 rounded-lg border border-dashed border-gray-200"
@@ -530,7 +530,7 @@ export default function ExpandableChartCard({
                 <button
                   onClick={() => setNotesOpen(true)}
                   aria-label="View source notes"
-                  className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shrink-0 text-xs font-semibold"
+                  className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:border-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shrink-0 text-xs font-semibold"
                 >
                   ?
                 </button>
@@ -678,7 +678,7 @@ export default function ExpandableChartCard({
                     onClick={handleCopyImage}
                     aria-label="Copy chart as image"
                     title="Copy image"
-                    className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-gray-200 text-xs font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-gray-200 text-xs font-medium text-gray-500 hover:text-brand hover:border-brand hover:bg-brand-tint transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap"
                   >
                     {copyState === 'copied' ? (
                       <><span className="text-green-600">✓</span> Copied</>
@@ -699,7 +699,7 @@ export default function ExpandableChartCard({
                     onClick={handleDownloadImage}
                     aria-label="Download chart as PNG"
                     title="Download PNG"
-                    className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-gray-200 text-xs font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-gray-200 text-xs font-medium text-gray-500 hover:text-brand hover:border-brand hover:bg-brand-tint transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -716,7 +716,7 @@ export default function ExpandableChartCard({
                   onClick={() => setEmbedOpen(true)}
                   aria-label="Embed chart"
                   title="Embed"
-                  className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-gray-200 text-xs font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-gray-200 text-xs font-medium text-gray-500 hover:text-brand hover:border-brand hover:bg-brand-tint transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -730,7 +730,7 @@ export default function ExpandableChartCard({
                   onClick={() => { setIsExpanded(false); expandBtnRef.current?.focus(); }}
                   aria-label="Close expanded chart"
                   data-modal-autofocus
-                  className="inline-flex items-center gap-1.5 h-8 px-3 text-sm text-gray-500 hover:text-gray-700 border border-gray-300 hover:border-gray-400 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 h-8 px-3 text-sm text-gray-500 hover:text-brand border border-gray-200 hover:border-brand hover:bg-brand-tint rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap"
                 >
                   Close
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">

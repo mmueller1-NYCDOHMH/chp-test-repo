@@ -73,5 +73,16 @@ export const layoutPresets = {
       gap: "md",
       width: "contained",
       noCard: true
+    },
+
+    // stackedNoCard: same as `stacked`, but without the outer section card.
+    // Use for sections whose own content already reads as a self-contained
+    // panel (e.g. the neighborhood "At a Glance" hero), so it doesn't render
+    // as a card nested inside another card.
+    stackedNoCard: {
+      variant: "stack",
+      gap: "md",
+      width: "contained",
+      noCard: true
     }
   };

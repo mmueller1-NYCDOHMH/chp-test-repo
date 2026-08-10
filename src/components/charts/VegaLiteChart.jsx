@@ -173,7 +173,7 @@ const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onView
   }
 
   return (
-    <div className="relative" style={{ minHeight: '175px' }}>
+    <div className="relative min-w-0" style={{ minHeight: '175px' }}>
       {/* Skeleton — visible while vega-embed loads and animates in.
           Sits behind the chart wrapper so the fade-in transition plays
           over it rather than over blank white space. */}
@@ -186,13 +186,14 @@ const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onView
 
       <div
         ref={wrapperRef}
+        className="min-w-0"
         style={{
           opacity:    hasEntered ? 1 : 0,
           transform:  hasEntered ? 'translateY(0)' : 'translateY(10px)',
           transition: 'opacity 450ms ease-out, transform 450ms ease-out',
         }}
       >
-        <div ref={containerRef} className="w-full" />
+        <div ref={containerRef} className="w-full min-w-0 overflow-hidden" />
       </div>
     </div>
   );

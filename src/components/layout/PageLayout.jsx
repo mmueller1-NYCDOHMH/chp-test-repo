@@ -22,10 +22,11 @@
 
 import Sidebar from './Sidebar';
 import PageHeader from './PageHeader';
+import Footer from './Footer';
 import TopicNav from './TopicNav';
 import StickyContextBar from './StickyContextBar';
 import FlyoutShell from '@/components/core/FlyoutShell';
-import BackToTopButton from '@/components/controls/BackToTopButton';
+import BackToTopButton, { BackToTopButtonMobile } from '@/components/controls/BackToTopButton';
 import { ComparisonProvider } from '@/lib/context/ComparisonContext';
 import { getNeighborhoods } from '@/lib/data/getNeighborhoods';
 import { getIndicatorSummaries } from '@/lib/data/getIndicatorSummaries';
@@ -43,7 +44,10 @@ export default async function PageLayout({ config, children, pageLabel, pageNav 
   return (
     <ComparisonProvider neighborhoods={neighborhoods}>
     <FlyoutShell>
-      <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* id targeted by IntroModal's inert/aria-hidden effect — must wrap
+          everything except the (portaled) modal so the background can be
+          hidden from assistive tech while the modal is open. */}
+      <div id="chp-app-shell" className="flex flex-col min-h-screen bg-[var(--background)]">
 
         {/* Header — full width, spans above sidebar and content */}
         <PageHeader neighborhoods={neighborhoods} />
@@ -60,14 +64,15 @@ export default async function PageLayout({ config, children, pageLabel, pageNav 
           />
 
           {/* Main content */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-w-0">
 
             {/* Sticky topic nav — two-level hover dropdown with scroll-spy */}
             <TopicNav />
 
-            {/* Sticky context bar — neighborhood name + active section breadcrumb */}
+            {/* Sticky context bar — breadcrumb + copy link + About/language/shortcuts.
+                Only renders on pages with sections, so it's the only place those
+                utility controls live now (see StickyContextBar's UTILITY CONTROLS NOTE). */}
             <StickyContextBar
-              neighborhoods={neighborhoods}
               sections={config.sections.filter(s => !s.category)}
             />
 
@@ -78,13 +83,19 @@ export default async function PageLayout({ config, children, pageLabel, pageNav 
               aria-label={pageLabel ?? 'Community Health Profile'}
             >
               {children}
+              <BackToTopButtonMobile />
             </main>
 
           </div>
         </div>
-      </div>
 
-      <BackToTopButton />
+        {/* Footer — full width, below sidebar + content, above BackToTopButton */}
+        <Footer />
+
+        {/* Fixed-position, but kept inside #chp-app-shell (rather than as a
+            sibling) so it's covered by the inert/aria-hidden toggle above. */}
+        <BackToTopButton />
+      </div>
     </FlyoutShell>
     </ComparisonProvider>
   );

@@ -7,7 +7,9 @@
  *
  * DESCRIPTION:
  * Server component that renders:
- * 1. A neighborhood identity header (name, borough, CD number)
+ * 1. A neighborhood identity header (name only — borough subheader removed
+ *    since it reads as confusing/incorrect once a user adds a comparison
+ *    community district in a different borough)
  * 2. A row of three StatTiles: total population, nativity, language
  * 3. Two ComparisonPyramidCharts side by side: Age Breakdown and Race / Ethnicity,
  *    each showing Neighborhood vs. NYC Citywide bars back-to-back per category.
@@ -71,7 +73,7 @@ export default function NeighborhoodOverviewHero({
   pyramidCharts = [],
   context,
 }) {
-  const { geoId, neighborhood, borough } = context ?? {};
+  const { geoId, neighborhood } = context ?? {};
 
   if (!geoId) return null;
 
@@ -101,9 +103,6 @@ export default function NeighborhoodOverviewHero({
       {/* ── Identity header ─────────────────────────────────── */}
       <div>
         <AtAGlanceTitle neighborhood={neighborhood ?? 'Neighborhood'} />
-        {borough && (
-          <p className="text-sm text-gray-600 mt-0.5">{borough}</p>
-        )}
       </div>
 
       {/* ── Stat tiles (population, nativity, language) ──────── */}

@@ -21,6 +21,13 @@
  *
  * PROPS:
  *   onNavigate  — called after the user selects a result (optional)
+ *
+ * NOTE ON FOCUS RING COLOR:
+ * The search input has autoFocus, so it's in its focused state the instant
+ * this tab opens — same situation as IntroModal's neighborhood search. Its
+ * focus ring is ring-brand rather than the site-wide ring-blue-500 for the
+ * same reason: since users see it focused far more than resting, the focus
+ * color is what actually reads as "the input's border."
  */
 
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
@@ -166,7 +173,7 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
           aria-label="Search indicators"
           aria-controls="indicator-search-results"
           aria-activedescendant={focusedIndex >= 0 ? `search-result-${focusedIndex}` : undefined}
-          className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
         />
         {query && (
           <button
@@ -183,15 +190,15 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
 
       {/* ── Category filter chip ────────────────────────────────── */}
       {categoryFilter && (
-        <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5">
-          <svg className="w-3 h-3 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+        <div className="flex items-center gap-1.5 bg-brand-tint border border-brand rounded-lg px-2.5 py-1.5">
+          <svg className="w-3 h-3 text-brand shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 8h10M11 12h2" />
           </svg>
-          <span className="text-xs font-medium text-blue-700 flex-1 leading-none">{categoryFilter}</span>
+          <span className="text-xs font-medium text-brand flex-1 leading-none">{categoryFilter}</span>
           <button
             onClick={onClearFilter}
             aria-label={`Remove ${categoryFilter} filter`}
-            className="text-blue-400 hover:text-blue-700 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded"
+            className="text-gray-500 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded"
           >
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -203,7 +210,7 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
       {/* ── Active neighborhood context ─────────────────────────── */}
       {activeNeighborhood && !categoryFilter && (
         <div className="flex items-center gap-1.5 text-xs text-gray-600">
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" aria-hidden="true" />
+          <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0" aria-hidden="true" />
           <span>
             Viewing <span className="font-medium text-gray-800">{activeNeighborhood.name}</span>
           </span>
@@ -249,7 +256,7 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
                 <button
                   key={s}
                   onClick={() => { setQuery(s); inputRef.current?.focus(); }}
-                  className="text-xs text-blue-600 border border-blue-200 bg-blue-50 rounded-full px-2.5 py-0.5 hover:bg-blue-100 transition-colors"
+                  className="text-xs text-brand border border-brand bg-brand-tint rounded-full px-2.5 py-0.5 hover:bg-brand hover:text-white transition-colors"
                 >
                   {s}
                 </button>
@@ -278,12 +285,12 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
                         onClick={() => handleSelect(ind)}
                         className={[
                           'text-left px-3 py-2.5 rounded-lg transition-colors group',
-                          isFocused ? 'bg-blue-50 ring-1 ring-blue-200' : 'hover:bg-blue-50',
+                          isFocused ? 'bg-brand-tint ring-1 ring-brand' : 'hover:bg-brand-tint',
                         ].join(' ')}
                       >
                         <p className={[
                           'text-sm font-medium leading-snug',
-                          isFocused ? 'text-blue-700' : 'text-gray-900 group-hover:text-blue-700',
+                          isFocused ? 'text-brand' : 'text-gray-900 group-hover:text-brand',
                         ].join(' ')}>
                           {highlight(ind.title, query.trim())}
                         </p>

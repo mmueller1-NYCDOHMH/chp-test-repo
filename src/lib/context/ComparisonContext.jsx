@@ -47,27 +47,12 @@ export function ComparisonProvider({ children, neighborhoods = [] }) {
   const [comparison,             _setComparison]             = useState(DEFAULT_VALUE);
   const [comparisonNeighborhood, _setComparisonNeighborhood] = useState(null);
 
-  // ── Clear comparison on mobile viewports ────────────────────────────────
-  // Comparison charts (amber highlight alongside blue) are unreadable at
-  // narrow widths. Clear on mount if already mobile, and on resize crossing
-  // the md breakpoint (768px).
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)');
-
-    function clearOnMobile(e) {
-      if (e.matches) {
-        _setComparisonNeighborhood(null);
-        const url = new URL(window.location.href);
-        url.searchParams.delete(COMPARE_TO_PARAM);
-        history.replaceState(null, '', url.toString());
-      }
-    }
-
-    // Run immediately in case we're already on mobile
-    clearOnMobile(mq);
-    mq.addEventListener('change', clearOnMobile);
-    return () => mq.removeEventListener('change', clearOnMobile);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // NOTE: comparison neighborhoods used to be force-cleared below 768px
+  // ("comparison charts are unreadable at narrow widths"). That's no longer
+  // true — StatTileSplit, ComparisonPyramidChart, and the StickyContextBar
+  // "Comparing: X" pill all have working mobile layouts now, and
+  // ComparisonNeighborhoodSelector is rendered in Sidebar's mobile sheet
+  // (see Sidebar.jsx). Comparison is intentionally supported at every width.
 
   // ── Hydrate both values from URL on mount ─────────────────────────────
   useEffect(() => {

@@ -14,8 +14,9 @@
  *   primary neighborhood is excluded from results. Selecting a neighborhood
  *   writes it to ComparisonContext and switches to the Pill state.
  *
- *   Pill — shows the selected neighborhood name in an amber chip with a
- *   clear button. Clicking the name or the chip itself reopens the search.
+ *   Pill — shows the selected neighborhood name in a rust-colored chip
+ *   (COMPARISON) with a clear button. Clicking the name or the chip itself
+ *   reopens the search.
  *
  * KEYBOARD (search input):
  *   ↓ / ↑  — move through results
@@ -29,7 +30,8 @@
  * NOTES:
  * - Client component — uses useComparison() + useParams()
  * - The primary neighborhood (from URL params) is excluded from results
- * - Color: amber throughout to match the comparison bar color in charts
+ * - Color: COMPARISON rust throughout (--color-comparison-* in globals.css)
+ *   to match the comparison CD color used in charts and on the map
  */
 
 import { useState, useRef, useEffect, useMemo, useCallback, useId } from 'react';
@@ -41,14 +43,14 @@ import NeighborhoodGroups from '@/components/controls/NeighborhoodGroups';
 // ── Pill — shown when a comparison neighborhood is selected ───────────────────
 function ComparisonPill({ neighborhood, onClear, onEdit }) {
   return (
-    <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+    <div className="flex items-center gap-2 bg-comparison-tint border border-comparison-border rounded-lg px-3 py-2">
       <span
-        className="w-2 h-2 rounded-full bg-amber-500 shrink-0"
+        className="w-2 h-2 rounded-full bg-comparison shrink-0"
         aria-hidden="true"
       />
       <button
         onClick={onEdit}
-        className="flex-1 text-left text-sm font-medium text-amber-900 hover:text-amber-700 truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded"
+        className="flex-1 text-left text-sm font-medium text-comparison-text hover:text-comparison-hover truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-comparison rounded"
         aria-label={`Comparing to ${neighborhood.name}. Click to change.`}
       >
         {neighborhood.name}
@@ -56,7 +58,7 @@ function ComparisonPill({ neighborhood, onClear, onEdit }) {
       <button
         onClick={onClear}
         aria-label={`Remove comparison with ${neighborhood.name}`}
-        className="text-amber-400 hover:text-amber-700 transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded"
+        className="text-comparison-border hover:text-comparison-hover transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-comparison rounded"
       >
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -202,7 +204,7 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
       {/* Input */}
       <div className="relative">
         <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-amber-400 pointer-events-none"
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-comparison-border pointer-events-none"
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
           aria-hidden="true"
         >
@@ -215,20 +217,20 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
           onChange={e => { setQuery(e.target.value); setIsEditing(true); }}
           onFocus={() => setIsEditing(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search neighborhoods…"
+          placeholder="Neighborhood name"
           aria-label="Search comparison neighborhoods"
           aria-expanded={isOpen}
           aria-autocomplete="list"
           aria-controls={listboxId}
           aria-activedescendant={focusedIndex >= 0 ? `${optPrefix}-${focusedIndex}` : undefined}
           role="combobox"
-          className="w-full pl-8 pr-3 py-1.5 text-sm border border-amber-300 rounded-lg bg-white placeholder-gray-400 text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white placeholder-gray-400 text-gray-800 focus:outline-none focus:ring-2 focus:ring-comparison focus:border-transparent"
         />
         {isEditing && query && (
           <button
             onClick={() => { setQuery(''); inputRef.current?.focus(); }}
             aria-label="Clear"
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-amber-400 hover:text-amber-600"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-comparison-border hover:text-comparison-hover"
           >
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

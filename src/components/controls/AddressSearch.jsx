@@ -22,6 +22,12 @@
  *   ↓ / ↑   — move through results
  *   Enter    — select focused (or first) result
  *   Escape   — clear query
+ *
+ * FOCUS RING COLOR:
+ * The "modal" variant's focus ring is ring-brand, not the site-wide
+ * ring-blue-500 — matches the other inputs in IntroModal's address/
+ * neighborhood tabs, which stay visibly focused most of the time users
+ * see them. The "sidebar" variant keeps ring-blue-400, untouched.
  */
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -182,7 +188,7 @@ export default function AddressSearch({
             'w-full bg-white focus:outline-none focus:ring-2 focus:border-transparent',
             isSidebar
               ? 'pl-8 pr-8 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-blue-400'
-              : 'pl-9 pr-9 py-2 text-sm border border-gray-200 rounded-lg focus:ring-blue-500',
+              : 'pl-9 pr-9 py-2 text-sm border border-gray-200 rounded-lg focus:ring-brand',
           ].join(' ')}
         />
 

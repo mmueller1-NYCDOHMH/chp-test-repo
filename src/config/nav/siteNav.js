@@ -104,15 +104,25 @@ export const siteNav = [
     ],
   },
 
-  // ── 5. Health conditions ───────────────────────────────────────────────────
+  // ── 5. Mental health & substance use ───────────────────────────────────────
+  {
+    id: 'mental-health-substance-use',
+    label: 'Mental health & substance use',
+    anchor: '#cat-mental-health-substance-use',
+    contentSlug: 'mental-health-substance-use',
+    subcategories: [
+      { id: MENTAL_WELLNESS_ID, label: 'Mental wellness', anchor: `#${MENTAL_WELLNESS_ID}` },
+      { id: SUBSTANCE_USE_ID,   label: 'Substance use', anchor: `#${SUBSTANCE_USE_ID}` },
+    ],
+  },
+
+  // ── 6. Health conditions ───────────────────────────────────────────────────
   {
     id: 'health-conditions',
     label: 'Health conditions',
     anchor: '#cat-health-conditions',
     contentSlug: 'health-conditions',
     subcategories: [
-      { id: MENTAL_WELLNESS_ID,    label: 'Mental health',      anchor: `#${MENTAL_WELLNESS_ID}` },
-      { id: SUBSTANCE_USE_ID,      label: 'Substance use',      anchor: `#${SUBSTANCE_USE_ID}` },
       { id: CHRONIC_CONDITIONS_ID, label: 'Chronic conditions', anchor: `#${CHRONIC_CONDITIONS_ID}` },
       { id: INFECTIOUS_DISEASE_ID, label: 'Infectious disease', anchor: `#${INFECTIOUS_DISEASE_ID}` },
       { id: HEALTH_OUTCOMES_ID,    label: 'Health outcomes',    anchor: `#${HEALTH_OUTCOMES_ID}` },

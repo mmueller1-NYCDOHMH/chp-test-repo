@@ -9,7 +9,13 @@
  *
  * PROPS:
  * - widthPct   {number}  — target width as a percentage (0–100)
- * - className  {string}  — forwarded directly (color, rounding, etc.)
+ * - className  {string}  — forwarded directly (rounding, etc.)
+ * - color      {string}  — optional hex/CSS color for background. Passed as
+ *                          inline style rather than a Tailwind class because
+ *                          callers (e.g. ComparisonPyramidChart) source their
+ *                          colors from chartColors.js constants, which
+ *                          Tailwind's static scanner can't pick up as
+ *                          dynamic arbitrary-value classes.
  * - title      {string}  — native tooltip
  * - delay      {number}  — stagger delay in ms (default 0)
  * - origin     {string}  — transform-origin; 'right center' for left-growing
@@ -27,6 +33,7 @@ import { useState, useEffect } from 'react';
 export default function AnimatedBar({
   widthPct,
   className = '',
+  color,
   title,
   delay = 0,
   origin = 'left center',
@@ -50,6 +57,7 @@ export default function AnimatedBar({
         transformOrigin: origin,
         transform:       mounted ? 'scaleX(1)' : 'scaleX(0)',
         transition:      reducedMotion ? 'none' : `transform 0.75s cubic-bezier(0.4, 0, 0.2, 1) ${delay}ms`,
+        ...(color ? { backgroundColor: color } : {}),
       }}
     />
   );

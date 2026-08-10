@@ -21,7 +21,11 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { SELECTED, COMPARISON, CITYWIDE, BAR_DEFAULT } from '@/lib/charts/chartColors';
 
+// Note: keyframes need a literal color (can't reference a CSS var scoped
+// elsewhere reliably inside a <style> tag rendered per-instance), so SELECTED
+// is interpolated directly from chartColors.js at module load.
 const DOT_KEYFRAMES = `
   @keyframes chp-dot-in {
     from { opacity: 0; transform: translate(-50%, -50%) scale(0); }
@@ -29,8 +33,8 @@ const DOT_KEYFRAMES = `
     to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   }
   @keyframes chp-dot-pulse {
-    0%, 100% { box-shadow: 0 0 0 2px var(--color-brand); }
-    50%       { box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-brand) 15%, transparent); }
+    0%, 100% { box-shadow: 0 0 0 2px ${SELECTED}; }
+    50%       { box-shadow: 0 0 0 6px color-mix(in srgb, ${SELECTED} 15%, transparent); }
   }
 `;
 
@@ -163,7 +167,7 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
                   left:       `${pct(row.Value)}%`,
                   width:      isSelected ? 10 : 6,
                   height:     isSelected ? 10 : 6,
-                  background: isSelected ? 'var(--color-brand)' : isHovered ? '#374151' : '#d1d5db',
+                  background: isSelected ? SELECTED : isHovered ? '#374151' : BAR_DEFAULT,
                   border:     isSelected ? '2px solid white' : 'none',
                   zIndex:     isSelected ? 3 : isHovered ? 4 : 1,
                   // Entrance animation; hover transform takes over once entered
@@ -174,7 +178,7 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
                         animation:  isSelected
                           ? `chp-dot-pulse 500ms ease-in-out ${pulseDelay}ms 2`
                           : 'none',
-                        boxShadow:  isSelected ? '0 0 0 2px var(--color-brand)' : 'none',
+                        boxShadow:  isSelected ? `0 0 0 2px ${SELECTED}` : 'none',
                       }
                     : {
                         animation:  `chp-dot-in 200ms cubic-bezier(0.34,1.56,0.64,1) ${entranceDelay}ms both`,
@@ -202,12 +206,12 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
                 aria-label={`${cleanName} (comparison): ${displayVal}`}
                 aria-describedby={isHovered ? 'distribution-tooltip' : undefined}
                 tabIndex={0}
-                className="absolute top-1/2 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1"
+                className="absolute top-1/2 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C94D18] focus-visible:ring-offset-1"
                 style={{
                   left:       `${compPct}%`,
                   width:      10,
                   height:     10,
-                  background: '#fbbf24',
+                  background: COMPARISON,
                   border:     '2px solid white',
                   zIndex:     isHovered ? 5 : 3,
                   transform:  `translate(-50%, -50%) scale(${isHovered ? 1.4 : 1})`,
@@ -227,7 +231,7 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
               className="absolute top-0 bottom-0 w-px pointer-events-none"
               style={{
                 left: `${citywidePct}%`,
-                background: 'repeating-linear-gradient(to bottom, #9ca3af 0 3px, transparent 3px 6px)',
+                background: `repeating-linear-gradient(to bottom, ${CITYWIDE} 0 3px, transparent 3px 6px)`,
                 zIndex: 2,
               }}
             />
@@ -259,8 +263,8 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
           {/* Selected neighborhood value */}
           {selected && selectedPct != null && (
             <span
-              className="absolute text-xs font-semibold text-blue-700 whitespace-nowrap -translate-x-1/2 top-0"
-              style={{ left: `${selectedPct}%` }}
+              className="absolute text-xs font-semibold whitespace-nowrap -translate-x-1/2 top-0"
+              style={{ left: `${selectedPct}%`, color: SELECTED }}
             >
               {selected.DisplayValue ?? selected.Value}
             </span>
@@ -269,10 +273,11 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
           {/* Citywide label — drops below row if too close to selected */}
           {citywide && citywidePct != null && (
             <span
-              className="absolute text-xs text-gray-500 whitespace-nowrap -translate-x-1/2"
+              className="absolute text-xs whitespace-nowrap -translate-x-1/2"
               style={{
-                left: `${citywidePct}%`,
-                top:  labelsClose ? 14 : 0,
+                left:  `${citywidePct}%`,
+                top:   labelsClose ? 14 : 0,
+                color: CITYWIDE,
               }}
             >
               Citywide {citywide.DisplayValue ?? citywide.Value}

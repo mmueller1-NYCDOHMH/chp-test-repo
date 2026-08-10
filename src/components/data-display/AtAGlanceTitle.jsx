@@ -9,7 +9,15 @@
  *
  * Without comparison:  "Woodside at a Glance"
  * With comparison:     "Woodside and Sunnyside at a Glance"
- *                       ↑ blue          ↑ amber
+ *                       ↑ selected purple   ↑ comparison rust
+ *                       (--color-selected,     (--color-comparison — the
+ *                        #5646F5)               solid #C94D18, not the darker
+ *                                                -text shade, which is tuned
+ *                                                for contrast on the tint pill
+ *                                                bg elsewhere, not white)
+ *                       Both mirror the SELECTED/COMPARISON colors used for
+ *                       these same two neighborhoods everywhere else (charts,
+ *                       dots, map) — see chartColors.js.
  *
  * PROPS:
  *   neighborhood — primary neighborhood name (e.g. "Woodside")
@@ -23,9 +31,9 @@ export default function AtAGlanceTitle({ neighborhood = 'Neighborhood' }) {
   if (comparisonNeighborhood) {
     return (
       <h3 className="text-lg font-semibold text-gray-900 leading-snug">
-        <span className="text-blue-700">{neighborhood}</span>
+        <span className="text-selected">{neighborhood}</span>
         {' and '}
-        <span className="text-amber-600">{comparisonNeighborhood.name}</span>
+        <span className="text-comparison">{comparisonNeighborhood.name}</span>
         {' at a Glance'}
       </h3>
     );

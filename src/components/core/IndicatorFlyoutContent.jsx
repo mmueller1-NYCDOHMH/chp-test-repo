@@ -20,7 +20,7 @@ import { buildInsight } from '@/lib/utils/compareIndicator';
 import { displayName } from '@/lib/utils/formatGeography';
 import { useComparison } from '@/lib/context/ComparisonContext';
 import DistributionStrip from '@/components/data-display/DistributionStrip';
-import { CHOROPLETH_STOPS } from '@/lib/charts/chartColors';
+import { CHOROPLETH_STOPS, SELECTED, COMPARISON } from '@/lib/charts/chartColors';
 
 const ChoroplethMap = dynamic(
   () => import('@/components/maps/ChoroplethMap'),
@@ -139,6 +139,7 @@ export default function IndicatorFlyoutContent({
           <div className="sm:hidden absolute inset-0 z-[1001]" aria-hidden="true" />
           <ChoroplethMap
             indicatorData={indicatorData ?? []}
+            geoId={geoId}
             subtitle={subtitle}
             onHoverGeoId={setMapHoveredGeoId}
             stripHoveredGeoId={stripHoveredGeoId}
@@ -167,17 +168,18 @@ export default function IndicatorFlyoutContent({
               <div className="flex flex-col gap-1.5">
                 <p className="text-sm text-gray-700 leading-relaxed">
                   In {insight.name}, {insight.title.toLowerCase()} is{' '}
-                  <span className="font-semibold text-blue-700">{insight.cdDisplay}</span>
+                  <span className="font-semibold" style={{ color: SELECTED }}>{insight.cdDisplay}</span>
                   {compRow && compName && (
                     <>
                       {', compared to '}
                       <span
-                        className="inline-block w-2 h-2 rounded-full bg-amber-400 shrink-0 align-middle mx-0.5"
+                        className="inline-block w-2 h-2 rounded-full shrink-0 align-middle mx-0.5"
+                        style={{ backgroundColor: COMPARISON }}
                         aria-hidden="true"
                       />
                       <span className="font-medium text-gray-800">{compName}</span>
                       {' '}
-                      <span className="font-semibold text-amber-600">{compRow.DisplayValue}</span>
+                      <span className="font-semibold" style={{ color: COMPARISON }}>{compRow.DisplayValue}</span>
                     </>
                   )}
                   .
@@ -196,7 +198,8 @@ export default function IndicatorFlyoutContent({
                       <>
                         {', while '}
                         <span
-                          className="inline-block w-2 h-2 rounded-full bg-amber-400 shrink-0 align-middle mx-0.5"
+                          className="inline-block w-2 h-2 rounded-full shrink-0 align-middle mx-0.5"
+                          style={{ backgroundColor: COMPARISON }}
                           aria-hidden="true"
                         />
                         <span className="font-medium text-gray-800">{compName}</span>

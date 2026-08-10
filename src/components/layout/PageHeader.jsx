@@ -22,13 +22,24 @@
  * The header background uses var(--color-brand) from globals.css.
  * Change --color-brand there to update the header color site-wide.
  *
+ * UTILITY CONTROLS (About / language / shortcuts):
+ * LanguageToggle lives here again, small and right-aligned under the NYC
+ * Health logo. It was moved to StickyContextBar for a while so it would
+ * stay reachable while scrolled, but that bar returns null on pages with no
+ * `sections` (e.g. /about), which meant those pages had no language access
+ * at all. PageHeader has no such guard — it renders on every route — so
+ * this is the one placement that's guaranteed reachable everywhere.
+ * "About this tool" and the "?" shortcuts button stay in StickyContextBar:
+ * both are only meaningful in the context of browsing a profile page, so
+ * scoping them there is fine.
+ *
  * NOTES:
  * - Client component — date must be read at runtime, not render time
  * - Receives no props; self-contained
  */
 
 import Image from 'next/image';
-import Link  from 'next/link';
+import LanguageToggle from './LanguageToggle';
 import headerContent from '../../../content/site/header.json';
 
 /**
@@ -86,7 +97,7 @@ export default function PageHeader() {
 
   return (
     <header
-      className="text-white px-4 sm:px-10 py-2.5 w-full flex items-center justify-between gap-4"
+      className="text-white px-4 sm:px-10 py-2.5 w-full flex items-start justify-between gap-4"
       style={{ backgroundColor: 'var(--color-brand)' }}
     >
       <div className="min-w-0">
@@ -99,29 +110,24 @@ export default function PageHeader() {
         <p className="mt-1 text-sm text-blue-100 max-w-xl hidden sm:block">
           {subtitle}
         </p>
-
-        {/* About link — mobile only; on desktop it lives in the sidebar footer */}
-        <Link
-          href="/about"
-          className="sm:hidden inline-flex items-center gap-1 mt-1 text-xs text-blue-200 hover:text-white transition-colors"
-        >
-          <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          About this tool
-        </Link>
       </div>
 
-      {/* NYC Health logo — white version via CSS filter */}
-      <Image
-        src="https://www.nyc.gov/assets/doh/respiratory-illness-data/assets/NYC_Health_color_main.png"
-        alt="NYC Health"
-        width={120}
-        height={30}
-        className="shrink-0 opacity-90 h-7 sm:h-9 w-auto"
-        style={{ filter: 'brightness(0) invert(1)' }}
-        priority
-      />
+      <div className="flex flex-col items-end gap-2 shrink-0 pt-4">
+        {/* pt-4 skips past the "New York City" eyebrow line on the left so the
+            logo lines up with the "Community Health Profiles" heading below it */}
+        {/* NYC Health logo — white version via CSS filter */}
+        <Image
+          src="https://www.nyc.gov/assets/doh/respiratory-illness-data/assets/NYC_Health_color_main.png"
+          alt="NYC Health"
+          width={120}
+          height={30}
+          className="opacity-90 h-7 sm:h-9 w-auto"
+          style={{ filter: 'brightness(0) invert(1)' }}
+          priority
+        />
+        {/* Small, right-aligned under the logo — see UTILITY CONTROLS note above */}
+        <LanguageToggle variant="onBrand" />
+      </div>
     </header>
   );
 }
