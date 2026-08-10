@@ -52,7 +52,7 @@ function StatTileSkeleton() {
 
 export default function NeighborhoodLoading() {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-[var(--background)]">
 
       {/* ── Header skeleton ────────────────────────────────────── */}
       <div className="bg-blue-700 px-10 py-3 w-full flex items-center justify-between">

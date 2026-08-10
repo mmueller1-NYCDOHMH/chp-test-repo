@@ -1,54 +1,125 @@
 @import "tailwindcss";
+@import "@nychealth/design-system/tokens.css";
+@import "@nychealth/design-system/theme.css";
 
-/* ── Design tokens ─────────────────────────────────────────────────────────── */
+/* ── Design tokens ───────────────────────────────────────────────────────────
+   Colors, typography scale, health-direction, spacing/radius/shadow now come
+   from @nychealth/design-system (imported above) — verified 2026-07-03 that
+   every value below matched the shared package exactly before removing the
+   local copies, with one exception kept as an explicit override below.     */
 :root {
-  /* Legacy Tailwind placeholders */
-  --background: #ffffff;
+  /* Legacy Tailwind placeholders (Next.js default, not part of the shared package) */
+  /* Page background — updated 2026-08-04. Low-saturation off-white (not pure
+     white) so white cards (StatCard, ChartContainer, etc.) visually lift off
+     the page instead of blending into it. Cool/blue-leaning tint ties back to
+     --color-brand without competing with chart/map data colors. Applied to
+     <body> below; PageLayout.jsx, loading.jsx, and not-found.jsx reference the
+     same var (bg-[var(--background)]) instead of Tailwind's bg-gray-50 so the
+     full-page shell always matches — component-level bg-gray-50 (hover
+     states, placeholders, tooltips) is untouched. */
+  --background: #F0F4F9;
   --foreground: #171717;
 
-  /* Brand & interaction */
-  --color-brand:         #1d4ed8;  /* blue-700 — header, primary brand */
-  --color-action:        #2563eb;  /* blue-600 — links, focus rings, CTAs */
-  --color-action-subtle: #eff6ff;  /* blue-50  — hover backgrounds */
+  /* KNOWN MISMATCH — do not delete without fixing upstream first.
+     The shared package's --gray-900 resolves to #1f2937 (mislabeled — that's
+     actually Tailwind's gray-800 value; true gray-900 is #111827). CHP's
+     original --color-text-primary used #111827 directly, so this override
+     keeps CHP's primary text rendering unchanged until --gray-900 is fixed
+     in @nychealth/design-system. Once fixed there, this line can go. */
+  --color-text-primary: #111827;
 
-  /* Surfaces */
-  --color-surface:       #ffffff;
-  --color-surface-raised:#f9fafb;  /* gray-50  — page bg, card hover */
-  --color-surface-inset: #f3f4f6;  /* gray-100 — input bg */
+  /* CHP brand color override — updated 2026-08-04.
+     @nychealth/design-system's [data-brand="chp"] block (tokens.css) still
+     ships the old #1d4ed8. This overrides it here so CHP doesn't have to wait
+     on a package bump. --color-brand drives --header-bg, --top-bar-text,
+     --header-button-active-text/bg, --top-bar-slider-checked-bg, and the
+     bg-brand/text-brand Tailwind utilities — i.e. header, primary nav, and
+     buttons only. It is not referenced by chart or map color scales (those
+     live in tokens.js / chartColors.js as independent hex values).
+     Once @nychealth/design-system publishes this value upstream, this
+     override can be removed. */
+  --color-brand: #1E3A8A;
 
-  /* Borders */
-  --color-border:        #e5e7eb;  /* gray-200 */
-  --color-border-subtle: #f3f4f6;  /* gray-100 */
+  /* Brand tint — added 2026-08-04. Light fill paired with --color-brand for
+     "selected/related" states that need more than a text/border color change
+     (e.g. TopicNav's dropdown submenu active/hover fill). Not used on the
+     top-level nav bar itself — that's underline-only, no fill. Not part of
+     the shared package; CHP-only for now. */
+  --color-brand-tint: #E8EBF3;
 
-  /* Text */
-  --color-text-primary:  #111827;  /* gray-900 */
-  --color-text-secondary:#4b5563;  /* gray-600 */
-  --color-text-tertiary: #9ca3af;  /* gray-400 */
+  /* Comparison CD color family — added 2026-08-04. Mirrors COMPARISON
+     (#C94D18) from lib/charts/chartColors.js — that file is the source of
+     truth for the raw hex (used in JS/Vega contexts); these are pre-blended
+     tint/shade steps of it so components that need a full "amber-style"
+     Tailwind scale (background, border, icon, text) for comparison-neighborhood
+     UI — e.g. ComparisonNeighborhoodSelector's pill/search, NeighborhoodGroups'
+     "amber" scheme — read as the same rust color instead of Tailwind's amber.
+     Keep in sync with COMPARISON in chartColors.js if that value changes. */
+  --color-comparison:       #C94D18;  /* solid — dot, focus ring */
+  --color-comparison-tint:  #F9EAE3;  /* very light — pill bg, focused row bg */
+  --color-comparison-border: #E7AF97; /* medium tint — borders, icons, "mark" bg */
+  --color-comparison-text:  #5A230B;  /* dark — pill label, mark text (contrast on tint) */
+  --color-comparison-hover: #973A12;  /* mid-dark — hover text state */
 
-  /* Health direction — used in insight badges */
-  --color-health-better: #15803d;  /* green-700 */
-  --color-health-worse:  #b91c1c;  /* red-700   */
-  --color-health-neutral:#6b7280;  /* gray-500  */
+  /* Selected/primary CD color — added 2026-08-04. Mirrors SELECTED (#5646F5)
+     from lib/charts/chartColors.js — that file is the source of truth for the
+     raw hex (used in bar/pyramid/dot chart contexts and the Leaflet map).
+     This lets prose UI (e.g. AtAGlanceTitle's primary-neighborhood name) use
+     the same purple instead of an unrelated Tailwind blue. Keep in sync with
+     SELECTED in chartColors.js if that value changes. */
+  --color-selected: #5646F5;
 
-  /* Comparison highlight — must match Vega chart spec #D97706 */
-  --color-comparison:    #d97706;  /* amber-600 */
-
-  /* Typography scale */
-  --font-size-label: 0.75rem;   /* 12px — UI chrome, badges, caps */
-  --font-size-body:  0.875rem;  /* 14px — card body, dropdowns      */
-  --font-size-read:  1rem;      /* 16px — longer-form reading        */
+  /* Footer — added 2026-08-08. @nychealth/design-system ships --footer-bg/
+     --footer-text/etc (tokens.css) as a fixed dark-charcoal footer (gray-900),
+     shared as-is by RVP. CHP overrides those here to bookend the page with
+     --color-brand instead: footer background matches the header's brand blue
+     rather than a generic dark neutral, so the brand color reads as CHP's
+     chrome, top and bottom. Text/link colors reuse the exact same
+     Tailwind blue-100 → white pairing PageHeader already uses for on-brand
+     secondary text, so header and footer read as one system. Only the color
+     family is re-exposed under @theme inline below (not spacing — see the
+     spacing note in @nychealth/design-system/theme.css for why that's
+     deliberately left out). */
+  --footer-bg: var(--color-brand);       /* #1E3A8A — same as PageHeader */
+  --footer-text: #DBEAFE;                /* Tailwind blue-100, matches PageHeader's text-blue-100 */
+  --footer-link: #DBEAFE;
+  --footer-link-hover: #FFFFFF;
+  --footer-border: rgba(255, 255, 255, 0.15);
+  --footer-logo-filter: brightness(0) invert(1); /* white NYC Health logo, same trick as PageHeader */
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-brand-tint: var(--color-brand-tint);
+  --color-comparison: var(--color-comparison);
+  --color-comparison-tint: var(--color-comparison-tint);
+  --color-comparison-border: var(--color-comparison-border);
+  --color-comparison-text: var(--color-comparison-text);
+  --color-comparison-hover: var(--color-comparison-hover);
+  --color-selected: var(--color-selected);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Footer color family only — see :root comment above. Enables
+     bg-footer-bg, text-footer-text, text-footer-link,
+     hover:text-footer-link-hover, border-footer-border, fill-footer-link
+     utility classes. */
+  --color-footer-bg: var(--footer-bg);
+  --color-footer-text: var(--footer-text);
+  --color-footer-link: var(--footer-link);
+  --color-footer-link-hover: var(--footer-link-hover);
+  --color-footer-border: var(--footer-border);
 }
 
 
 html {
   scroll-behavior: smooth;
+  /* overflow-x:clip prevents horizontal scrolling without creating a new block
+     formatting context — so position:sticky and position:fixed elements are
+     unaffected. This is intentionally on <html>, not <body>: overflow-x:hidden
+     on body breaks sticky (see body comment below). overflow-x:clip does not. */
+  overflow-x: clip;
 }
 
 body {
@@ -188,4 +259,9 @@ summary {
    finger drags pass through to the flyout's overflow-y-auto container.    */
 .flyout-map .leaflet-container {
   touch-action: pan-y !important;
+}
+
+/* Removes overflow white-space on the right side of screens narrower than 1284px */
+.sr-only {
+  white-space: normal !important;
 }

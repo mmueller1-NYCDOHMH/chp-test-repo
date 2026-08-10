@@ -17,7 +17,7 @@ import Link from 'next/link';
 
 export default function NeighborhoodNotFound() {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[var(--background)] flex flex-col">
 
       {/* Slim header */}
       <div className="bg-blue-700 px-10 py-3">
@@ -62,7 +62,7 @@ export default function NeighborhoodNotFound() {
             Browse all neighborhoods
           </Link>
 
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-500">
             Or use the neighborhood search in the sidebar to find a community district.
           </p>
 

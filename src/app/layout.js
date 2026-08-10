@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from 'next/script';
 import 'leaflet/dist/leaflet.css';
 import "./globals.css";
 
@@ -29,8 +30,16 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
+      data-brand="chp"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <link
+          rel="icon"
+          type="image/x-icon"
+          href="https://www.nyc.gov/favicon.ico"
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         {/* Skip navigation — first focusable element; visible only on focus */}
         <a
@@ -40,6 +49,21 @@ export default function RootLayout({ children }) {
           Skip to main content
         </a>
         {children}
+
+        {/* Google Translate — init callback defined inline so it runs before the script */}
+        <Script id="google-translate-init" strategy="beforeInteractive">{`
+          function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+              pageLanguage: 'en',
+              includedLanguages: 'es,zh-CN,ru,ar,bn',
+              autoDisplay: false,
+            }, 'google_translate_element');
+          }
+        `}</Script>
+        <Script
+          src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
