@@ -29,9 +29,6 @@
 
   "footer": {
     "attribution":     "Data from the NYC Department of Health and Mental Hygiene",
-    "aboutLabel":      "About this tool",
-    "aboutHref":       "/about",
-    "aboutBlurb":      "New to Community Health Profiles? Learn how the data is collected, what the indicators mean, and how to get the most out of this tool.",
     "randomButton":    "Random neighborhood →"
   }
 }

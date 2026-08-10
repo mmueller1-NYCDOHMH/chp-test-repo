@@ -1,0 +1,28 @@
+{
+  "linkColumns": [
+    [
+      { "label": "Directory of City Agencies", "href": "https://www.nyc.gov/nyc-resources/agencies.page" },
+      { "label": "Notify NYC",                 "href": "https://a858-nycnotify.nyc.gov/notifynyc/" },
+      { "label": "NYC Mobile Apps",            "href": "https://www.nyc.gov/connect/mobile-applications.page" }
+    ],
+    [
+      { "label": "Contact NYC Government", "href": "https://www.nyc.gov/home/contact-us.page" },
+      { "label": "CityStore",              "href": "https://a856-citystore.nyc.gov/" },
+      { "label": "Maps",                   "href": "https://www.nyc.gov/nyc-resources/nyc-maps.page" }
+    ],
+    [
+      { "label": "City Employees",   "href": "https://a127-ess.nyc.gov/psp/prdess/?cmd=login&languageCd=ENG&" },
+      { "label": "Stay Connected",   "href": "https://www.nyc.gov/connect/social-media.page" },
+      { "label": "Resident Toolkit", "href": "https://www.nyc.gov/nyc-resources/resident-toolkit.page" }
+    ]
+  ],
+  "copyright": "© City of New York - {year} All Rights Reserved. Community Health Profiles is a publication of the NYC Department of Health and Mental Hygiene.",
+  "legalLinks": [
+    { "label": "Privacy Policy", "href": "https://www.nyc.gov/home/privacy-policy.page" },
+    { "label": "Terms Of Use",   "href": "https://www.nyc.gov/home/terms-of-use.page" }
+  ],
+  "accessibilityLink": {
+    "label": "Mayor's Office for People with Disabilities",
+    "href": "https://www.nyc.gov/site/mopd/index.page"
+  }
+}
