@@ -1,13 +1,41 @@
 @import "tailwindcss";
 
-
 /* ── Design tokens ───────────────────────────────────────────────────────────
-   Colors, typography scale, health-direction, spacing/radius/shadow now come
-   from @nychealth/design-system (imported above) — verified 2026-07-03 that
-   every value below matched the shared package exactly before removing the
-   local copies, with one exception kept as an explicit override below.     */
+   TEMPORARILY INLINED — 2026-08-11. This app used to pull tokens from
+   @nychealth/design-system (`@import "@nychealth/design-system/tokens.css"`
+   + `theme.css`), a private package on npm.pkg.github.com. That registry
+   needs an NPM_TOKEN at install time; Netlify's build environment doesn't
+   have one configured, so `npm install` was failing there and Netlify kept
+   serving the last build that predates that dependency — every fix made
+   since has been invisible on the live site regardless of what shipped to
+   the branch.
+
+   Removed from package.json entirely (not even a devDependency) and
+   inlined every value it was actually supplying below, so `npm install`
+   never touches that registry and prod builds again. Devdeps get
+   installed by a normal `npm install` too — Netlify needs tailwindcss,
+   eslint-config-next, etc. to build — so leaving it in as a devDependency
+   wouldn't have fixed this; the install would still choke on the missing
+   NPM_TOKEN. This is meant to be temporary: once the Netlify env var is
+   sorted (or the package moves to a registry Netlify can reach), re-add
+   `@nychealth/design-system` to package.json and the two @import lines
+   above, and delete the inlined block below. Until then, install it
+   locally on-demand (`npm install @nychealth/design-system`, uncommitted)
+   if you need to test against it — just don't commit that back to
+   package.json.
+
+   Values below were copied verbatim from the package's tokens.css/theme.css
+   as of the point of removal (confirmed via a full audit of every --gray-*,
+   --font-size-*, --radius-*, --color-brand, and --color-health-* usage
+   across src/ — anything the package shipped that nothing in this app
+   actually referenced, e.g. --color-action, --color-surface*, the legacy
+   --blue-*, --purple-*, --green-*, --orange-*, --red-* aliases, every
+   --header-*, --modal-*, --top-bar-*, --card-*, --overview-*, --chip-*, etc.
+   component-alias var, was left out rather than carried forward as dead
+   weight). Do not hand-edit these values without updating them in the
+   design-system package too, or the two will drift the next time someone
+   re-adopts the import. */
 :root {
-  /* Legacy Tailwind placeholders (Next.js default, not part of the shared package) */
   /* Page background — updated 2026-08-04. Low-saturation off-white (not pure
      white) so white cards (StatCard, ChartContainer, etc.) visually lift off
      the page instead of blending into it. Cool/blue-leaning tint ties back to
@@ -19,24 +47,63 @@
   --background: #F0F4F9;
   --foreground: #171717;
 
-  /* KNOWN MISMATCH — do not delete without fixing upstream first.
-     The shared package's --gray-900 resolves to #1f2937 (mislabeled — that's
-     actually Tailwind's gray-800 value; true gray-900 is #111827). CHP's
-     original --color-text-primary used #111827 directly, so this override
-     keeps CHP's primary text rendering unchanged until --gray-900 is fixed
-     in @nychealth/design-system. Once fixed there, this line can go. */
-  --color-text-primary: #111827;
+  /* ---- Grayscale — from @nychealth/design-system/tokens.css ----
+     Tailwind's own bg-gray-*, text-gray-*, border-gray-* utilities are
+     overridden by these (registered under --color-gray-* in @theme inline
+     below) everywhere they're used across the app (322 occurrences, 45
+     files, per the pre-removal audit) — keep these exact values or those
+     utilities will silently shift to Tailwind's stock gray scale, which is
+     close but not identical (e.g. stock gray-900 is #111827, darker than
+     this #1F2937). */
+  --gray-100: #F9FAFB;
+  --gray-200: #F3F4F6;
+  --gray-300: #E5E7EB;
+  --gray-400: #D1D5DB;
+  --gray-500: #9CA3AF;
+  --gray-600: #6B7280;
+  --gray-700: #4B5563;
+  --gray-800: #374151;
+  --gray-900: #1F2937;
 
-  /* CHP brand color override — updated 2026-08-04.
-     @nychealth/design-system's [data-brand="chp"] block (tokens.css) still
-     ships the old #1d4ed8. This overrides it here so CHP doesn't have to wait
-     on a package bump. --color-brand drives --header-bg, --top-bar-text,
-     --header-button-active-text/bg, --top-bar-slider-checked-bg, and the
-     bg-brand/text-brand Tailwind utilities — i.e. header, primary nav, and
-     buttons only. It is not referenced by chart or map color scales (those
-     live in tokens.js / chartColors.js as independent hex values).
-     Once @nychealth/design-system publishes this value upstream, this
-     override can be removed. */
+  /* ---- Type scale — from @nychealth/design-system/tokens.css ----
+     sm/lg/2xl/xl below intentionally override Tailwind's own built-in
+     text-sm/text-lg/text-xl/text-2xl utilities (same collision as
+     grayscale above) — xl in particular is 30px here vs. Tailwind's stock
+     20px, a large, very visible difference if this drifts. label/body/read
+     aren't Tailwind utility names and have zero usage in src/ currently,
+     kept only so nothing breaks if something starts using them. */
+  --font-size-label: 0.75rem;   /* 12px */
+  --font-size-xs: 0.75rem;      /* 12px — alias of label */
+  --font-size-sm: 0.8125rem;    /* 13px */
+  --font-size-body: 0.875rem;   /* 14px */
+  --font-size-read: 1rem;       /* 16px */
+  --font-size-lg: 1.125rem;     /* 18px */
+  --font-size-2xl: 1.25rem;     /* 20px */
+  --font-size-xl: 1.875rem;     /* 30px */
+
+  /* ---- Radius — from @nychealth/design-system/tokens.css ----
+     Overrides Tailwind's own rounded-sm/md/lg (used in 11 files per the
+     pre-removal audit). */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* ---- Health direction — from @nychealth/design-system/tokens.css ----
+     Used directly via var() in ComparisonStatTilesClient's delta-badge
+     styling (not as Tailwind utility classes). */
+  --color-health-better: #15803d;
+  --color-health-worse: #b91c1c;
+  --color-health-neutral: #4B5563;       /* = --gray-700 */
+  --color-health-better-bg: #f0fdf4;
+  --color-health-worse-bg: #fef2f2;
+  --color-health-neutral-bg: #F9FAFB;    /* = --gray-100 */
+
+  /* CHP's brand color. Previously an override of the design-system
+     package's [data-brand="chp"] value (#1d4ed8) — now the sole source of
+     truth since the package import is gone. Drives the bg-brand/text-brand
+     Tailwind utilities used for header, primary nav, and buttons. Not
+     referenced by chart or map color scales (those live in tokens.js /
+     chartColors.js as independent hex values). */
   --color-brand: #1E3A8A;
 
   /* Brand tint — added 2026-08-04. Light fill paired with --color-brand for
@@ -89,6 +156,12 @@
 
 @theme inline {
   --color-background: var(--background);
+
+  /* Brand — was registered by @nychealth/design-system/theme.css; now the
+     sole registration, since that import is gone. Without this line
+     bg-brand/text-brand/border-brand stop existing as utilities entirely
+     (not just wrong-colored — the classes wouldn't generate at all). */
+  --color-brand: var(--color-brand);
   --color-brand-tint: var(--color-brand-tint);
   --color-comparison: var(--color-comparison);
   --color-comparison-tint: var(--color-comparison-tint);
@@ -99,6 +172,56 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Grayscale — was registered by @nychealth/design-system/theme.css
+     (--color-gray-100..900, mapped from tokens.css's --gray-*). Same
+     "stops generating, not just wrong color" risk as --color-brand above:
+     without this, bg-gray-*, text-gray-*, border-gray-* fall back to
+     Tailwind's own built-in gray scale everywhere (322 occurrences, 45
+     files) rather than disappearing outright, since Tailwind ships its own
+     gray-100..900 by default — but the shades would shift, most visibly
+     gray-900 (#1F2937 here vs. Tailwind's stock #111827). */
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-gray-700: var(--gray-700);
+  --color-gray-800: var(--gray-800);
+  --color-gray-900: var(--gray-900);
+
+  /* Health direction — was registered by @nychealth/design-system/theme.css.
+     Only consumed via var() (ComparisonStatTilesClient's delta badges), not
+     as Tailwind utility classes, but registering here keeps it available as
+     bg-health-better/text-health-worse/etc. if that's ever needed later. */
+  --color-health-better: var(--color-health-better);
+  --color-health-worse: var(--color-health-worse);
+  --color-health-neutral: var(--color-health-neutral);
+  --color-health-better-bg: var(--color-health-better-bg);
+  --color-health-worse-bg: var(--color-health-worse-bg);
+  --color-health-neutral-bg: var(--color-health-neutral-bg);
+
+  /* Type scale — was registered by @nychealth/design-system/theme.css.
+     sm/lg/2xl/xl override Tailwind's own built-in text-sm/lg/xl/2xl sizes;
+     see the :root comment above for exact values and the size this
+     replaces. label/body/read aren't Tailwind utility names (zero usage in
+     src/ currently) but registering them costs nothing and keeps them
+     available. */
+  --font-size-label: var(--font-size-label);
+  --font-size-xs: var(--font-size-xs);
+  --font-size-sm: var(--font-size-sm);
+  --font-size-body: var(--font-size-body);
+  --font-size-read: var(--font-size-read);
+  --font-size-lg: var(--font-size-lg);
+  --font-size-2xl: var(--font-size-2xl);
+  --font-size-xl: var(--font-size-xl);
+
+  /* Radius — was registered by @nychealth/design-system/theme.css.
+     Overrides Tailwind's own rounded-sm/md/lg (11 files use these). */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
 
   /* Footer color family only — see :root comment above. Enables
      bg-footer-bg, text-footer-text, text-footer-link,
