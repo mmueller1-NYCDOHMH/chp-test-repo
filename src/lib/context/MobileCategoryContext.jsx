@@ -8,19 +8,26 @@
  *
  * DESCRIPTION:
  * On mobile, instead of one continuous long scroll through every category,
- * only the active category's sections are shown at a time. Tapping a
- * category tab in TopicNav, or the "Continue to next category" button
- * (ContinueToNextCategoryButton.jsx, rendered at the end of each category
- * by CHPBuilder.jsx), switches pagedCategoryId here.
+ * only ONE category's sections are shown at a time — defaulting to the
+ * first category (Social), which renders right under the "at a glance"
+ * hero exactly like the original continuous-scroll page did, so on load
+ * the user can just scroll down into it normally rather than hitting a
+ * dead end. Tapping a *different* category tab in TopicNav, or the
+ * "Continue to next category" button (ContinueToNextCategoryButton.jsx,
+ * rendered at the end of each category by CHPBuilder.jsx), switches
+ * pagedCategoryId — that's what triggers the swap/hide behavior.
  *
  * This provider owns the resulting scroll behavior in one place so both
- * triggers stay consistent: when pagedCategoryId changes, it scrolls to
- * that category's header (`#cat-${id}`, from buildCategorySection in
- * neighborhoodProfile.js) rather than all the way to the top of the page —
- * the "at a glance" hero above the first category stays out of the way.
- * It relies on MobileCategoryPager having already un-hidden that
- * category's sections first — safe because effects fire child-before-
- * parent, and MobileCategoryPager is a descendant of this provider.
+ * triggers stay consistent: when pagedCategoryId actually CHANGES value,
+ * it scrolls to that category's header (`#cat-${id}`, from
+ * buildCategorySection in neighborhoodProfile.js) rather than all the way
+ * to the top of the page. It deliberately does NOT scroll on load, on a
+ * neighborhood-route change, or when a comparison neighborhood is toggled
+ * — none of those change pagedCategoryId's value, only mount/remount or
+ * unrelated state, so the page simply starts at the top like normal. It
+ * relies on MobileCategoryPager having already un-hidden that category's
+ * sections first — safe because effects fire child-before-parent, and
+ * MobileCategoryPager is a descendant of this provider.
  *
  * Desktop is untouched — `isMobile` gates all paging/scroll behavior off,
  * and MobileCategoryPager shows everything when `isMobile` is false.
@@ -40,20 +47,21 @@
  * Or simply: git revert the commit(s) that introduced this feature.
  */
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { siteNav } from '@/config/nav/siteNav';
 import { scrollToSection } from '@/lib/utils/scrollToSection';
 
 const MobileCategoryContext = createContext(null);
 
 export function MobileCategoryProvider({ children }) {
   const [isMobile, setIsMobile] = useState(false);
-  // null, not siteNav[0].id: on first load / a fresh neighborhood page,
-  // mobile should land on just the "at a glance" hero (categoryId 'always'
-  // in MobileCategoryPager/CHPBuilder's sectionCategoryId — always shown
-  // regardless of pagedCategoryId) with every category collapsed, not
-  // pre-opened into Social. A category only becomes visible once the user
-  // taps its tab (or the continue-to-next-category button), which is what
-  // actually sets this to a real id.
-  const [pagedCategoryId, setPagedCategoryId] = useState(null);
+  // Defaults to the first category (Social), not null: on load, the "at a
+  // glance" hero should NOT be a dead-end "page" of its own — Social's
+  // sections render right underneath it (both have categoryId either
+  // 'always' or the default's id, so MobileCategoryPager shows both), and
+  // the user can just scroll down into it normally. Only switching to a
+  // *different* category (tapping another tab, or the continue button)
+  // should trigger the pseudo-page swap/hide behavior below.
+  const [pagedCategoryId, setPagedCategoryId] = useState(siteNav[0]?.id ?? null);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
@@ -67,11 +75,23 @@ export function MobileCategoryProvider({ children }) {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // Skip the scroll on first mount — the initial category is already the
-  // one on screen (top of page), there's nothing to jump to yet.
-  const hasMountedRef = useRef(false);
+  // Only scroll when pagedCategoryId itself actually CHANGES VALUE (a real
+  // tab tap or continue-button click) — not merely when this effect
+  // re-runs for some other reason. That distinction matters because
+  // `isMobile` starts false and flips to true asynchronously shortly after
+  // mount (matchMedia resolves in the effect above), and this effect also
+  // depends on `isMobile` — so with a plain "skip only the very first run"
+  // guard, that isMobile flip caused a SECOND run where hasMounted was
+  // already true, and it would auto-scroll into the default category on
+  // every load/neighborhood-change/comparison-toggle. Comparing against
+  // the previous value (not just "have we run before") catches that case:
+  // isMobile changing alone, with pagedCategoryId untouched, no longer
+  // scrolls anything.
+  const prevPagedCategoryIdRef = useRef(pagedCategoryId);
   useEffect(() => {
-    if (!hasMountedRef.current) { hasMountedRef.current = true; return; }
+    const changed = prevPagedCategoryIdRef.current !== pagedCategoryId;
+    prevPagedCategoryIdRef.current = pagedCategoryId;
+    if (!changed) return;
     if (!isMobile || !pagedCategoryId) return;
 
     // One frame of headroom in case the un-hide + layout hasn't settled

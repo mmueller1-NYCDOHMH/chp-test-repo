@@ -203,10 +203,14 @@ export default function StickyContextBar({ sections = [] }) {
       className="sticky z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100 relative"
       style={{ top: topOffset }}
     >
-      {/* Scroll progress bar — 2px strip at the very bottom of this sticky bar */}
+      {/* Scroll progress bar — 2px strip at the very bottom of this sticky bar.
+          Hidden on mobile: with the pseudo-page category tabs now the primary
+          sense of "where am I", a page-scroll-percentage bar reading as a
+          loading/buffering indicator at the top of the screen was more
+          confusing than useful there. Unchanged on desktop (md+). */}
       <div
         aria-hidden="true"
-        className="absolute bottom-0 left-0 h-[2px] bg-brand transition-[width] duration-75 ease-linear"
+        className="hidden md:block absolute bottom-0 left-0 h-[2px] bg-brand transition-[width] duration-75 ease-linear"
         style={{ width: `${scrollProgress * 100}%` }}
       />
 
