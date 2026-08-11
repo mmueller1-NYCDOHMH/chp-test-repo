@@ -88,16 +88,31 @@ export default function KeyboardShortcutsButton() {
   // or any ancestor — is caught, not just window-level scroll).
   useEffect(() => {
     if (!isOpen) return;
+    let rafId = null;
     function updateCoords() {
+      rafId = null;
       const rect = btnRef.current?.getBoundingClientRect();
       if (rect) setCoords({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
     }
+    function onScroll() {
+      if (rafId == null) rafId = requestAnimationFrame(updateCoords);
+    }
     updateCoords();
     window.addEventListener('resize', updateCoords);
-    window.addEventListener('scroll', updateCoords, true);
+    // capture:true so scrolling inside any ancestor scroll container is
+    // caught, not just window-level scroll (see comment above). passive:true
+    // alongside it — this listener never calls preventDefault, so marking it
+    // passive lets the browser skip waiting on the handler before starting
+    // the scroll, avoiding jank. rAF-throttled for the same reason as
+    // StickyContextBar's scroll-progress tracker: getBoundingClientRect()
+    // forces a layout read, so doing it on every raw scroll event (rather
+    // than once per paint) is unnecessary main-thread work while this
+    // popover happens to be open.
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true });
     return () => {
       window.removeEventListener('resize', updateCoords);
-      window.removeEventListener('scroll', updateCoords, true);
+      window.removeEventListener('scroll', onScroll, { capture: true });
+      if (rafId != null) cancelAnimationFrame(rafId);
     };
   }, [isOpen]);
 

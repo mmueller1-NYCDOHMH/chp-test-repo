@@ -104,15 +104,32 @@ export default function StickyContextBar({ sections = [] }) {
   const sectionIds                             = sections.map(s => s.id);
 
   // ── Track scroll progress ────────────────────────────────────────────────
+  // rAF-throttled: native 'scroll' events can fire far more than once per
+  // frame during momentum/fling scrolling, especially on mobile. Calling
+  // setState directly from the listener (the previous implementation) drove
+  // a React re-render on every single event instead of once per paint,
+  // which is a well-known source of scroll jank — this was very likely the
+  // biggest contributor to the page feeling less smooth than it should,
+  // since this bar (and its progress fill) is mounted on every neighborhood
+  // profile page. Coalescing to one requestAnimationFrame per scroll burst
+  // caps updates at the display's actual refresh rate.
   useEffect(() => {
+    let rafId = null;
     function update() {
+      rafId = null;
       const scrolled = window.scrollY;
       const total    = document.documentElement.scrollHeight - window.innerHeight;
       setScrollProgress(total > 0 ? Math.min(scrolled / total, 1) : 0);
     }
+    function onScroll() {
+      if (rafId == null) rafId = requestAnimationFrame(update);
+    }
     update();
-    window.addEventListener('scroll', update, { passive: true });
-    return () => window.removeEventListener('scroll', update);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafId != null) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   // ── Measure TopicNav height so we stick immediately below it ────────────

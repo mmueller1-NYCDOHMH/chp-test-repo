@@ -387,9 +387,15 @@ export default function TopicNav() {
           >
             {siteNav.map((category, index) => {
               const isActive  = activeCategoryId === category.id;
-              const anchor    = category.anchor
-                ?? category.subcategories?.find(s => !s.dummy)?.anchor;
               const firstSub  = category.subcategories.find(s => !s.dummy);
+              // Prefer the first real subcategory's anchor. category.anchor
+              // (e.g. "#cat-social") is a virtual id that only Sidebar.jsx's
+              // hash→category lookup understands — no section in the DOM
+              // actually carries that id, so scrollUtil's getElementById
+              // silently no-ops and the tap does nothing. Only fall back to
+              // category.anchor when every subcategory is a `dummy`
+              // placeholder (nothing real to scroll to yet).
+              const anchor    = firstSub?.anchor ?? category.anchor;
 
               function handleMobileTap() {
                 if (!anchor) return;
@@ -479,6 +485,13 @@ export default function TopicNav() {
           {siteNav.map((category, index) => {
             const isOpen   = openCategoryId === category.id;
             const isActive = activeCategoryId === category.id;
+            // Same fallback as the mobile tab row below: category.anchor
+            // (e.g. "#cat-social") has no matching DOM id, so a direct click
+            // on the category label (as opposed to a dropdown subcategory
+            // item, which always has a real anchor) needs to target the
+            // first real subcategory instead or scrollToSection no-ops.
+            const clickAnchor = category.subcategories.find(s => !s.dummy)?.anchor
+              ?? category.anchor;
 
             return (
               <li
@@ -503,12 +516,12 @@ export default function TopicNav() {
                   aria-haspopup="true"
                   aria-expanded={isOpen}
                   aria-current={isActive ? 'location' : undefined}
-                  onClick={() => { if (category.anchor) scrollToSection(category.anchor); }}
+                  onClick={() => { if (clickAnchor) scrollToSection(clickAnchor); }}
                   onKeyDown={e => handleCategoryKeyDown(e, category, categoryBtnRefs.current[index])}
                   className={[
                     'flex items-center px-3 py-2.5 text-sm font-medium whitespace-nowrap',
                     'transition-colors border-b-2 flex-1',
-                    category.anchor ? 'cursor-pointer' : 'cursor-default',
+                    clickAnchor ? 'cursor-pointer' : 'cursor-default',
                     isActive
                       ? 'border-brand text-brand font-semibold'
                       : isOpen

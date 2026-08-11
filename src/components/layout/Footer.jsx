@@ -38,9 +38,20 @@ import footerContent from '../../../content/site/footer.json';
 
 const { linkColumns, copyright, legalLinks, accessibilityLink } = footerContent;
 
+// max-lg:text-center — on the stacked mobile/tablet layout, the column's
+// flex `items-center` (max-lg:items-center, applied to the column div in
+// the JSX below) only centers each link's inline-block BOX as a unit; it
+// doesn't affect text-align inside that box. That's invisible for
+// single-line labels (box width == text width, so centering the box
+// already centers the text), but "Directory of City Agencies" and
+// "Contact NYC Government" wrap to two lines on narrow screens — without
+// this, the box is sized to the wider first line and centered, while the
+// shorter second line defaults to flush-left inside that box instead of
+// centering under the first line, reading as ragged/misaligned next to
+// every other (single-line, correctly-centered) link in the column.
 const linkCls =
   'inline-block py-1 text-sm font-semibold text-footer-link no-underline transition-colors ' +
-  'hover:text-footer-link-hover hover:underline decoration-2 underline-offset-4';
+  'hover:text-footer-link-hover hover:underline decoration-2 underline-offset-4 max-lg:text-center';
 
 // inline-block + py-2: text stays text-xs, but the tap target grows to a
 // more mobile-friendly height without changing the visual line height.
