@@ -27,10 +27,16 @@ import { resolveLayoutClasses } from '@/config/layout/resolveLayoutClasses';
 
 // Reveal animation CSS lives in globals.css — no inline <style> injection needed.
 
-export default function SectionWrapper({ children, layout, id }) {
+export default function SectionWrapper({ children, layout, id, categoryId }) {
   const sectionRef = useRef(null);
   const resolved   = layoutPresets[layout] || layoutPresets.stacked;
   const classes    = resolveLayoutClasses(resolved);
+
+  // EXPERIMENTAL (mobile pseudo-pages) — data-chp-category lets
+  // MobileCategoryPager.jsx show/hide sections by category on mobile.
+  // Harmless no-op on desktop / if categoryId is undefined. See
+  // MobileCategoryContext.jsx for the revert path.
+  const categoryAttr = categoryId ? { 'data-chp-category': categoryId } : {};
 
   // Set hidden state before browser paints to prevent SSR flash
   useLayoutEffect(() => {
@@ -59,7 +65,7 @@ export default function SectionWrapper({ children, layout, id }) {
 
   if (resolved.noCard) {
     return (
-      <section ref={sectionRef} id={id} className={classes.outer}>
+      <section ref={sectionRef} id={id} className={classes.outer} {...categoryAttr}>
         <div className={classes.inner}>
           {children}
         </div>
@@ -68,7 +74,7 @@ export default function SectionWrapper({ children, layout, id }) {
   }
 
   return (
-    <section ref={sectionRef} id={id} className={classes.outer}>
+    <section ref={sectionRef} id={id} className={classes.outer} {...categoryAttr}>
       <div className={classes.card}>
         <div className={classes.inner}>
           {children}

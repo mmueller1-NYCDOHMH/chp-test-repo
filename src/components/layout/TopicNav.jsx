@@ -33,6 +33,7 @@ import { siteNav }           from '@/config/nav/siteNav';
 import { scrollToSection as scrollUtil } from '@/lib/utils/scrollToSection';
 import { DEFAULT_NEIGHBORHOOD_ID } from '@/lib/utils/constants';
 import { TOPICNAV_SEPARATOR } from '@/lib/charts/chartColors';
+import { useMobileCategory } from '@/lib/context/MobileCategoryContext';
 
 // Fallback neighborhood when navigating to a section from a non-profile page.
 // Matches the default redirect in /app/page.js.
@@ -51,6 +52,11 @@ export default function TopicNav() {
   // tab's normal in-place active look, and square off whichever side is
   // actually flush against the bar's edge.
   const [stuckSide, setStuckSide]                 = useState(null);
+
+  // EXPERIMENTAL (mobile pseudo-pages) — see MobileCategoryContext.jsx.
+  // setPagedCategoryId is only used inside handleMobileTap below; on
+  // desktop nothing reads pagedCategoryId so this has no effect.
+  const { setPagedCategoryId } = useMobileCategory();
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
@@ -403,7 +409,13 @@ export default function TopicNav() {
                   router.push(`/neighborhood/${DEFAULT_NEIGHBORHOOD_ID}${anchor}`);
                   return;
                 }
-                scrollUtil(anchor);
+                // EXPERIMENTAL (mobile pseudo-pages): switch which category's
+                // sections are visible instead of scrolling to them within one
+                // long page. MobileCategoryContext.jsx owns the resulting
+                // scroll — it jumps to this category's header, not the very
+                // top of the page. See that file for what this is and how to
+                // revert (restore the scrollUtil(anchor) call this replaced).
+                setPagedCategoryId(category.id);
                 if (firstSub) {
                   navigateToSection(firstSub.id);
                   window.dispatchEvent(

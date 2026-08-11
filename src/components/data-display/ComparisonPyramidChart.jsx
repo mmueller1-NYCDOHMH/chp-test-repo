@@ -110,8 +110,15 @@ export default function ComparisonPyramidChart({
                 </div>
               </div>
 
-              {/* Center label — narrower on mobile to give bars more room */}
-              <div className="shrink-0 w-20 sm:w-28 px-1 text-center text-xs text-gray-600 leading-tight">
+              {/* Center label — narrower on mobile to give bars more room.
+                  break-words: labels with no spaces to wrap on (e.g.
+                  "Hispanic/Latino", the longest in the race/ethnicity set)
+                  would otherwise overflow this fixed-width box horizontally
+                  and visually collide with the bar tracks on either side —
+                  break-words forces a mid-word break instead, wrapping to a
+                  second line within the same column rather than bleeding
+                  outward. */}
+              <div className="shrink-0 w-20 sm:w-28 px-1 text-center text-xs text-gray-600 leading-tight break-words">
                 {s.label}
               </div>
 
