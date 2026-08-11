@@ -1,6 +1,6 @@
 @import "tailwindcss";
-/* @import "@nychealth/design-system/tokens.css";
-@import "@nychealth/design-system/theme.css"; */
+@import "@nychealth/design-system/tokens.css";
+@import "@nychealth/design-system/theme.css";
 
 /* ── Design tokens ───────────────────────────────────────────────────────────
    Colors, typography scale, health-direction, spacing/radius/shadow now come
@@ -118,7 +118,22 @@ html {
   /* overflow-x:clip prevents horizontal scrolling without creating a new block
      formatting context — so position:sticky and position:fixed elements are
      unaffected. This is intentionally on <html>, not <body>: overflow-x:hidden
-     on body breaks sticky (see body comment below). overflow-x:clip does not. */
+     on body breaks sticky (see body comment below). overflow-x:clip does not.
+
+     The `hidden` line right before `clip` is a progressive-enhancement
+     fallback, not a mistake — `overflow: clip` support on <html> only
+     landed in Safari 16 (iOS 16, Sept 2022). Browsers that recognize `clip`
+     simply use it (last valid declaration for the same property wins,
+     exact same behavior as before this comment). Browsers that don't
+     recognize the *value* `clip` treat that whole declaration as invalid
+     and fall back to whatever `overflow-x` was previously set to — here,
+     `hidden` — instead of silently landing on the initial `visible` and
+     allowing real horizontal panning, which is the actual mobile bug this
+     is fixing. `hidden` still carries the sticky/fixed-breaking risk noted
+     below, but only on the pre-2022-iOS slice of devices that don't
+     support `clip` in the first place — a real but narrow tradeoff versus
+     leaving horizontal scrolling wide open there. */
+  overflow-x: hidden;
   overflow-x: clip;
 }
 

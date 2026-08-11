@@ -414,7 +414,21 @@ export default function TopicNav() {
                   onClick={handleMobileTap}
                   className={[
                     'shrink-0 whitespace-nowrap py-2 text-xs font-medium leading-snug min-h-[2.5rem] flex items-center gap-1.5 snap-start',
-                    'transition-all duration-200 ease-out',
+                    // transform-gpu (+ backface-visibility) forces this sticky
+                    // element onto its own GPU compositing layer. Without it,
+                    // iOS Safari has a known bug where a `position: sticky`
+                    // element inside a horizontally scrolling container,
+                    // combined with a background-color transition, can paint
+                    // with no background at all — the tab renders fully
+                    // white — until something else forces a repaint. Chrome's
+                    // device-emulation mode still runs desktop Chrome's
+                    // engine underneath, so it never reproduces this; only
+                    // real WebKit/Safari does, which matches "only on my
+                    // phone, not the emulator." Explicit transition-property
+                    // list (not transition-all) is part of the same fix —
+                    // transitioning `position` itself was never intended.
+                    'transform-gpu [-webkit-backface-visibility:hidden] [backface-visibility:hidden]',
+                    'transition-[background-color,color,transform,padding,box-shadow,border-radius] duration-200 ease-out',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1',
                     anchor ? 'cursor-pointer active:scale-95' : 'cursor-default',
                     // Sticky to BOTH edges of the scroll port (not just left)
@@ -430,12 +444,20 @@ export default function TopicNav() {
                     // underneath it, stays rounded. Once it settles back
                     // into its normal spot in the row, it returns to the
                     // fuller active look.
+                    // No scale-[1.03] pop here (removed) — a transform on a
+                    // child of this row's overflow-x-auto container is a
+                    // known WebKit risk: Safari can miscalculate the row's
+                    // scrollWidth to include the scaled-up visual bounds,
+                    // adding phantom scrollable slack. Not worth it for a
+                    // purely decorative pop, especially chasing a live
+                    // report of the page panning horizontally on a real
+                    // phone (not reproducible in desktop emulation).
                     isActive && stuckSide === 'left'
                       ? 'sticky left-0 right-0 z-10 px-2.5 bg-brand text-white rounded-l-none rounded-r-full'
                       : isActive && stuckSide === 'right'
                       ? 'sticky left-0 right-0 z-10 px-2.5 bg-brand text-white rounded-r-none rounded-l-full'
                       : isActive
-                      ? 'sticky left-0 right-0 z-10 px-3.5 bg-brand text-white shadow-md shadow-brand/20 scale-[1.03] rounded-full'
+                      ? 'sticky left-0 right-0 z-10 px-3.5 bg-brand text-white shadow-md shadow-brand/20 rounded-full'
                       : 'px-3.5 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-full',
                   ].join(' ')}
                 >

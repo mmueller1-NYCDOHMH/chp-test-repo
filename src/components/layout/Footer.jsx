@@ -32,7 +32,7 @@
  * - Receives no props; self-contained
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import footerContent from '../../../content/site/footer.json';
 
@@ -62,6 +62,25 @@ export default function Footer() {
   // showing where the link actually goes.
   const [hoverTip, setHoverTip] = useState(null);
 
+  // Touch devices don't have a cursor to follow, and the bug this avoids is
+  // worse than just "no tooltip": mobile Safari fires a synthetic
+  // mouseenter/mouseover on tap (to support hover-menu sites built for
+  // desktop), but never fires mouseleave — there's no cursor to actually
+  // leave the element — so a tapped footer link would show the tooltip and
+  // then leave it stuck on screen with no way to dismiss it. `(hover: hover)
+  // and (pointer: fine)` is the standard way to detect "this is a real
+  // mouse," not just "this is a wide screen" (a touch-only tablet in
+  // landscape would otherwise still get the same stuck-tooltip bug).
+  const [canHover, setCanHover] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
+    setCanHover(mq.matches);
+    const handler = (e) => setCanHover(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
   const handleEnter = useCallback((e, href, label) => {
     const host = getHost(href);
     setHoverTip({
@@ -77,11 +96,17 @@ export default function Footer() {
 
   const handleLeave = useCallback(() => setHoverTip(null), []);
 
-  const hoverHandlers = (href, label) => ({
-    onMouseEnter: (e) => handleEnter(e, href, label),
-    onMouseMove: handleMove,
-    onMouseLeave: handleLeave,
-  });
+  // Returns no handlers at all on touch devices — not just a no-op — so
+  // there's no chance of the stuck-tooltip bug regardless of how a given
+  // browser's synthetic mouse events behave.
+  const hoverHandlers = (href, label) =>
+    canHover
+      ? {
+          onMouseEnter: (e) => handleEnter(e, href, label),
+          onMouseMove: handleMove,
+          onMouseLeave: handleLeave,
+        }
+      : {};
 
   return (
     <footer className="relative bg-footer-bg text-footer-text py-8 px-4 sm:px-10">
