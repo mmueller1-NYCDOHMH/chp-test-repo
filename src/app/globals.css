@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@import "@nychealth/design-system/tokens.css";
-@import "@nychealth/design-system/theme.css";
+/* @import "@nychealth/design-system/tokens.css";
+@import "@nychealth/design-system/theme.css"; */
 
 /* ── Design tokens ───────────────────────────────────────────────────────────
    Colors, typography scale, health-direction, spacing/radius/shadow now come
