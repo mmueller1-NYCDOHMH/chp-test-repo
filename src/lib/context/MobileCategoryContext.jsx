@@ -40,14 +40,20 @@
  * Or simply: git revert the commit(s) that introduced this feature.
  */
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { siteNav } from '@/config/nav/siteNav';
 import { scrollToSection } from '@/lib/utils/scrollToSection';
 
 const MobileCategoryContext = createContext(null);
 
 export function MobileCategoryProvider({ children }) {
   const [isMobile, setIsMobile] = useState(false);
-  const [pagedCategoryId, setPagedCategoryId] = useState(siteNav[0]?.id ?? null);
+  // null, not siteNav[0].id: on first load / a fresh neighborhood page,
+  // mobile should land on just the "at a glance" hero (categoryId 'always'
+  // in MobileCategoryPager/CHPBuilder's sectionCategoryId — always shown
+  // regardless of pagedCategoryId) with every category collapsed, not
+  // pre-opened into Social. A category only becomes visible once the user
+  // taps its tab (or the continue-to-next-category button), which is what
+  // actually sets this to a real id.
+  const [pagedCategoryId, setPagedCategoryId] = useState(null);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
