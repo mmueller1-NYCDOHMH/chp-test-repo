@@ -1,0 +1,21 @@
+{
+  "IndicatorKey": "air-pollution",
+  "Title": "Air Pollution (Fine Particulate Matter)",
+  "Label": "Air Pollution",
+  "Subtitle": "Annual average micrograms of fine particulate matter (PM2.5) per cubic meter of air (mcg/m3).",
+  "AgeAdjustment": "N/A",
+  "MethodsNote": "Air samples were collected at NYC Community Air Survey monitoring sites and a statistical model was used to predict pollutant concentrations across NYC. Results were assigned to neighborhoods and were then averaged.",
+  "ReliabilityNote": "",
+  "Source": "NYC DOHMH, Community Air Survey",
+  "DenominatorSource": "N/A",
+  "TimePeriod": "2023",
+  "Unit": "Mcg/cubic meter",
+  "Decimals": 1,
+  "Section": "neighborhood",
+  "Subsection": "environmental-risk",
+  "type": "Annual average",
+  "of": "fine particulate matter (PM2.5)",
+  "detail": "",
+  "units": "mcg/m³",
+  "indicatorDetail": ""
+}

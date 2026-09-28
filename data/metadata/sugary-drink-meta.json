@@ -1,0 +1,21 @@
+{
+  "IndicatorKey": "sugary-drink",
+  "Title": "One or more 12 oz. sugary drinks per day",
+  "Label": "Sugary Drink Consumption",
+  "Subtitle": "Percentage of adults ages 18 and older who report drinking one or more 12 ounce sugar-sweetened beverage (sodas, fruit punch, sweet iced tea, sports drinks, etc.) on average per day.",
+  "AgeAdjustment": "Yes, to the US 2000 standard population",
+  "MethodsNote": "Weighted to represent the NYC adult population, and to compensate for unequal probability of selection and nonresponse bias. Data by community district are weighted per the American Community Survey, 2015. Data for borough and NYC are weighted per the American Community Survey, 2014. The data source combined Financial District (MN 01) and Greenwich Village/Soho (MN 02), Clinton/Chelsea (MN 04) and Midtown (MN 05), Mott Haven/Melrose (BX 01) and Hunts Point/Longwood (BX 02), and Morrisania/Crotona (BX 03) and Belmont/East Tremont (BX 06). For these four pairs, the same estimate was applied to both CDs.",
+  "ReliabilityNote": "",
+  "Source": "NYC DOHMH, Community Health Survey",
+  "DenominatorSource": "N/A",
+  "TimePeriod": "2023-2024",
+  "Unit": "%",
+  "Decimals": 0,
+  "Section": "neighborhood",
+  "Subsection": "food",
+  "type": "Percent",
+  "of": "adults age 18+",
+  "detail": "who report drinking 1 or more 12 ounce sugar sweetened beverage per day",
+  "units": "",
+  "indicatorDetail": "Including sodas, fruit punch, sweet iced tea, sports drinks, etc."
+}

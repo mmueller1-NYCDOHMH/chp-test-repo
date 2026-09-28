@@ -1,0 +1,21 @@
+{
+  "IndicatorKey": "on-time-hs-grad",
+  "Title": "On-Time High School Graduation",
+  "Label": "On-Time High School Graduation",
+  "Subtitle": "Percent of public school students graduating in four years.",
+  "AgeAdjustment": "No",
+  "MethodsNote": "Community district assigned by student home residence. Students with missing information were assigned based on other years data. Some students were excluded from the community district analysis as they had no valid address available. NYC and borough estimates exclude students who could not be assigned to a community district therefore the data may differ from rates presented in other published sources.",
+  "ReliabilityNote": "",
+  "Source": "NYC Department of Education graduation data obtained from New York State Department of Education",
+  "DenominatorSource": "N/A",
+  "TimePeriod": "2019-2020",
+  "Unit": "%",
+  "Decimals": 0,
+  "Section": "social",
+  "Subsection": "education",
+  "type": "Percent",
+  "of": "public school students",
+  "detail": "graduating in 4 years",
+  "units": "",
+  "indicatorDetail": ""
+}

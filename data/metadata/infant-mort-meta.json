@@ -1,0 +1,21 @@
+{
+  "IndicatorKey": "infant-mort",
+  "Title": "Infant Mortality",
+  "Label": "Infant Mortality",
+  "Subtitle": "Rate of infant deaths (under one year old) per 1,000 live births.",
+  "AgeAdjustment": "N/A",
+  "MethodsNote": "",
+  "ReliabilityNote": "Interpret with caution due to small number of events",
+  "Source": "NYC DOHMH, Bureau of Vital Statistics",
+  "DenominatorSource": "NYC DOHMH, Bureau of Vital Statistics",
+  "TimePeriod": "2020-2022",
+  "Unit": "Rate per 1,000 live births",
+  "Decimals": 1,
+  "Section": "family-child-health",
+  "Subsection": "infant-child",
+  "type": "Rate",
+  "of": "deaths",
+  "detail": "under age 1",
+  "units": "per 1,000 live births",
+  "indicatorDetail": ""
+}

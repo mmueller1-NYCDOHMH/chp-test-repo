@@ -1,0 +1,21 @@
+{
+  "IndicatorKey": "avoidable-adult-hosp",
+  "Title": "Avoidable Hospitalizations Among Adults",
+  "Label": "Avoidable Hospitalizations Among Adults",
+  "Subtitle": "Rate of avoidable adult hospitalizations per 100,000 adults ages 18 and older.",
+  "AgeAdjustment": "Yes, to the US 2000 standard population",
+  "MethodsNote": "Avoidable hospitalizations among adults is based on AHRQ PQI Enhanced Version 5.0, updated March 2015. For more information, visit: http://www.qualityindicators.ahrq.gov/Modules/pqi_resources.aspx\n\nThe indicator includes: PQI 05 (Asthma in older adults portion only), PQI 15 (Asthma in younger adults), PQI 01 (Diabetes short term complications), PQI 03 (Diabetes long-term complications), PQI 14 (uncontrolled Diabetes), PQI 16 (lower-extremity amputation among patients with Diabetes), PQI 07 (Hypertension), PQ1 08 (Heart Failure), PQI 10 (Dehydration), PQI 11 (Bacterial Pneumonia), and PQI 12 (Urinary Tract Infection). For a breakdown of the calculations used to formulate each PQI, including the list of corresponding ICD-9-CM codes, visit: http://www.qualityindicators.ahrq.gov/Archive/PQI_TechSpec_ICD9_v50.aspx",
+  "ReliabilityNote": "",
+  "Source": "New York State Department of Health, Statewide Planning and Research Cooperative System (SPARCS)",
+  "DenominatorSource": "NYC DOHMH population estimates, modified from US Census Bureau interpolated intercensal population estimates, 2000-2016. Updated Sept 2017",
+  "TimePeriod": "2023",
+  "Unit": "Rate per 100,000 adults",
+  "Decimals": 0,
+  "Section": "healthcare",
+  "Subsection": "injury-hospitalizations",
+  "type": "Rate",
+  "of": "avoidable hospitalizations",
+  "detail": "",
+  "units": "per 100,000 adults (age 18+)",
+  "indicatorDetail": ""
+}

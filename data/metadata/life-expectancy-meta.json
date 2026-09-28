@@ -1,0 +1,21 @@
+{
+  "IndicatorKey": "life-expectancy",
+  "Title": "Life Expectancy",
+  "Label": "Life Expectancy",
+  "Subtitle": "Life expectancy at birth (years of age).",
+  "AgeAdjustment": "N/A",
+  "MethodsNote": "Community district and borough level data include New York City residents who died in New York State, outside of NYC, while NYC data are restricted to deaths in NYC.",
+  "ReliabilityNote": "",
+  "Source": "NYC DOHMH, Bureau of Vital Statistics",
+  "DenominatorSource": "Population estimates, 2006-2015, vintages, 2012-2015",
+  "TimePeriod": "2013-2022 (community district and borough), 2022 (NYC)",
+  "Unit": "Years",
+  "Decimals": 1,
+  "Section": "health-conditions",
+  "Subsection": "health-outcomes",
+  "type": "",
+  "of": "",
+  "detail": "",
+  "units": "",
+  "indicatorDetail": ""
+}

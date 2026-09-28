@@ -1,0 +1,21 @@
+{
+  "IndicatorKey": "school-absent",
+  "Title": "Elementary School Absenteeism",
+  "Label": "Elementary School Absenteeism",
+  "Subtitle": "Percent of public school students in grades K through 5 missing >10% of reported school days",
+  "AgeAdjustment": "No",
+  "MethodsNote": "Students were included in the analysis if they were enrolled for at least 150 days. Students with missing home addresses were allocated to community districts based on other years in which they had a valid address. Some students were excluded from the community district analysis as they had no valid address available.",
+  "ReliabilityNote": "",
+  "Source": "NYC Public Schools",
+  "DenominatorSource": "N/A",
+  "TimePeriod": "2022-2023",
+  "Unit": "%",
+  "Decimals": 0,
+  "Section": "social",
+  "Subsection": "education",
+  "type": "Percent",
+  "of": "public school students (grade K through 5)",
+  "detail": "missing over 10% of school days",
+  "units": "",
+  "indicatorDetail": ""
+}
