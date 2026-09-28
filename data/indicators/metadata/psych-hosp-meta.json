@@ -1,0 +1,21 @@
+{
+  "IndicatorKey": "psych-hosp",
+  "Title": "Psychiatric Hospitalizations",
+  "Label": "Psychiatric Hospitalizations",
+  "Subtitle": "Rate of psychiatric hospitalizations per 100,000 adults ages 18 and older.",
+  "AgeAdjustment": "Yes, to the US 2000 standard population",
+  "MethodsNote": "Psychiatric hospitalizations are defined as a principal diagnosis with ICD-9 codes: 295-298, 300-302, 306- 309, 311-314, E95, V62.84, excluding 302.52; ICD-10 codes: F20-F52, F59-F63, F65, F68-F69, F90-F99, X71-X83, R45.1, R45.7, R45.851, T14.91, excluding F48.2 or a prescription refill with psychiatric secondary diagnosis (ICD-9 code V68.1, or ICD-10 code Z76.0, with secondary diagnosis as above). Data is limited to NYC residents only.",
+  "ReliabilityNote": "",
+  "Source": "New York State Department of health, Statewide Planning and Research Cooperative System (SPARCS)",
+  "DenominatorSource": "NYC DOHMH population estimates, modified from US Census Bureau interpolated intercensal population estimates, 2000-2016. Updated Sept 2017",
+  "TimePeriod": "2023",
+  "Unit": "Rate per 100,000 adults",
+  "Decimals": 0,
+  "Section": "mental-health-substance-use",
+  "Subsection": "mental-health",
+  "type": "Rate",
+  "of": "psychiatric hospitalizations",
+  "detail": "",
+  "units": "per 100,000 adults (age 18+)",
+  "indicatorDetail": ""
+}

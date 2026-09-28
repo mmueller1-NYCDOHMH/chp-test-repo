@@ -1,0 +1,21 @@
+{
+  "IndicatorKey": "teen-births",
+  "Title": "Teen Births",
+  "Label": "Teen Births",
+  "Subtitle": "Rate of births in which the mother was under 20 years old per 1,000 girls ages 15 to 19.",
+  "AgeAdjustment": "No",
+  "MethodsNote": "",
+  "ReliabilityNote": "Interpret with caution due to small number of events",
+  "Source": "NYC DOHMH, Bureau of Vital Statistics",
+  "DenominatorSource": "NYC DOHMH population estimates, modified from US Census Bureau interpolated intercensal population estimates, 2011-2015, vintage 2015",
+  "TimePeriod": "2020-2022",
+  "Unit": "Rate per 1,000 girls",
+  "Decimals": 1,
+  "Section": "family-child-health",
+  "Subsection": "maternal",
+  "type": "Rate",
+  "of": "births",
+  "detail": "where the mother is under age 20",
+  "units": "per 1,000 girls (age 15 to 19)",
+  "indicatorDetail": ""
+}

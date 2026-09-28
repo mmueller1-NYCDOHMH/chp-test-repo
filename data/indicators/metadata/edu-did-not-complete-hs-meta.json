@@ -1,0 +1,21 @@
+{
+  "IndicatorKey": "edu-did-not-complete-hs",
+  "Title": "Did Not Complete High School",
+  "Label": "Educational Attainment: Less than High School",
+  "Subtitle": "Percentage of adults ages 25 and older whose highest level of education is less than a high school diploma or GED.",
+  "AgeAdjustment": "No",
+  "MethodsNote": "US Census Bureau American Factfinder Table ID: S1501: Educational Attainment. Data source provided data at the Public Use Microdata Area (PUMA) geographic level. At the PUMA level, the following Community Districts are combined: Financial District (MN 01) and Greenwich Village/Soho (MN 02), Clinton/Chelsea (MN 04) and Midtown (MN 05), Mott Haven/Melrose (BX 01) and Hunts Point/Longwood (BX 02), and Morrisania/Crotona (BX 03) and Belmont/East Tremont (BX 06). For these four areas, the same estimate was applied to both community districts that comprised the PUMA.",
+  "ReliabilityNote": "",
+  "Source": "U.S. Census Bureau, American Community Survey",
+  "DenominatorSource": "N/A",
+  "TimePeriod": "2012-2016",
+  "Unit": "%",
+  "Decimals": 0,
+  "Section": "social",
+  "Subsection": "education",
+  "type": "",
+  "of": "",
+  "detail": "",
+  "units": "",
+  "indicatorDetail": ""
+}

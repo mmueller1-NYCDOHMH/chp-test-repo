@@ -1,0 +1,21 @@
+{
+  "IndicatorKey": "homes-no-defects",
+  "Title": "Homes With No Maintenance Defects",
+  "Label": "Homes With No Maintenance Problems",
+  "Subtitle": "Percentage of renter-occupied homes that reported any maintenance deficiencies (water leaks, cracks and holes, inadequate heating, presence of mice or rats, toilet breakdowns, or peeling paint).",
+  "AgeAdjustment": "N/A",
+  "MethodsNote": "No maintenance deficiencies includes heating equipment breakdown, additional heating required, rodent infestation, cracks/holes in the walls, ceilings or floors, broken plaster/peeling paint larger than 8&half; x 11 inches, toilet breakdowns, or water leaks from outside the unit.",
+  "ReliabilityNote": "",
+  "Source": "NYC Housing and Vacancy Survey",
+  "DenominatorSource": "N/A",
+  "TimePeriod": "2023",
+  "Unit": "%",
+  "Decimals": 0,
+  "Section": "neighborhood",
+  "Subsection": "housing-quality",
+  "type": "Percent",
+  "of": "renter-occupied homes",
+  "detail": "with any reported maintenance problems",
+  "units": "",
+  "indicatorDetail": "Including water leaks, cracks and holes, inadequate heating, presence of mice or rats, toilet breakdowns, or peeling paint."
+}
