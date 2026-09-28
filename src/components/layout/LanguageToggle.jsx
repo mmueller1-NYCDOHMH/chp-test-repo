@@ -7,21 +7,27 @@
  * Language selector powered by Google Translate Website Translator.
  *
  * DESCRIPTION:
- * Renders a custom dropdown with the six supported languages. On selection
+ * Renders a custom dropdown with the supported languages. On selection
  * it sets the `googtrans` cookie and reloads the page so Google Translate
  * applies the translation. A hidden #google_translate_element div satisfies
  * the Translate script's requirement for a mount point.
  *
  * SUPPORTED LANGUAGES:
- *   English · Español · 中文 · Русский · العربية · বাংলা
+ *   English · Español · 中文 · Русский · Italiano · Kreyòl Ayisyen · বাংলা ·
+ *   ייִדיש · 한국어 · العربية · Français · Polski · اردو · Português
  *
  * ADDING LANGUAGES:
- * Add an entry to the LANGUAGES array below. The `code` must be a valid
+ * Add an entry to the LANGUAGES array below AND add its code to
+ * `includedLanguages` in app/layout.js (GT only loads listed languages).
+ * If the script is right-to-left, add the code to RTL_CODES too.
+ * The `code` must be a valid
  * BCP-47 tag that Google Translate recognises (e.g. 'fr', 'ht', 'ko').
  *
  * NOTES:
  * - The Google Translate script is loaded in layout.js via next/script.
- * - RTL languages (Arabic) flip the dropdown direction via dir="rtl".
+ * - RTL languages (Arabic, Urdu, Yiddish) set dir="rtl" on the label span
+ *   only, so the text shapes correctly but stays left-aligned with the rest
+ *   of the list (dir on the whole row flipped the flex layout).
  * - `notranslate` class on inner labels prevents double-translation of the UI.
  * - Renders once, in PageHeader, on the dark brand-colored background —
  *   use the `variant` prop below for the trigger's text color. PageHeader
@@ -38,13 +44,24 @@
 import { useState, useEffect, useRef, useId } from 'react';
 
 const LANGUAGES = [
-  { code: 'en',    label: 'English',    native: 'English'   },
-  { code: 'es',    label: 'Spanish',    native: 'Español'   },
-  { code: 'zh-CN', label: 'Chinese',    native: '中文'       },
-  { code: 'ru',    label: 'Russian',    native: 'Русский'   },
-  { code: 'ar',    label: 'Arabic',     native: 'العربية'   },
-  { code: 'bn',    label: 'Bengali',    native: 'বাংলা'     },
+  { code: 'en',    label: 'English',        native: 'English'          },
+  { code: 'es',    label: 'Spanish',        native: 'Español'          },
+  { code: 'zh-CN', label: 'Chinese',        native: '中文'              },
+  { code: 'ru',    label: 'Russian',        native: 'Русский'          },
+  { code: 'it',    label: 'Italian',        native: 'Italiano'         },
+  { code: 'ht',    label: 'Haitian Creole', native: 'Kreyòl Ayisyen'   },
+  { code: 'bn',    label: 'Bengali',        native: 'বাংলা'            },
+  { code: 'yi',    label: 'Yiddish',        native: 'ייִדיש'           },
+  { code: 'ko',    label: 'Korean',         native: '한국어'            },
+  { code: 'ar',    label: 'Arabic',         native: 'العربية'          },
+  { code: 'fr',    label: 'French',         native: 'Français'         },
+  { code: 'pl',    label: 'Polish',         native: 'Polski'           },
+  { code: 'ur',    label: 'Urdu',           native: 'اردو'             },
+  { code: 'pt',    label: 'Portuguese',     native: 'Português'        },
 ];
+
+/** Right-to-left scripts — option rows render with dir="rtl". */
+const RTL_CODES = new Set(['ar', 'ur', 'yi']);
 
 /** Read the current language from the googtrans cookie, e.g. "/en/es" → "es" */
 function getCurrentLang() {
@@ -182,7 +199,7 @@ export default function LanguageToggle({ variant = 'onBrand' }) {
             ref={listRef}
             onKeyDown={handleListKeyDown}
             aria-label="Select language"
-            className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg ring-1 ring-black/10 overflow-hidden z-50 py-1 text-gray-700"
+            className="absolute right-0 mt-1 w-48 max-h-[min(70vh,28rem)] overflow-y-auto overscroll-contain bg-white rounded-lg shadow-lg ring-1 ring-black/10 z-50 py-1 text-gray-700"
           >
             {LANGUAGES.map(lang => {
               const isSelected = lang.code === current;
@@ -197,13 +214,12 @@ export default function LanguageToggle({ variant = 'onBrand' }) {
                         ? 'bg-brand-tint text-brand font-medium'
                         : 'text-gray-700 hover:bg-brand-tint hover:text-brand'
                       }`}
-                    dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
                   >
                     {/* A11Y (2026-09-26, WCAG 3.1.2): lang so screen readers
                         pronounce each native name in its own language — the
                         container is lang="en", so "Español", "中文" etc. were
                         read with the English voice. */}
-                    <span lang={lang.code}>{lang.native}</span>
+                    <span lang={lang.code} dir={RTL_CODES.has(lang.code) ? 'rtl' : 'ltr'}>{lang.native}</span>
                     {isSelected && (
                       <svg className="w-4 h-4 shrink-0 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
