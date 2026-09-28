@@ -1,0 +1,80 @@
+/**
+ * FILE: print.css
+ *
+ * PURPOSE:
+ * Styles specific to the printable Community Health Profile
+ * (src/app/print/neighborhood/[id]/page.js). Imported only by
+ * src/app/print/layout.js — never touches the main app's globals.css or
+ * any on-screen route.
+ *
+ * Tailwind's utility classes (via globals.css, already loaded once by the
+ * root layout — no need to re-import it here) cover almost everything on
+ * this page, including pagination hints (`break-inside-avoid`,
+ * `break-inside-avoid-page` are built-in Tailwind utilities, used directly
+ * in the print components rather than duplicated here). This file only
+ * adds the handful of things with no Tailwind utility equivalent: the
+ * @page rule, the screen-vs-print column count, and forcing background
+ * colors/shading to survive a browser's default print rendering (which
+ * strips most background colors unless told not to).
+ */
+
+/* Letter-size page with a reasonable margin. Change to A4 (`size: A4;`) if
+   this needs to serve non-US letter-size printers/paper.
+ *
+ * NO PAGE NUMBERS: CSS Paged Media's @page margin boxes (`@bottom-right {
+ * content: counter(page); }` etc.) are the standard way to add a running
+ * "Page N" to printed output, but mainstream browsers (Chrome, Firefox,
+ * Safari) don't actually implement margin-box content — only print
+ * engines like WeasyPrint/Prince do. An earlier version of this file's
+ * documentation (and a comment in PrintReportHeader.jsx) claimed Chrome
+ * supports counter(page) here; that was wrong and has been corrected —
+ * there is currently no reliable way to show real page numbers in this
+ * report's printed/PDF output from pure CSS. Left out entirely rather
+ * than shipping a number that's silently wrong. A future JS-based
+ * approach (measuring layout at print time via `window.onbeforeprint`) is
+ * possible but nontrivial and not attempted here. */
+@page {
+  size: letter;
+  margin: 0.5in;
+}
+
+/* Screen: single column on narrow viewports (phones), two columns once
+   there's room. Print: always two columns, matching the mockup — paper is
+   wide enough regardless of the viewer's screen width. */
+.print-columns {
+  column-count: 1;
+  column-gap: 1.75rem;
+}
+
+@media (min-width: 700px) {
+  .print-columns {
+    column-count: 2;
+  }
+}
+
+@media print {
+  .print-columns {
+    column-count: 2;
+  }
+
+  /* Elements only meaningful on screen (the Print button) never render in
+     the printed/PDF output. */
+  /* The root layout's page background (gray) showed below the footer on
+     the last printed page — force white. */
+  html, body {
+    background: #fff !important;
+  }
+
+  [data-no-print] {
+    display: none !important;
+  }
+
+  /* Chrome/print engines strip background colors and box-shadows by
+     default unless told otherwise — without this, the category title
+     bars (bg-black) and subsection header bars (bg-gray-100) print as
+     plain white, losing the visual hierarchy the mockup relies on. */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
