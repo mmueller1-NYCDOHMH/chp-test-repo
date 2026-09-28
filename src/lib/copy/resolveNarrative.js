@@ -85,14 +85,216 @@ function estimateDescription(value) {
   return bucket?.word ?? null;
 }
 
-function resolveAggComparison(rows, cdRow, geoId, title) {
+// NYCComparison field value / buildInsight direction → badge direction.
+const COMPARISON_DIRECTION = { higher: 'up', lower: 'down', similar: 'neutral' };
+
+function resolveAggComparisonPart(rows, cdRow, geoId, title) {
   const raw = cdRow.NYCComparison;
   if (raw && raw !== 'na' && NYC_COMPARISON_PHRASES[raw]) {
-    return NYC_COMPARISON_PHRASES[raw];
+    return { text: NYC_COMPARISON_PHRASES[raw], direction: COMPARISON_DIRECTION[raw] ?? 'neutral' };
   }
-  // Fall back to a relative-difference heuristic against the citywide row.
   const insight = buildInsight(rows, geoId, title);
-  return insight?.label ?? null;
+  return insight?.label ? { text: insight.label, direction: insight.direction } : null;
+}
+
+/**
+ * Structured version of resolveNarrative (2026-09-28) — same token rules,
+ * but returns an array of segments so callers can style data values
+ * (e.g. the flyout's comparison sentence renders values as badges):
+ *   { kind: 'text',       text }
+ *   { kind: 'value',      text }             — the neighborhood's own value
+ *   { kind: 'nyc',        text }             — the citywide reference value
+ *   { kind: 'comparison', text, direction }  — higher/lower/similar phrase;
+ *                                              direction 'up'|'down'|'neutral'
+ * Plain JSON, so it can cross the server → client boundary as a prop.
+ *
+ * @returns {Array|null} segments, or null if it can't be safely resolved
+ */
+export function resolveNarrativeParts(template, { rows, geoId, neighborhoodName, title }) {
+  if (!template) return null;
+
+  const hasTokens = TOKEN_RE.test(template);
+  TOKEN_RE.lastIndex = 0; // reset after .test()
+
+  if (!hasTokens) return [{ kind: 'text', text: template.trim() }]; // fully static copy
+
+  if (!rows?.length || geoId == null) return null;
+
+  const cdRow  = rows.find(r => r.GeoType === 'CD' && r.GeoID === geoId) ?? null;
+  const nycRow = rows.find(r => r.GeoID === 0) ?? null;
+
+  if (!cdRow || cdRow.Value == null) return null;
+
+  const cdValue = stripReliabilityMark(cdRow.DisplayValue) ?? '';
+  const parts = [];
+  let unresolved = false;
+  let last = 0;
+  const pushText = (text) => { if (text) parts.push({ kind: 'text', text }); };
+
+  // Direction of this CD vs NYC, shared by the bespoke tokens below.
+  const cmp = () => resolveAggComparisonPart(rows, cdRow, geoId, title);
+
+  function resolveToken(arg) {
+    const argLower = arg.toLowerCase();
+
+    // ── Bespoke copy-deck tokens (2026-09-28) ────────────────────────────
+    // The deck's Tableau calculated fields for these aren't available, so
+    // their output is reconstructed from the surrounding sentence. BEST
+    // GUESSES — confirm wording with the copy/data team.
+    const bespoke = resolveBespokeToken(argLower, { cdRow, nycRow, cdValue, cmp });
+    if (bespoke !== undefined) return bespoke;
+
+    if (argLower === 'name') return { kind: 'text', text: neighborhoodName ?? '' };
+    if (argLower.startsWith('reliability')) {
+      return { kind: 'text', text: cdRow.ValueStatus === 'flagged' ? '*' : '' };
+    }
+    // Bare <Value> (copy deck 2026-09) — same as <SUM(Value)>.
+    if (argLower === 'value') return { kind: 'value', text: cdValue };
+    // <Suppression> — suppressed rows already returned null above.
+    if (argLower === 'suppression') return { kind: 'text', text: '' };
+
+    const aggMatch = arg.match(/^(SUM|AVG|MIN)\((.+)\)$/i);
+    if (aggMatch) {
+      const inner = aggMatch[2].toLowerCase();
+      if (inner.includes('nyc reference')) {
+        if (!nycRow) return null;
+        return { kind: 'nyc', text: stripReliabilityMark(nycRow.DisplayValue) ?? '' };
+      }
+      // Percentage or plain value — DisplayValue already carries the right
+      // formatting (% sign, thousands separators).
+      return { kind: 'value', text: cdValue };
+    }
+
+    if (argLower.startsWith('agg(')) {
+      const inner = arg.slice(4, -1).toLowerCase();
+      if (inner.includes('nyc comparison')) {
+        const c = resolveAggComparisonPart(rows, cdRow, geoId, title);
+        return c ? { kind: 'comparison', text: c.text, direction: c.direction } : null;
+      }
+      // e.g. <AGG(ZN(SUM([Value Percentage])))> — the CD's own value.
+      if (inner.includes('value percentage')) return { kind: 'value', text: cdValue };
+      if (inner.includes('estimate description')) {
+        const word = estimateDescription(cdRow.Value);
+        return word ? { kind: 'text', text: word } : null;
+      }
+      return null;
+    }
+
+    // Unknown token (e.g. the copy deck's bespoke "<Bikes text 1>").
+    return null;
+  }
+
+  let m;
+  while ((m = TOKEN_RE.exec(template)) !== null) {
+    pushText(template.slice(last, m.index));
+    const res = resolveToken(m[1].trim());
+    if (!res) unresolved = true;
+    else for (const seg of [].concat(res)) {
+      if (seg.kind === 'text') pushText(seg.text);
+      else parts.push(seg);
+    }
+    last = m.index + m[0].length;
+  }
+  TOKEN_RE.lastIndex = 0;
+  pushText(template.slice(last));
+
+  // 2026-09-28: any unresolved token → null so the card falls back to its
+  // plain subtitle. Warn once per template per server process.
+  if (unresolved) {
+    if (process.env.NODE_ENV === 'development' && !warnedTemplates.has(template)) {
+      warnedTemplates.add(template);
+      console.warn(`[resolveNarrative] Unsupported token(s) — card shows its subtitle instead. Template: "${template}"`);
+    }
+    return null;
+  }
+
+  // Merge adjacent text segments, then tidy whitespace the same way the
+  // string version always has (double spaces from empty substitutions,
+  // space before punctuation).
+  const merged = [];
+  for (const p of parts) {
+    const prev = merged[merged.length - 1];
+    if (p.kind === 'text' && prev?.kind === 'text') prev.text += p.text;
+    else merged.push({ ...p });
+  }
+  merged.forEach((p, i) => {
+    if (p.kind !== 'text') return;
+    const prev = merged[i - 1];
+    // Copy-deck slips the badge layout makes obvious (2026-09-28):
+    //   "<AGG(NYC comparison)> than the rest" → "higher than than the rest"
+    if (prev?.kind === 'comparison' && /\bthan$/i.test(prev.text)) {
+      p.text = p.text.replace(/^\s*than\b/i, '');
+    }
+    //   "<SUM(Value)><Reliability>of adults" → "14%of adults" / "14%*of adults"
+    if (prev && prev.kind !== 'text') p.text = p.text.replace(/^(\*?)([A-Za-z])/, '$1 $2');
+    p.text = p.text.replace(/[ \t]+/g, ' ');
+    if (i === 0) p.text = p.text.replace(/^\s+/, '');
+    if (i === merged.length - 1) p.text = p.text.replace(/\s+$/, '');
+    p.text = p.text.replace(/\s+([.,])/g, '$1');
+  });
+  return merged.filter(p => p.kind !== 'text' || p.text);
+}
+
+/**
+ * Bespoke tokens → segment, null (can't resolve), or undefined (not bespoke).
+ *   <Farmer's market text 1/2>  "is home to <1> <2> farmers markets"
+ *                               → 1 = the count ("no" when 0), 2 = nothing
+ *   <Bikes text 1><Cockroaches and bikes text 2>roads …
+ *                               → 1 = Most/Many/Some/Few, 2 = the space
+ *   <AGG(HO infant mortality narrative text)> <AGG(NYC comparison)><AGG(NYC comparison 2)>
+ *                               → " of <value> per 1,000 live births is",
+ *                                 "<higher than…>", " the citywide rate."
+ *   <AGG(If NYC and CD are the same omit City - child obesity)>
+ *                               → " of <NYC value>" unless similar to NYC
+ *   <AGG(However for premature mort)>
+ *                               → "However," when the CD's rate is higher
+ *                                 than NYC (contrasts the preceding "…in all
+ *                                 communities in NYC" sentence), else nothing
+ */
+function resolveBespokeToken(argLower, { cdRow, nycRow, cdValue, cmp }) {
+  const nycValue = nycRow ? stripReliabilityMark(nycRow.DisplayValue) : null;
+
+  if (argLower.startsWith("farmer's market text") || argLower.startsWith('farmers market text')) {
+    if (argLower.endsWith('1')) {
+      return Number(cdRow.Value) === 0 ? { kind: 'text', text: 'no' } : { kind: 'value', text: cdValue };
+    }
+    return { kind: 'text', text: '' };
+  }
+  if (argLower === 'bikes text 1') {
+    const word = estimateDescription(cdRow.Value);
+    return word ? { kind: 'text', text: word } : null;
+  }
+  if (argLower === 'cockroaches and bikes text 2') {
+    return { kind: 'text', text: ' ' };
+  }
+
+  if (!argLower.startsWith('agg(')) return undefined;
+  const inner = argLower.slice(4, -1);
+
+  if (inner === 'nyc comparison 2') return { kind: 'text', text: ' the citywide rate.' };
+  if (inner.startsWith('ho infant mortality narrative text')) {
+    return [
+      { kind: 'text', text: ' of ' },
+      { kind: 'value', text: `${cdValue} per 1,000 live births` },
+      { kind: 'text', text: ' is' },
+    ];
+  }
+  if (inner.startsWith('if nyc and cd are the same omit city')) {
+    const c = cmp();
+    if (!c || c.direction === 'neutral' || !nycValue) return { kind: 'text', text: '' };
+    return [{ kind: 'text', text: ' of ' }, { kind: 'nyc', text: nycValue }];
+  }
+  if (inner.startsWith('however for premature mort')) {
+    const c = cmp();
+    return { kind: 'text', text: c?.direction === 'up' ? 'However,' : '' };
+  }
+  return undefined;
+}
+
+/** Flatten segments from resolveNarrativeParts back into one string. */
+export function narrativePartsToString(parts) {
+  if (!parts) return null;
+  return parts.map(p => p.text).join('').replace(/[ \t]+/g, ' ').replace(/\s+([.,])/g, '$1').trim();
 }
 
 /**
@@ -105,96 +307,6 @@ function resolveAggComparison(rows, cdRow, geoId, title) {
  *
  * @returns {string|null} resolved sentence, or null if it can't be safely resolved
  */
-export function resolveNarrative(template, { rows, geoId, neighborhoodName, title }) {
-  if (!template) return null;
-
-  const hasTokens = TOKEN_RE.test(template);
-  TOKEN_RE.lastIndex = 0; // reset after .test()
-
-  if (!hasTokens) return template; // fully static copy (e.g. New HIV diagnoses)
-
-  if (!rows?.length || geoId == null) return null;
-
-  const cdRow  = rows.find(r => r.GeoType === 'CD' && r.GeoID === geoId) ?? null;
-  const nycRow = rows.find(r => r.GeoID === 0) ?? null;
-
-  if (!cdRow || cdRow.Value == null) return null;
-
-  let unresolved = false;
-
-  const result = template.replace(TOKEN_RE, (_match, rawArg) => {
-    const arg = rawArg.trim();
-    const argLower = arg.toLowerCase();
-
-    if (argLower === 'name') {
-      return neighborhoodName ?? '';
-    }
-
-    if (argLower.startsWith('reliability')) {
-      return cdRow.ValueStatus === 'flagged' ? '*' : '';
-    }
-
-    // Bare <Value> (copy deck 2026-09) — same as <SUM(Value)>.
-    if (argLower === 'value') {
-      return stripReliabilityMark(cdRow.DisplayValue) ?? '';
-    }
-
-    // <Suppression> — suppressed rows already return null above, so a row
-    // that reaches here is never suppressed: render nothing.
-    if (argLower === 'suppression') {
-      return '';
-    }
-
-    const aggMatch = arg.match(/^(SUM|AVG|MIN)\((.+)\)$/i);
-    if (aggMatch) {
-      const inner = aggMatch[2].toLowerCase();
-      if (inner.includes('nyc reference')) {
-        if (!nycRow) { unresolved = true; return ''; }
-        return stripReliabilityMark(nycRow.DisplayValue) ?? '';
-      }
-      // Percentage or plain value — DisplayValue already carries the right
-      // formatting (% sign, thousands separators) and, after the 2026 data
-      // audit fix, numerically matches Value exactly.
-      return stripReliabilityMark(cdRow.DisplayValue) ?? '';
-    }
-
-    if (argLower.startsWith('agg(')) {
-      const inner = arg.slice(4, -1).toLowerCase();
-      if (inner.includes('nyc comparison')) {
-        const phrase = resolveAggComparison(rows, cdRow, geoId, title);
-        if (!phrase) { unresolved = true; return ''; }
-        return phrase;
-      }
-      // e.g. <AGG(ZN(SUM([Value Percentage])))> — the CD's own value.
-      if (inner.includes('value percentage')) {
-        return stripReliabilityMark(cdRow.DisplayValue) ?? '';
-      }
-      if (inner.includes('estimate description')) {
-        const word = estimateDescription(cdRow.Value);
-        if (!word) { unresolved = true; return ''; }
-        return word;
-      }
-      unresolved = true;
-      return '';
-    }
-
-    // Unknown token (e.g. the copy deck's bespoke "<Bikes text 1>") — flag it.
-    unresolved = true;
-    return '';
-  });
-
-  // 2026-09-28: any unresolved token → return null so the card falls back to
-  // its plain subtitle. Previously the sentence rendered with blanks where
-  // the tokens were (e.g. "is home to  farmers markets") in production.
-  // Warn once per template per server process, not on every render.
-  if (unresolved) {
-    if (process.env.NODE_ENV === 'development' && !warnedTemplates.has(template)) {
-      warnedTemplates.add(template);
-      console.warn(`[resolveNarrative] Unsupported token(s) — card shows its subtitle instead. Template: "${template}"`);
-    }
-    return null;
-  }
-
-  // Collapse any double spaces left by empty substitutions (e.g. Reliability = '').
-  return result.replace(/[ \t]+/g, ' ').replace(/\s+([.,])/g, '$1').trim();
+export function resolveNarrative(template, opts) {
+  return narrativePartsToString(resolveNarrativeParts(template, opts));
 }

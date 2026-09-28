@@ -9,14 +9,16 @@
  * resolveNarrative.js.
  *
  * 2026-09-26: replaces the old status-gated narrativeCopy.json. There is no
- * status column any more — every keyed row renders, EXCEPT rows whose FLAG
- * says "design in progress" (their bespoke tokens aren't wired yet); those
- * fall back to the card's plain subtitle.
+ * status column any more — every keyed row renders.
+ *
+ * 2026-09-28: the "design in progress" FLAG no longer holds a row back.
+ * resolveNarrative() already returns null for any token it can't fill, so a
+ * row whose copy fully resolves (e.g. Health insurance) now renders, and one
+ * that doesn't (Avertable deaths, College degree) still falls back to the
+ * plain subtitle. FLAG is left as an editorial note only.
  */
 
 import { indicatorCopy } from '@/config/indicatorCopy';
-
-const HOLD_FLAGS = /design in progress/i;
 
 /** Full copy-deck row for one key, or null. */
 export function getNarrativeCopy(key) {
@@ -25,15 +27,31 @@ export function getNarrativeCopy(key) {
 }
 
 /**
- * Context + Comparison as one template string, or null when the row is held
- * or has no copy. Callers: `resolveNarrative(getReadyNarrativeTemplate(key)) ?? subtitle`.
+ *  Context + Comparison as one template string, or null when the row
+ * has no copy. Callers: `resolveNarrative(getReadyNarrativeTemplate(key)) ?? subtitle`.
  *
  * @param {string} key
  * @returns {string|null}
  */
 export function getReadyNarrativeTemplate(key) {
   const entry = getNarrativeCopy(key);
-  if (!entry || HOLD_FLAGS.test(entry.flag ?? '')) return null;
+  if (!entry) return null;
   const template = [entry.context, entry.comparison].filter(Boolean).join(' ').trim();
   return template || null;
+}
+
+/**
+ * Context and Comparison as SEPARATE templates (2026-09-28) — the flyout
+ * shows the context sentence above the map and the indicator-specific
+ * comparison sentence (values styled as badges) below it.
+ *
+ * @param {string} key
+ * @returns {{ context: string|null, comparison: string|null } | null}
+ */
+export function getReadyNarrativeTemplates(key) {
+  const entry = getNarrativeCopy(key);
+  if (!entry) return null;
+  const context    = (entry.context ?? '').trim() || null;
+  const comparison = (entry.comparison ?? '').trim() || null;
+  return context || comparison ? { context, comparison } : null;
 }
