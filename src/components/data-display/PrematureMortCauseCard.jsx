@@ -178,6 +178,7 @@ export default function PrematureMortCauseCard({
         restoreFocusRef={expandBtnRef}
         embedBtnRef={embedBtnRef}
         onOpenEmbed={() => setEmbedOpen(true)}
+        csvRows={rawData}
       >
         <ComparisonBarChartClient {...chartProps} />
       </CustomExpandedChartModal>

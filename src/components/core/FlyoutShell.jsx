@@ -324,6 +324,8 @@ export default function FlyoutShell({ children }) {
               dataSource={flyout?.dataSource}
               isPercent={flyout?.isPercent}
               higherIsBetter={flyout?.higherIsBetter}
+              contextText={flyout?.flyoutContext}
+              comparisonParts={flyout?.flyoutComparison}
               compactSpec={flyout?.compactSpec}
               chart={flyout?.chart}
             />

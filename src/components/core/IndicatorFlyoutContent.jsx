@@ -7,9 +7,14 @@
  * Body content for the indicator "Details" flyout panel.
  *
  * LAYOUT (top to bottom):
- *   1. Indicator name + subtitle                  ← above the map
+ *   1. Indicator name + context sentence          ← above the map
+ *      (copy deck Context, resolved; falls back to the plain subtitle)
  *   2. Choropleth map with color legend overlaid  ← legend floats bottom-left of map
- *   3. Dynamic insight (CD vs citywide)
+ *   3. Indicator-specific comparison sentence (copy deck Comparison,
+ *      2026-09-28) — values rendered as badges: neighborhood value in the
+ *      selected-CD color, NYC value in the citywide color, higher/lower/
+ *      similar phrase as the directional insight badge. Replaces the old
+ *      generic "In X, … is Y / ↑ higher than the citywide rate" text.
  *   3a. Small-sample-size footnote — only when the selected CD's row is
  *       itself flagged (ValueStatus: "flagged"); wording picked by
  *       dataSource/isPercent — see getFlaggedEstimateFootnote() in
@@ -29,20 +34,17 @@
  *   6. Description (if provided)
  *   7. Source row — inline text + ? notes modal   ← no "Data Source" label
  */
-import phrases from '../../../content/site/phrases.json';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import {
-  buildInsight,
   getFlaggedEstimateFootnote,
   getInsightBadgeClass,
   DIRECTION_ARROWS,
 } from '@/lib/utils/compareIndicator';
-import { displayName } from '@/lib/utils/formatGeography';
 import { useComparison } from '@/lib/context/ComparisonContext';
 import VegaLiteChart from '@/components/charts/VegaLiteChart';
 import RankDotStrip from '@/components/data-display/RankDotStrip';
-import { CHOROPLETH_STOPS, SELECTED, COMPARISON } from '@/lib/charts/chartColors';
+import { CHOROPLETH_STOPS, SELECTED, CITYWIDE } from '@/lib/charts/chartColors';
 
 const ChoroplethMap = dynamic(
   () => import('@/components/maps/ChoroplethMap'),
@@ -57,6 +59,54 @@ const ChoroplethMap = dynamic(
 // can render the exact same up/down/neutral language without duplicating it
 // here. Same logic/comment as ComparisonStatTilesClient.jsx's
 // StatTileDetailModal, which still keeps its own copy.
+
+// ── Comparison sentence (copy deck) with badge-styled values ───────────────
+// `parts` comes from resolveNarrativeParts() (server-side, in
+// IndicatorChartGrid) — text segments plus typed value segments.
+const VALUE_BADGE = 'inline-flex items-center text-xs font-semibold px-1.5 py-0.5 rounded-md border align-baseline whitespace-nowrap';
+
+function ComparisonSentence({ parts, higherIsBetter }) {
+  return (
+    <p className="text-sm text-gray-700 leading-7">
+      {parts.map((p, i) => {
+        if (p.kind === 'value') {
+          return (
+            <span
+              key={i}
+              className={VALUE_BADGE}
+              style={{ color: SELECTED, backgroundColor: `${SELECTED}12`, borderColor: `${SELECTED}40` }}
+            >
+              {p.text}
+            </span>
+          );
+        }
+        if (p.kind === 'nyc') {
+          return (
+            <span
+              key={i}
+              className={VALUE_BADGE}
+              style={{ color: CITYWIDE, backgroundColor: `${CITYWIDE}12`, borderColor: `${CITYWIDE}40` }}
+            >
+              {p.text}
+            </span>
+          );
+        }
+        if (p.kind === 'comparison') {
+          return (
+            <span
+              key={i}
+              className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border align-baseline whitespace-nowrap ${getInsightBadgeClass(p.direction, higherIsBetter)}`}
+            >
+              <span aria-hidden="true">{DIRECTION_ARROWS[p.direction] ?? DIRECTION_ARROWS.neutral}</span>
+              {p.text}
+            </span>
+          );
+        }
+        return <span key={i}>{p.text}</span>;
+      })}
+    </p>
+  );
+}
 
 function cleanSource(source) {
   if (!source) return '';
@@ -75,42 +125,22 @@ export default function IndicatorFlyoutContent({
   dataSource,
   isPercent,
   higherIsBetter,
+  contextText,      // copy-deck Context sentence, resolved — shown above the map
+  comparisonParts,  // copy-deck Comparison sentence as segments — shown below the map
   compactSpec,
   chart,        // custom cards: their own chart element, shown in the mini-bar slot
 }) {
   const { comparisonNeighborhood } = useComparison();
 
-  const insight  = indicatorData?.length ? buildInsight(indicatorData, geoId, title) : null;
-
   // Small-sample-size footnote — only when the SELECTED CD's own row is
   // flagged, not just because the indicator has a flagged row somewhere
   // among its 59. The "*" itself is already baked into that row's
-  // DisplayValue (e.g. "95%*"), shown above via insight.cdDisplay — this
+  // DisplayValue (e.g. "95%*") / the copy deck's <Reliability> token — this
   // just explains what it means.
   const selectedRow     = geoId != null ? (indicatorData ?? []).find(r => r.GeoID === geoId) : null;
   const flaggedFootnote = selectedRow?.ValueStatus === 'flagged'
     ? getFlaggedEstimateFootnote(dataSource, isPercent)
     : null;
-
-  // ── Comparison neighborhood value ─────────────────────────────────────────
-  const compRow = comparisonNeighborhood?.geoId != null
-    ? (indicatorData ?? []).find(r => r.GeoID === comparisonNeighborhood.geoId) ?? null
-    : null;
-  const compName = compRow ? displayName(compRow.Geography) : comparisonNeighborhood?.name ?? null;
-
-  // ── Comparison CD direction vs citywide ───────────────────────────────────
-  // Used to detect when selected and comparison are on opposite sides of
-  // citywide so the second sentence can acknowledge both relationships.
-  const compInsight = (() => {
-    if (!compRow || !insight) return null;
-    const cityVal = (indicatorData ?? []).find(r => r.GeoID === 0)?.Value;
-    if (cityVal == null) return null;
-    const diff    = compRow.Value - cityVal;
-    const relDiff = cityVal !== 0 ? Math.abs(diff / cityVal) : 0;
-    if (relDiff < 0.05) return { direction: 'neutral', label: phrases.comparison.similar };
-    if (diff > 0) return { direction: 'up',   label: phrases.comparison.higher };
-    return            { direction: 'down', label: phrases.comparison.lower };
-  })();
 
   // ── CD rank + inline dot-distribution marker ────────────────────────────────
   // One sort (ascending, low → high — the same order buildBarChartSpec.js
@@ -194,16 +224,19 @@ export default function IndicatorFlyoutContent({
     <>
       <div className="overflow-y-auto flex-1 min-h-0 overscroll-contain border-t border-gray-200">
 
-        {/* ── 1. Section label + subtitle (above map) ──────────────────────── */}
-        {(title || subtitle) && (
+        {/* ── 1. Title + context sentence (above map) ──────────────────────── */}
+        {/* Context only — the comparison half of the copy lives below the map
+            (section 3). Plain subtitle when the indicator has no copy-deck
+            context (held rows, unsupported tokens, custom cards). */}
+        {(title || contextText || subtitle) && (
           <div className="px-5 pt-3 pb-2 flex flex-col gap-0.5">
             {title && (
               <h2 className="text-sm font-semibold text-gray-900 leading-snug truncate min-w-0">
                 {title}
               </h2>
             )}
-            {subtitle && (
-              <p className="text-xs text-gray-600 leading-snug">{subtitle}</p>
+            {(contextText || subtitle) && (
+              <p className="text-xs text-gray-600 leading-snug">{contextText || subtitle}</p>
             )}
           </div>
         )}
@@ -240,70 +273,17 @@ export default function IndicatorFlyoutContent({
 
         <div className="px-5 pt-4 pb-5 flex flex-col gap-4">
 
-          {/* ── 3. Dynamic insight ──────────────────────────────────────────── */}
-          {insight && (() => {
-            const arrow = DIRECTION_ARROWS[insight.direction];
-            const badge = getInsightBadgeClass(insight.direction, higherIsBetter);
-            // Show the comparison's citywide direction only when it diverges from selected
-            const showCompDirection = compInsight && compInsight.direction !== insight.direction && compName;
-            return (
-              <div className="flex flex-col gap-1.5">
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  In {insight.name}, {insight.title.toLowerCase()} is{' '}
-                  <span className="font-semibold" style={{ color: SELECTED }}>{insight.cdDisplay}</span>
-                  {compRow && compName && (
-                    <>
-                      {', compared to '}
-                      <span
-                        className="inline-block w-2 h-2 rounded-full shrink-0 align-middle mx-0.5"
-                        style={{ backgroundColor: COMPARISON }}
-                        aria-hidden="true"
-                      />
-                      <span className="font-medium text-gray-800">{compName}</span>
-                      {' '}
-                      <span className="font-semibold" style={{ color: COMPARISON }}>{compRow.DisplayValue}</span>
-                    </>
-                  )}
-                  .
-                </p>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  <span
-                    className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border mr-1.5 ${badge}`}
-                    aria-label={`${insight.label} citywide`}
-                  >
-                    <span aria-hidden="true">{arrow}</span> {insight.label}
-                  </span>
-                  the citywide rate of {insight.cityDisplay}
-                  {showCompDirection && (() => {
-                    const compArrow = DIRECTION_ARROWS[compInsight.direction];
-                    const compBadge = getInsightBadgeClass(compInsight.direction, higherIsBetter);
-                    return (
-                      <>
-                        {', while '}
-                        <span
-                          className="inline-block w-2 h-2 rounded-full shrink-0 align-middle mx-0.5"
-                          style={{ backgroundColor: COMPARISON }}
-                          aria-hidden="true"
-                        />
-                        <span className="font-medium text-gray-800">{compName}</span>
-                        {' is '}
-                        <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border mx-1 ${compBadge}`}>
-                          <span aria-hidden="true">{compArrow}</span> {compInsight.label}
-                        </span>
-                      </>
-                    );
-                  })()}
-                  .
-                </p>
-              </div>
-            );
-          })()}
+          {/* ── 3. Indicator-specific comparison (copy deck) ─────────────────
+                Replaces the old generic insight text (2026-09-28). Nothing
+                renders when the indicator has no resolvable Comparison copy. */}
+          {comparisonParts?.length > 0 && (
+            <ComparisonSentence parts={comparisonParts} higherIsBetter={higherIsBetter} />
+          )}
 
           {/* ── 3a. Small-sample-size caveat — only when the selected CD's row
-                is itself flagged. Matches the "*" already shown on its value
-                above. Text/eligibility per CONTENT-GUIDE.md section 11. ─────── */}
+                is itself flagged. Explains the "*" on the CD's value. Text/eligibility per CONTENT-GUIDE.md section 11. ─────── */}
           {flaggedFootnote && (
-            <p className="text-xs text-gray-600 italic leading-snug -mt-2">{flaggedFootnote}</p>
+            <p className={`text-xs text-gray-600 italic leading-snug ${comparisonParts?.length ? '-mt-2' : ''}`}>{flaggedFootnote}</p>
           )}
 
 

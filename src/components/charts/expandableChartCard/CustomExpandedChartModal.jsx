@@ -7,7 +7,7 @@
  * Leading Causes of Premature Death. Added 2026-09-27 so these match the
  * standard ExpandedChartModal: same portal/z-index, same fade + scale-in,
  * same max-w-4xl / max-h-[90vh] sizing, same header row
- * ([Copy Download] | [Embed] | [Close]), same subtitle, body padding and
+ * ([Copy PNG CSV] | [Embed] | [Close]), same subtitle, body padding and
  * source footer. The chart itself is passed as children.
  *
  * Differences from the standard modal, and why:
@@ -17,6 +17,8 @@
  *     composited under the title + subtitle the same way the standard
  *     modal's buildExportCanvas does. Legends are part of `children` here,
  *     so they're captured in the image rather than redrawn on the canvas.
+ *   - CSV: same downloadCsv() as the standard modal, fed by the optional
+ *     `csvRows` prop (the card's raw data rows); button hidden if absent.
  *   - Embed: same EmbedModal (?flyout=<indicatorKey> iframe snippet), owned
  *     by the parent card exactly like ExpandableChartCard does.
  */
@@ -27,6 +29,7 @@ import { useModalVisibility } from './useModalVisibility';
 import { useModalFocusTrap } from './useModalFocusTrap';
 import SubtitleWithGlossary from './SubtitleWithGlossary';
 import { domToCanvas } from './domToCanvas';
+import { downloadCsv, hasCsvData } from './downloadCsv';
 
 const BTN =
   'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-gray-200 text-xs font-medium text-gray-600 hover:text-brand hover:border-brand hover:bg-brand-tint transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap';
@@ -41,6 +44,7 @@ export default function CustomExpandedChartModal({
   restoreFocusRef,
   embedBtnRef,
   onOpenEmbed,
+  csvRows,      // optional — data rows for the "CSV" download (2026-09-28)
   children,
 }) {
   const dialogRef  = useRef(null);
@@ -159,7 +163,7 @@ export default function CustomExpandedChartModal({
         <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 shrink-0 rounded-t-xl bg-white gap-4">
           <h3 className="text-base font-semibold text-gray-900 min-w-0">{title}</h3>
 
-          {/* [Copy Download] | [Embed] | [Close] */}
+          {/* [Copy PNG CSV] | [Embed] | [Close] */}
           <div className="flex items-center gap-1.5 shrink-0">
             <div className="flex items-center gap-1">
               <button onClick={handleCopyImage} aria-label="Copy chart as image" title="Copy image" className={BTN}>
@@ -181,8 +185,22 @@ export default function CustomExpandedChartModal({
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                Download
+                PNG
               </button>
+
+              {hasCsvData(csvRows) && (
+                <button
+                  onClick={() => downloadCsv(csvRows, indicatorKey, title)}
+                  aria-label={`Download data for ${title} as CSV`}
+                  title="Download data (CSV)"
+                  className={BTN}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  CSV
+                </button>
+              )}
             </div>
 
             <div className="w-px h-5 bg-gray-200 mx-0.5" aria-hidden="true" />

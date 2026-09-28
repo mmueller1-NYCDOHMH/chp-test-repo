@@ -66,8 +66,8 @@
 import { loadIndicatorData } from '@/lib/data/loadIndicatorData';
 import { buildBarChartSpec } from '@/lib/charts/buildBarChartSpec';
 import { getIndicatorMeta } from '@/lib/data/getIndicatorMeta';
-import { getReadyNarrativeTemplate } from '@/lib/copy/getNarrativeCopy';
-import { resolveNarrative } from '@/lib/copy/resolveNarrative';
+import { getReadyNarrativeTemplate, getReadyNarrativeTemplates } from '@/lib/copy/getNarrativeCopy';
+import { resolveNarrative, resolveNarrativeParts, narrativePartsToString } from '@/lib/copy/resolveNarrative';
 import ExpandableChartCard from '@/components/charts/ExpandableChartCard';
 
 const COMPACT_WIDTH  = 'container'; // responsive — fits the card width
@@ -112,6 +112,23 @@ function resolveDisplaySubtitle({ indicatorKey, fallbackSubtitle, data, geoId, n
 
   const resolved = resolveNarrative(template, { rows: data, geoId, neighborhoodName, title });
   return resolved ?? fallbackSubtitle;
+}
+
+/**
+ * Flyout copy (2026-09-28): the copy deck's Context and Comparison resolved
+ * SEPARATELY, so the Details flyout can put context above the map and the
+ * comparison (with its values as structured segments, for badge styling)
+ * below it. Each half falls back to null independently — e.g. a context
+ * sentence with an unsupported token doesn't take the comparison down too.
+ */
+function resolveFlyoutCopy({ indicatorKey, data, geoId, neighborhoodName, title }) {
+  const t = getReadyNarrativeTemplates(indicatorKey);
+  if (!t) return { flyoutContext: null, flyoutComparison: null };
+  const opts = { rows: data, geoId, neighborhoodName, title };
+  return {
+    flyoutContext:    t.context    ? narrativePartsToString(resolveNarrativeParts(t.context, opts)) : null,
+    flyoutComparison: t.comparison ? resolveNarrativeParts(t.comparison, opts) : null,
+  };
 }
 
 /**
@@ -185,8 +202,18 @@ export default function IndicatorChartGrid({ charts = [], context, sectionLabel,
       title: base.title,
     });
 
+    const { flyoutContext, flyoutComparison } = resolveFlyoutCopy({
+      indicatorKey: chart.indicatorKey,
+      data,
+      geoId,
+      neighborhoodName,
+      title: base.title,
+    });
+
     return {
       key:             chart.indicatorKey,
+      flyoutContext,
+      flyoutComparison,
       title:           base.title,
       subtitle:        displaySubtitle,
       metadataOf:      meta?.of ?? null,
@@ -242,6 +269,8 @@ export default function IndicatorChartGrid({ charts = [], context, sectionLabel,
           dataSource={chart.dataSource}
           isPercent={chart.isPercent}
           higherIsBetter={chart.higherIsBetter}
+          flyoutContext={chart.flyoutContext}
+          flyoutComparison={chart.flyoutComparison}
           relatedIndicators={relatedIndicators}
           indicatorData={chart.indicatorData}
           geoId={chart.geoId}

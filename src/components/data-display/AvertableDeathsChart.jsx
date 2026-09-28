@@ -248,6 +248,7 @@ export default function AvertableDeathsChart({
         restoreFocusRef={expandBtnRef}
         embedBtnRef={embedBtnRef}
         onOpenEmbed={() => setEmbedOpen(true)}
+        csvRows={rows}
       >
         <div className="mb-5">{legend}</div>
         <div className="relative">

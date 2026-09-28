@@ -29,7 +29,7 @@ export default function CategoryHeader({ title, intro }) {
         {title}
       </h2>
       {intro && (
-        <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
+        <p className="text-sm text-gray-600 leading-relaxed max-w-4xl">
           {intro}
         </p>
       )}

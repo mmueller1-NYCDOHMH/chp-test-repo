@@ -7,7 +7,7 @@
  * Renders via a portal at document.body so it sits above all stacking
  * contexts (backdrop-filter, transform, etc.) created by layout ancestors
  * (StickyContextBar, etc.). Owns the chart image export (copy / download as
- * PNG) and hosts the "Embed" trigger that opens EmbedModal. Part of the
+ * PNG), the data export (download as CSV — 2026-09-28), and hosts the "Embed" trigger that opens EmbedModal. Part of the
  * 2026-09-04 split of ExpandableChartCard.jsx.
  */
 
@@ -21,6 +21,7 @@ import { useModalFocusTrap } from './useModalFocusTrap';
 import ExpandedChartLegend from './ExpandedChartLegend';
 import SubtitleWithGlossary from './SubtitleWithGlossary';
 import { buildLegendItems } from './chartCardUtils';
+import { downloadCsv, hasCsvData } from './downloadCsv';
 
 export default function ExpandedChartModal({
   open,
@@ -206,10 +207,10 @@ export default function ExpandedChartModal({
         <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 shrink-0 rounded-t-xl bg-white gap-4">
           <h3 className="text-base font-semibold text-gray-900 min-w-0">{title}</h3>
 
-          {/* Export actions + close — grouped: [Copy Download] | [Embed] | [Close] */}
+          {/* Export actions + close — grouped: [Copy PNG CSV] | [Embed] | [Close] */}
           <div className="flex items-center gap-1.5 shrink-0">
 
-            {/* Export group: Copy + Download share the same action family */}
+            {/* Export group: Copy + PNG + CSV share the same action family */}
             <div className="flex items-center gap-1">
               {/* Copy image */}
               <button
@@ -242,8 +243,23 @@ export default function ExpandedChartModal({
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                Download
+                PNG
               </button>
+
+              {/* Download data — every geography in the indicator file, as CSV */}
+              {hasCsvData(indicatorData) && (
+                <button
+                  onClick={() => downloadCsv(indicatorData, indicatorKey, title)}
+                  aria-label={`Download data for ${title} as CSV`}
+                  title="Download data (CSV)"
+                  className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-gray-200 text-xs font-medium text-gray-600 hover:text-brand hover:border-brand hover:bg-brand-tint transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  CSV
+                </button>
+              )}
             </div>
 
             <div className="w-px h-5 bg-gray-200 mx-0.5" aria-hidden="true" />

@@ -102,6 +102,8 @@ export default function ExpandableChartCard({
   dataSource,
   isPercent,
   higherIsBetter,
+  flyoutContext,    // copy-deck Context sentence, resolved (flyout: above map)
+  flyoutComparison, // copy-deck Comparison sentence as segments (flyout: below map)
   relatedIndicators = [],
   indicatorData,
   geoId,
@@ -127,6 +129,7 @@ export default function ExpandableChartCard({
       title, subtitle, source, sourceUrl, description,
       indicatorData, geoId, sectionLabel,
       dataSource, isPercent, higherIsBetter,
+      flyoutContext, flyoutComparison,
       // Same spec object already built for this card's own chart — passed
       // through so the flyout's mini bar is pixel-identical to the card,
       // not a re-derived lookalike. See IndicatorFlyoutContent.jsx.

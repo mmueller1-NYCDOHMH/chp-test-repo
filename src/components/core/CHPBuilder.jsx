@@ -97,6 +97,12 @@ export default function CHPBuilder({ config, data }) {
 
         return (
           <Fragment key={section.id}>
+            {/* Spacer above each category intro card (2026-09-28) — separates
+                a new category from the end of the previous one. A real
+                element with an inline height, so it can't be eaten by margin
+                collapsing or depend on a Tailwind class being generated.
+                Change the height here to adjust the gap. */}
+            {section.category && <div aria-hidden="true" style={{ height: 64 }} />}
             <SectionWrapper
               id={section.id}
               layout={section.layout}
