@@ -1,0 +1,14 @@
+{
+  "_note": "Editorial prose for the neighborhood-profile overview panels. The At a Glance source list (sources + years) is built automatically from data/metadata; only its closing sentence lives here. Edit here — no code changes needed. {source} and {name}/{labels}-type placeholders (where present) are filled in at runtime by the component.",
+  "neighborhoodOverviewHero": {
+    "sourceFootnoteSuffix": "Single-value metrics compare the neighborhood to NYC citywide."
+  },
+  "prematureDeathOverview": {
+    "heading": "",
+    "causeChartTitle": "Top causes of premature death",
+    "cancerChartTitle": "Top causes of cancer-related premature death",
+    "cancerCaptionPrefix": "Top causes of cancer-related premature death in",
+    "footnoteTemplate": "Top causes of premature death and cancer types are ranked directly from the underlying per-cause/per-type data (see indicator detail pages for exact citations).",
+    "defaultRateSource": "NYC DOHMH, Bureau of Vital Statistics"
+  }
+}
