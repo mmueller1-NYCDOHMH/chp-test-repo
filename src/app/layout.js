@@ -62,7 +62,7 @@ export default function RootLayout({ children }) {
           function googleTranslateElementInit() {
             new google.translate.TranslateElement({
               pageLanguage: 'en',
-              includedLanguages: 'es,zh-CN,ru,ar,bn',
+              includedLanguages: 'es,zh-CN,ru,it,ht,bn,yi,ko,ar,fr,pl,ur,pt',
               autoDisplay: false,
             }, 'google_translate_element');
           }

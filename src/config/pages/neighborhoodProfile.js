@@ -42,7 +42,7 @@ function buildCategorySection(cat) {
   return {
     id:       `cat-${cat.id}`,
     category: true,
-    layout:   'stacked',
+    layout:   'categoryIntro',
     children: [
       {
         id:   `cat-${cat.id}-header`,

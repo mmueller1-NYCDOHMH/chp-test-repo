@@ -84,5 +84,15 @@ export const layoutPresets = {
       gap: "md",
       width: "contained",
       noCard: true
+    },
+
+    // categoryIntro (2026-09-28): same as `stacked`, plus a blue top-edge
+    // accent on the card so the start of each new nav category (the
+    // "chapter" intro card) stands out while scrolling.
+    categoryIntro: {
+      variant: "stack",
+      gap: "md",
+      width: "contained",
+      accent: "top"
     }
   };
