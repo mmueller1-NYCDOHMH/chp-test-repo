@@ -1,1 +1,0 @@
-Access to affordable, high-quality health care is essential to keeping communities healthy. These indicators measure insurance coverage, unmet need, health care utilization patterns, and preventive service uptake across NYC neighborhoods.

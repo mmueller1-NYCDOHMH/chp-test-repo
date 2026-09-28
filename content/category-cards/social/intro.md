@@ -1,1 +1,0 @@
-Social and economic factors shape the conditions in which people live, work, and age. Indicators in this category reflect the economic pressures, safety, and educational opportunities available to residents across NYC neighborhoods.

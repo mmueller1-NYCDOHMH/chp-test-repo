@@ -1,1 +1,0 @@
-Mortality and hospitalization data are sourced from the NYC DOHMH. Life expectancy estimates use standard life table methods applied to vital statistics records. Data reflect the most recent multi-year period available.

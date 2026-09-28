@@ -1,1 +1,0 @@
-Community safety directly affects physical and mental health outcomes. Neighborhoods with higher rates of violence and incarceration often face compounding disadvantages in housing, employment, and access to care.
