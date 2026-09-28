@@ -153,7 +153,7 @@ export default function AddressSearch({
         {/* Pin icon */}
         {loading ? (
           <svg
-            className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none animate-spin text-gray-400 ${isSidebar ? 'w-3.5 h-3.5' : 'w-4 h-4'}`}
+            className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none animate-spin text-gray-600 ${isSidebar ? 'w-3.5 h-3.5' : 'w-4 h-4'}`}
             fill="none" viewBox="0 0 24 24" aria-hidden="true"
           >
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -161,7 +161,7 @@ export default function AddressSearch({
           </svg>
         ) : (
           <svg
-            className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 ${isSidebar ? 'w-3.5 h-3.5' : 'w-4 h-4'}`}
+            className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-600 ${isSidebar ? 'w-3.5 h-3.5' : 'w-4 h-4'}`}
             fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
             aria-hidden="true"
           >
@@ -199,7 +199,7 @@ export default function AddressSearch({
               inputRef.current?.focus();
             }}
             aria-label="Clear address"
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus-visible:outline-none"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-600 transition-colors focus-visible:outline-none"
           >
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -244,7 +244,7 @@ export default function AddressSearch({
                 <span className="font-medium leading-snug">
                   {highlight(item.label, query)}
                 </span>
-                <span className={`leading-snug mt-0.5 ${isFocused ? 'text-blue-600' : 'text-gray-500'}`}>
+                <span className={`leading-snug mt-0.5 ${isFocused ? 'text-blue-600' : 'text-gray-600'}`}>
                   {item.neighborhood.name} · CD {item.neighborhood.cdNumber}
                 </span>
               </li>

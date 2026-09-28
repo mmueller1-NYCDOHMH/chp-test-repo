@@ -1,1 +1,0 @@
-Chronic diseases are the leading cause of death and disability in New York City. Rates vary significantly across neighborhoods and are closely linked to social and environmental conditions including income, housing, and access to care.

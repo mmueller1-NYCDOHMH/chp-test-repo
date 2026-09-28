@@ -104,7 +104,7 @@
      Tailwind utilities used for header, primary nav, and buttons. Not
      referenced by chart or map color scales (those live in tokens.js /
      chartColors.js as independent hex values). */
-  --color-brand: #1E3A8A;
+  --color-brand: #00397A;
 
   /* Brand tint — added 2026-08-04. Light fill paired with --color-brand for
      "selected/related" states that need more than a text/border color change
@@ -146,7 +146,7 @@
      family is re-exposed under @theme inline below (not spacing — see the
      spacing note in @nychealth/design-system/theme.css for why that's
      deliberately left out). */
-  --footer-bg: var(--color-brand);       /* #1E3A8A — same as PageHeader */
+  --footer-bg: var(--color-brand);       /* #00397A — same as PageHeader */
   --footer-text: #DBEAFE;                /* Tailwind blue-100, matches PageHeader's text-blue-100 */
   --footer-link: #DBEAFE;
   --footer-link-hover: #FFFFFF;
@@ -379,6 +379,44 @@ summary {
   }
 }
 
+/* ── Skeleton shimmer sweep ─────────────────────────────────────────────────
+   Used by Bone.jsx (shared skeleton primitive — src/components/layout/Bone.jsx)
+   instead of Tailwind's flat animate-pulse (opacity 100%→50%→100%), which
+   reads as "greyed out" rather than "actively loading". Implemented as a
+   ::after overlay — a light diagonal band sweeping left→right — rather than
+   swapping the element's own background-color, so it composes cleanly with
+   whatever background color a caller passes (e.g. loading.jsx's header bones
+   pass bg-blue-500 to sit on the brand bar; the sweep just glides over
+   whatever's underneath instead of fighting that class for background-color
+   in the cascade). Bone still supplies its own base bg-gray-200 by default. */
+@keyframes chp-skeleton-sweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 100%
+  );
+  animation: chp-skeleton-sweep 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer::after {
+    content: none;
+    animation: none;
+  }
+}
+
 /* Remove Leaflet SVG focus outline (the annoying rectangle) */
 .leaflet-container .leaflet-interactive:focus {
   outline: none !important;
@@ -401,4 +439,29 @@ summary {
 /* Removes overflow white-space on the right side of screens narrower than 1284px */
 .sr-only {
   white-space: normal !important;
+}
+
+/* ── Sticky header offset (A11Y, 2026-09-26) ───────────────────────────────
+   WCAG 2.4.11 Focus Not Obscured. TopicNav + StickyContextBar are both
+   sticky at the top of the viewport; without this, the browser's native
+   scroll-into-view (Tab / Shift+Tab, #hash links from "Copy link to
+   section") parks the focused element or anchor target underneath them.
+   --chp-sticky-offset is measured live by StickyOffsetSync.jsx (combined
+   height of both bars, changes between mobile/desktop); the fallback is
+   used for the first paint and on pages without those bars.
+   2026-09-27: was `html { scroll-padding-top }`, which also applied to the
+   sticky sidebar — its search inputs sit inside that top band, so every
+   keystroke made the browser "reveal" the caret by scrolling the page up
+   (endlessly, since a sticky input never moves). Scoped to #main-content
+   via scroll-margin so only content under the bars gets the offset; the
+   sidebar, TopicNav and StickyContextBar are outside it. */
+#main-content,
+#main-content * {
+  scroll-margin-top: calc(var(--chp-sticky-offset, 0px) + 12px);
+}
+
+/* Programmatic focus targets (scrollToSection focuses the section heading
+   with tabindex=-1) — no ring for these, they aren't interactive. */
+[tabindex="-1"]:focus:not(:focus-visible) {
+  outline: none;
 }

@@ -1,0 +1,527 @@
+{
+  "Section": "health-conditions",
+  "Subsection": "health-outcomes",
+  "IndicatorKey": "premature-mort-cause-heart-disease-count",
+  "Data": [
+    {
+      "GeoType": "Citywide",
+      "GeoID": 0,
+      "Geography": "NYC",
+      "Value": 8763.0,
+      "DisplayValue": "8,763",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "Borough",
+      "GeoID": 1,
+      "Geography": "Manhattan",
+      "Value": 1681.0,
+      "DisplayValue": "1,681",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "Borough",
+      "GeoID": 2,
+      "Geography": "Bronx",
+      "Value": 2779.0,
+      "DisplayValue": "2,779",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "Borough",
+      "GeoID": 3,
+      "Geography": "Brooklyn",
+      "Value": 2117.0,
+      "DisplayValue": "2,117",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "Borough",
+      "GeoID": 4,
+      "Geography": "Queens",
+      "Value": 1568.0,
+      "DisplayValue": "1,568",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "Borough",
+      "GeoID": 5,
+      "Geography": "Staten Island",
+      "Value": 618.0,
+      "DisplayValue": "618",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 101,
+      "Geography": "Financial District",
+      "Value": 18.0,
+      "DisplayValue": "18",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 102,
+      "Geography": "Greenwich Village and Soho",
+      "Value": 25.0,
+      "DisplayValue": "25",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 103,
+      "Geography": "Lower East Side and Chinatown",
+      "Value": 234.0,
+      "DisplayValue": "234",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 104,
+      "Geography": "Clinton and Chelsea",
+      "Value": 143.0,
+      "DisplayValue": "143",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 105,
+      "Geography": "Midtown",
+      "Value": 64.0,
+      "DisplayValue": "64",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 106,
+      "Geography": "Stuyvesant Town and Turtle Bay",
+      "Value": 83.0,
+      "DisplayValue": "83",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 107,
+      "Geography": "Upper West Side",
+      "Value": 143.0,
+      "DisplayValue": "143",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 108,
+      "Geography": "Upper East Side",
+      "Value": 93.0,
+      "DisplayValue": "93",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 109,
+      "Geography": "Morningside Heights and Hamilton Heights",
+      "Value": 133.0,
+      "DisplayValue": "133",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 110,
+      "Geography": "Central Harlem",
+      "Value": 212.0,
+      "DisplayValue": "212",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 111,
+      "Geography": "East Harlem",
+      "Value": 262.0,
+      "DisplayValue": "262",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 112,
+      "Geography": "Washington Heights and Inwood",
+      "Value": 240.0,
+      "DisplayValue": "240",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 201,
+      "Geography": "Mott Haven and Melrose",
+      "Value": 258.0,
+      "DisplayValue": "258",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 202,
+      "Geography": "Hunts Point and Longwood",
+      "Value": 157.0,
+      "DisplayValue": "157",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 203,
+      "Geography": "Morrisania and Crotona",
+      "Value": 281.0,
+      "DisplayValue": "281",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 204,
+      "Geography": "Highbridge and Concourse",
+      "Value": 292.0,
+      "DisplayValue": "292",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 205,
+      "Geography": "Fordham and University Heights",
+      "Value": 331.0,
+      "DisplayValue": "331",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 206,
+      "Geography": "Belmont and East Tremont",
+      "Value": 250.0,
+      "DisplayValue": "250",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 207,
+      "Geography": "Kingsbridge Heights and Bedford",
+      "Value": 318.0,
+      "DisplayValue": "318",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 208,
+      "Geography": "Riverdale and Fieldston",
+      "Value": 116.0,
+      "DisplayValue": "116",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 209,
+      "Geography": "Parkchester and Soundview",
+      "Value": 263.0,
+      "DisplayValue": "263",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 210,
+      "Geography": "Throgs Neck and Co-op City",
+      "Value": 159.0,
+      "DisplayValue": "159",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 211,
+      "Geography": "Morris Park and Bronxdale",
+      "Value": 140.0,
+      "DisplayValue": "140",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 212,
+      "Geography": "Williamsbridge and Baychester",
+      "Value": 206.0,
+      "DisplayValue": "206",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 301,
+      "Geography": "Greenpoint and Williamsburg",
+      "Value": 166.0,
+      "DisplayValue": "166",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 302,
+      "Geography": "Fort Greene and Brooklyn Heights",
+      "Value": 79.0,
+      "DisplayValue": "79",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 303,
+      "Geography": "Bedford Stuyvesant",
+      "Value": 181.0,
+      "DisplayValue": "181",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 304,
+      "Geography": "Bushwick",
+      "Value": 94.0,
+      "DisplayValue": "94",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 305,
+      "Geography": "East New York and Starrett City",
+      "Value": 255.0,
+      "DisplayValue": "255",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 306,
+      "Geography": "Park Slope and Carroll Gardens",
+      "Value": 77.0,
+      "DisplayValue": "77",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 307,
+      "Geography": "Sunset Park",
+      "Value": 74.0,
+      "DisplayValue": "74",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 308,
+      "Geography": "Crown Heights and Prospect Heights",
+      "Value": 97.0,
+      "DisplayValue": "97",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 309,
+      "Geography": "South Crown Heights and Lefferts Gardens",
+      "Value": 77.0,
+      "DisplayValue": "77",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 310,
+      "Geography": "Bay Ridge and Dyker Heights",
+      "Value": 96.0,
+      "DisplayValue": "96",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 311,
+      "Geography": "Bensonhurst",
+      "Value": 114.0,
+      "DisplayValue": "114",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 312,
+      "Geography": "Borough Park",
+      "Value": 53.0,
+      "DisplayValue": "53",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 313,
+      "Geography": "Coney Island",
+      "Value": 132.0,
+      "DisplayValue": "132",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 314,
+      "Geography": "Flatbush and Midwood",
+      "Value": 87.0,
+      "DisplayValue": "87",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 315,
+      "Geography": "Sheepshead Bay",
+      "Value": 122.0,
+      "DisplayValue": "122",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 316,
+      "Geography": "Brownsville",
+      "Value": 173.0,
+      "DisplayValue": "173",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 317,
+      "Geography": "East Flatbush",
+      "Value": 117.0,
+      "DisplayValue": "117",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 318,
+      "Geography": "Flatlands and Canarsie",
+      "Value": 108.0,
+      "DisplayValue": "108",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 401,
+      "Geography": "Long Island City and Astoria",
+      "Value": 157.0,
+      "DisplayValue": "157",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 402,
+      "Geography": "Woodside and Sunnyside",
+      "Value": 61.0,
+      "DisplayValue": "61",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 403,
+      "Geography": "Jackson Heights",
+      "Value": 94.0,
+      "DisplayValue": "94",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 404,
+      "Geography": "Elmhurst and Corona",
+      "Value": 59.0,
+      "DisplayValue": "59",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 405,
+      "Geography": "Ridgewood and Maspeth",
+      "Value": 142.0,
+      "DisplayValue": "142",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 406,
+      "Geography": "Rego Park and Forest Hills",
+      "Value": 51.0,
+      "DisplayValue": "51",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 407,
+      "Geography": "Flushing and Whitestone",
+      "Value": 156.0,
+      "DisplayValue": "156",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 408,
+      "Geography": "Hillcrest and Fresh Meadows",
+      "Value": 78.0,
+      "DisplayValue": "78",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 409,
+      "Geography": "Kew Gardens and Woodhaven",
+      "Value": 95.0,
+      "DisplayValue": "95",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 410,
+      "Geography": "South Ozone Park and Howard Beach",
+      "Value": 107.0,
+      "DisplayValue": "107",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 411,
+      "Geography": "Bayside and Little Neck",
+      "Value": 65.0,
+      "DisplayValue": "65",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 412,
+      "Geography": "Jamaica and Hollis",
+      "Value": 221.0,
+      "DisplayValue": "221",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 413,
+      "Geography": "Queens Village",
+      "Value": 103.0,
+      "DisplayValue": "103",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 414,
+      "Geography": "Rockaway and Broad Channel",
+      "Value": 168.0,
+      "DisplayValue": "168",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 501,
+      "Geography": "St. George and Stapleton",
+      "Value": 266.0,
+      "DisplayValue": "266",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 502,
+      "Geography": "South Beach and Willowbrook",
+      "Value": 144.0,
+      "DisplayValue": "144",
+      "ValueType": "count"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 503,
+      "Geography": "Tottenville and Great Kills",
+      "Value": 207.0,
+      "DisplayValue": "207",
+      "ValueType": "count"
+    }
+  ]
+}

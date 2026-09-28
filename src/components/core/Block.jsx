@@ -31,8 +31,6 @@
 
 import { BlockRegistry } from '@/config/registries/blockRegistry';
 import { resolveProps } from '@/lib/utils/resolveProps';
-import { getFlyoutContent } from '@/lib/utils/getFlyoutContent';
-import { getCategoryCardContent } from '@/lib/utils/getCategoryCardContent';
 import { loadSectionIndicators, loadOverviewHeroConfig } from '@/lib/data/loadSectionIndicators';
 import sectionTitles from '@/config/content/sectionTitles.json';
 
@@ -46,46 +44,43 @@ export default function Block({ block, data, context, sectionId }) {
   const blockData = block.dataKey ? data?.[block.dataKey] : undefined;
   const resolvedProps = resolveProps(block.props, context);
 
-  // If this block declares a flyoutKey, load the markdown from /content/flyouts/
-  // and inject it as the `content` prop. Non-developers edit the .md file directly.
-  if (block.props?.flyoutKey) {
-    resolvedProps.content = getFlyoutContent(block.props.flyoutKey);
-  }
-
-  // If this block declares an introContentKey, load the intro paragraph from
-  // /content/category-cards/{slug}/intro.md and inject it as the `intro` prop.
-  // To edit a category intro: open the matching intro.md file — no code changes needed.
-  if (block.props?.introContentKey) {
-    resolvedProps.intro = getCategoryCardContent(block.props.introContentKey) ?? resolvedProps.intro;
-  }
-
-  // For sectionHeader blocks, look up the display title from /src/config/content/sectionTitles.json
-  // using the parent section's ID. The JSON value wins over the inline `title` prop.
-  // To rename a section heading: edit sectionTitles.json — no section config changes needed.
+  // For sectionHeader blocks, the heading comes from sectionTitles.json
+  // (generated from the Sections tab, content/copy/sections.csv) by section ID.
+  // To rename a section heading: edit the Heading column there.
   if (block.type === 'sectionHeader' && sectionId) {
     if (sectionTitles[sectionId]) resolvedProps.title = sectionTitles[sectionId];
     resolvedProps.sectionId = sectionId;
   }
 
-  // For indicatorChartGrid blocks, load the ordered indicator list from
-  // /content/sections/{sectionId}.json and resolve metadata from
-  // /content/indicators/{key}.meta.json. Injects the charts prop automatically.
-  // To add/remove/reorder indicators: edit content/sections/{sectionId}.json — no JS needed.
+  // For indicatorChartGrid blocks, inject the ordered indicator cards for this
+  // section. Placement + order come from the copy deck
+  // (content/copy/measure-copy.csv → indicatorCopy.json via `npm run copy`).
+  // To add/remove/reorder indicators: edit the CSV — no JSON or JS needed.
   if (block.type === 'indicatorChartGrid' && sectionId) {
     const jsonCharts = loadSectionIndicators(sectionId);
     if (jsonCharts !== null) resolvedProps.charts = jsonCharts;
   }
 
-  // For neighborhoodOverviewHero blocks, load statTile + pyramidChart config from
-  // /content/sections/neighborhood-overview.json, resolving metadata from meta.json.
-  // To change which tiles appear: edit content/sections/neighborhood-overview.json.
+  // For neighborhoodOverviewHero blocks, load statTile + pyramidChart config
+  // from the copy deck's "At a glance" rows. To change which tiles appear or
+  // their order: edit content/copy/measure-copy.csv.
   if (block.type === 'neighborhoodOverviewHero' && sectionId) {
     const heroConfig = loadOverviewHeroConfig();
     if (heroConfig) {
       resolvedProps.statTiles    = heroConfig.statTiles;
       resolvedProps.pyramidCharts = heroConfig.pyramidCharts;
+      resolvedProps.sourceFootnote = heroConfig.sourceFootnote;
     }
   }
+
+  // extraBlocks (2026-09-27): bespoke blocks folded into this block by the
+  // page config (e.g. Avertable Deaths inside Economic's card grid). Rendered
+  // here and passed as children so they share the parent's grid cells.
+  const extras = block.extraBlocks?.length
+    ? block.extraBlocks.map(extra => (
+        <Block key={extra.id} block={extra} data={data} context={context} sectionId={sectionId} />
+      ))
+    : null;
 
   return (
     <Component
@@ -93,6 +88,8 @@ export default function Block({ block, data, context, sectionId }) {
       preset={block.preset}
       context={context}
       {...resolvedProps}
-    />
+    >
+      {extras}
+    </Component>
   );
 }

@@ -94,6 +94,25 @@ export default async function AboutPage() {
     <PageLayout config={EMPTY_CONFIG} pageLabel="About" pageNav={PAGE_NAV}>
       <article>
 
+        {/* ── Mobile-only back link ─────────────────────────────────────
+            This page has an empty `sections` config, so StickyContextBar
+            (the usual home for a persistent mobile nav control) returns
+            null here — there's no sticky bar to add a back button to.
+            Until now the only way back on mobile was the "← Back to
+            neighborhood profiles" link at the very bottom of this long
+            prose page. Mirrors that same link/destination, just also
+            reachable without scrolling all the way down first. Desktop
+            already has the sidebar for this, so md:hidden. */}
+        <Link
+          href="/"
+          className="md:hidden inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors mb-6"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to neighborhood profiles
+        </Link>
+
         {/* ── Page header ────────────────────────────────────────────── */}
         <div className="mb-10 pb-10 border-b border-gray-100">
           <p className="text-xs font-semibold text-blue-600 uppercase tracking-widest mb-3">
@@ -102,7 +121,7 @@ export default async function AboutPage() {
           <h1 className="text-3xl font-bold text-gray-900 leading-tight mb-4">
             {copy.pageTitle}
           </h1>
-          <p className="text-lg text-gray-500 leading-relaxed max-w-2xl">
+          <p className="text-lg text-gray-600 leading-relaxed max-w-2xl">
             {copy.intro}
           </p>
         </div>
@@ -223,7 +242,7 @@ export default async function AboutPage() {
           <aside className="hidden lg:block">
             <div className="sticky top-32">
               <div className="bg-gray-50 border border-gray-200 rounded-xl px-5 py-4">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
                   Keyboard shortcuts
                 </p>
                 <ShortcutRow keys={['/']}   description="Search neighborhoods" />

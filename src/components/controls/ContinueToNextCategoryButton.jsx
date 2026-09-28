@@ -32,7 +32,7 @@ export default function ContinueToNextCategoryButton({ categoryId, nextCategoryI
 
   return (
     <div className="px-4 py-8 flex flex-col items-center gap-2 text-center">
-      <p className="text-sm text-gray-500">You&rsquo;ve reached the end of this section</p>
+      <p className="text-sm text-gray-600">You&rsquo;ve reached the end of this section</p>
       <button
         type="button"
         onClick={() => setPagedCategoryId(nextCategoryId)}

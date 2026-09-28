@@ -161,6 +161,8 @@ export default function Footer() {
                     {...hoverHandlers(href, label)}
                   >
                     {label}
+                    {/* A11Y (2026-09-26, WCAG 2.4.4 / 3.2.5): warn before a new tab opens */}
+                    <span className="sr-only"> (opens in new tab)</span>
                   </a>
                 ))}
               </div>
@@ -183,9 +185,9 @@ export default function Footer() {
             >
               <Image
                 src="https://www.nyc.gov/assets/doh/respiratory-illness-data/assets/NYC_Health_color_main.png"
-                alt="NYC Health Logo"
+                alt="NYC.gov (opens in new tab)" /* A11Y: alt names the link destination, not the image */
                 width={86}
-                height={22}
+                height={40} /* source PNG is 1797×827 (~2.17:1); 22 made Next warn "width or height modified" */
                 className="w-[86px] h-auto"
                 style={{ filter: 'var(--footer-logo-filter)' }}
               />
@@ -207,6 +209,7 @@ export default function Footer() {
                   {...hoverHandlers(href, label)}
                 >
                   {label}
+                  <span className="sr-only"> (opens in new tab)</span>
                 </a>
               ))}
               {/* p-3 -m-3: expands the tap target toward ~44px (WCAG/iOS HIG
@@ -214,7 +217,7 @@ export default function Footer() {
               <a
                 href={accessibilityLink.href}
                 title={accessibilityLink.label}
-                aria-label={accessibilityLink.label}
+                aria-label={`${accessibilityLink.label} (opens in new tab)`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="shrink-0 p-3 -m-3 text-footer-link hover:text-footer-link-hover transition-colors"

@@ -3,57 +3,51 @@ import 'server-only';
 /**
  * FILE: getIndicatorMeta.js
  *
- * SERVER-SIDE ONLY — uses fs to read from the filesystem at runtime.
- * For client-safe static indicator data, import from @/config/indicatorMeta.js
- * For client-safe search data, import from @/config/searchIndex.js
+ * SERVER-SIDE ONLY — uses fs to read data/metadata/{key}-meta.json.
  *
- * PURPOSE:
- * Reads indicator metadata from /content/indicators/{key}.meta.json.
+ * Merges the three homes of indicator metadata (2026-09-26 — the combined
+ * src/config/indicatorMeta.json is RETIRED and no longer read anywhere):
  *
- * This is the single source of truth for indicator display metadata
- * (title, subtitle, source, units, delta direction, etc.).
+ *   1. COPY — content/copy/indicatorCopy.json (built from the copy-deck CSV
+ *      content/copy/measure-copy.csv by `npm run copy`), via
+ *      @/config/indicatorCopy. The ONLY source for copy fields: title/label
+ *      (Measure), context, comparison, type, of, detail, units,
+ *      indicatorDetail, topic (section placement).
+ *
+ *   2. DATA FACTS — data/metadata/{key}-meta.json (data team export):
+ *      source, timePeriod, methodsNote, denominatorSource, ageAdjustment,
+ *      decimals, unit (raw, e.g. "%"). Title/Subtitle are used only for keys
+ *      with no copy-deck row (e.g. cancer-rank-rate, premature-mort-cause-rate).
+ *      The metadata's own type/of/detail/units columns are ignored — they
+ *      duplicated the CSV (identical for every key as of 2026-09-27).
+ *
+ *   3. DISPLAY RULES — @/config/presets/indicatorDisplay.js:
+ *      higherIsBetter, showDelta, dataSource, sourceUrl, kind, segments,
+ *      dataMetaKey.
  *
  * DATA-PERSON WORKFLOW:
- *   To add a new indicator's metadata: create /content/indicators/{key}.meta.json
- *   To edit an existing indicator's metadata: edit that file directly
- *   No code changes needed in either case.
+ *   Copy        → edit content/copy/measure-copy.csv, run `npm run copy`
+ *   Data facts  → edit data/metadata/{key}-meta.json
+ *   Display     → edit src/config/presets/indicatorDisplay.js
  *
- * FIELDS in each meta.json (all optional except key, title):
- *   key             — must match the data file name in /data/indicators/ (no extension)
- *   topic           — section ID this indicator belongs to (e.g. 'chronic-conditions')
- *   title           — full display title used in chart headers
- *   subtitle        — descriptor shown under the chart title (method, population, unit)
- *   source          — full source citation string
- *   sourceUrl       — optional link to source dataset
- *   timePeriod      — data collection period
- *   label           — short label for stat tiles
- *   unit            — sub-label shown under the value (e.g. 'of adults')
- *   displaySuffix   — appended to the displayed value (e.g. ' yrs')
- *   deltaSuffix     — appended to the citywide delta (e.g. ' pts')
- *   decimals        — decimal places for the delta value
- *   higherIsBetter  — true/false/null — controls delta badge direction
- *   showDelta       — false to suppress delta badge (e.g. raw counts)
- *   kind            — 'distribution' for segmented indicators
- *   segments        — array of { key, label } for distribution indicators
+ * RETURNED SHAPE: key, topic, title, label, subtitle, context, comparison,
+ * copyFlag, source, sourceUrl, timePeriod, unit, unitOverride, type, of,
+ * detail, units, indicatorDetail, deltaSuffix, decimals,
+ * higherIsBetter, showDelta, methodsNote, denominatorSource, ageAdjustment,
+ * kind, segments, dataSource.
  */
 
 import fs   from 'fs';
 import path from 'path';
+import { cache } from 'react';
 
-const META_DIR = path.join(process.cwd(), 'content', 'indicators');
+import { indicatorCopy, indicatorKeys } from '@/config/indicatorCopy';
+import { indicatorDisplay } from '@/config/presets/indicatorDisplay';
+import { normalizeDataMetaFields, formatSourceCitation } from './normalizeDataMeta';
 
-/**
- * Load a single indicator's metadata by key.
- * Returns null if no meta.json exists for that key.
- *
- * @param {string} key — indicator key (e.g. 'obesity', 'life-expectancy')
- * @returns {object|null}
- */
-export function getIndicatorMeta(key) {
-  if (!key) return null;
+const DATA_META_DIR = path.join(process.cwd(), 'data', 'metadata');
 
-  const filePath = path.join(META_DIR, `${key}.meta.json`);
-
+function readJsonSafe(filePath) {
   try {
     return JSON.parse(fs.readFileSync(filePath, 'utf8'));
   } catch {
@@ -61,28 +55,103 @@ export function getIndicatorMeta(key) {
   }
 }
 
+// Always "{key}-meta.json" — `npm run copy` warns when one is missing.
+function readDataMeta(key) {
+  return readJsonSafe(path.join(DATA_META_DIR, `${key}-meta.json`));
+}
+
+// Stat-tile sub-label ("of residents", "per 100,000", "people"), built from
+// the copy deck's type/of/units columns.
+function buildTileLabel({ type, of, units }) {
+  if (type === 'Percent' && of) return `of ${of}`;
+  return units || of || null;
+}
+
+// Plain-language fallback subtitle from the copy deck, used only when
+// neither a resolved narrative nor a data-team Subtitle exists.
+function buildCopySubtitle({ type, of, detail, units }) {
+  if (!of) return null;
+  const lead = type ? `${type} of ${of}` : of;
+  return [lead, detail, units].filter(Boolean).join(' ');
+}
+
 /**
- * Load all indicator metadata from /content/indicators/*.meta.json.
- * Returns a flat object keyed by indicator key.
- * Used by searchIndex.js to build the search catalog.
+ * Wrapped in React cache() — the same key is resolved by several components
+ * per render (card grid, hero, search, print), so each file is read once
+ * per request.
+ *
+ * @param {string} key — indicator key (e.g. 'obesity', 'life-expectancy')
+ * @returns {object|null} null when no source knows this key
+ */
+export const getIndicatorMeta = cache(function getIndicatorMeta(key) {
+  if (!key) return null;
+
+  const display  = indicatorDisplay[key] ?? {};
+  const copy     = indicatorCopy[key] ?? null;
+  const dataMeta = readDataMeta(display.dataMetaKey ?? key);
+
+  if (!copy && !dataMeta) return null;
+
+  const c    = copy ?? {};
+  const norm = normalizeDataMetaFields(dataMeta) ?? {};
+  // Segment files (age0to17, race-asian) describe one segment, not the whole
+  // distribution — only borrow their citation fields, never their copy.
+  const isBorrowed = Boolean(display.dataMetaKey);
+
+  const type   = c.type   || null;
+  const of     = c.of     || null;
+  const detail = c.detail || null;
+  const units  = c.units  || null;
+  const title  = c.measure || (!isBorrowed && norm.title) || key;
+
+  return {
+    key,
+    topic:             c.topic || null,
+    title,
+    label:             c.measure || (!isBorrowed && norm.label) || title,
+    subtitle:          (!isBorrowed && norm.subtitle) || buildCopySubtitle({ type, of, detail, units }),
+    context:           c.context || null,
+    comparison:        c.comparison || null,
+    copyFlag:          c.flag || null,
+    source:            formatSourceCitation(norm.source, norm.timePeriod) ?? null,
+    sourceName:        norm.source || null,
+    sourceUrl:         display.sourceUrl ?? null,
+    timePeriod:        norm.timePeriod || null,
+    // Raw data-team unit ("%", "") — drives count-vs-rate chart logic in
+    // IndicatorChartGrid.jsx's isCountDatatype(). Don't replace with copy.
+    unit:              isBorrowed ? null : (norm.unit || null),
+    // Editorial sub-label for At-a-Glance tiles / print rows (see
+    // loadOverviewHeroConfig() in loadSectionIndicators.js, loadPrintManifest.js).
+    unitOverride:      buildTileLabel({ type, of, units }),
+    type,
+    of,
+    detail,
+    units,
+    indicatorDetail:   c.indicatorDetail || null,
+    deltaSuffix:       norm.unit === '%' ? ' pts' : '',
+    decimals:          dataMeta?.Decimals ?? 0,
+    higherIsBetter:    display.higherIsBetter ?? null,
+    showDelta:         display.showDelta ?? undefined,
+    methodsNote:       norm.methodsNote || null,
+    denominatorSource: norm.denominatorSource || null,
+    ageAdjustment:     dataMeta?.AgeAdjustment ?? null,
+    kind:              display.kind ?? undefined,
+    segments:          display.segments ?? undefined,
+    dataSource:        display.dataSource ?? null,
+  };
+});
+
+/**
+ * All indicator metadata keyed by indicator key — roster is every keyed row
+ * in the copy deck.
  *
  * @returns {Record<string, object>}
  */
-export function getAllIndicatorMeta() {
-  try {
-    const files = fs.readdirSync(META_DIR).filter(f => f.endsWith('.meta.json'));
-    return Object.fromEntries(
-      files.flatMap(f => {
-        try {
-          const meta = JSON.parse(fs.readFileSync(path.join(META_DIR, f), 'utf8'));
-          return [[meta.key, meta]];
-        } catch {
-          console.warn(`[getAllIndicatorMeta] Malformed or unreadable: ${f}`);
-          return [];
-        }
-      })
-    );
-  } catch {
-    return {};
-  }
-}
+export const getAllIndicatorMeta = cache(function getAllIndicatorMeta() {
+  return Object.fromEntries(
+    indicatorKeys.flatMap(key => {
+      const resolved = getIndicatorMeta(key);
+      return resolved ? [[key, resolved]] : [];
+    })
+  );
+});

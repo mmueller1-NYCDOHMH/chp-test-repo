@@ -14,21 +14,27 @@
  * All other days show the default subtitle.
  *
  * EDITING COPY:
- * All subtitle strings live in /content/site/header.json — no code changes needed.
- * The {year} and {age} placeholders in dohAnniversary.subtitle are filled
- * in at runtime by this component.
+ * The site name (H1) and all subtitle strings live in /content/site/header.json
+ * — no code changes needed. The {year} and {age} placeholders in
+ * dohAnniversary.subtitle are filled in at runtime by this component.
  *
  * EDITING BRAND COLOR:
  * The header background uses var(--color-brand) from globals.css.
  * Change --color-brand there to update the header color site-wide.
  *
+ * LAYOUT:
+ * Two stacked rows, separated by a thin hairline (blue-100/20) under row 1.
+ * Row 1 is a slim utility strip: NYC Health logo far left, LanguageToggle
+ * far right. Row 2 holds the site title (H1) at the left and the subtitle
+ * pushed to the far right of the same row.
+ *
  * UTILITY CONTROLS (About / language / shortcuts):
- * LanguageToggle lives here again, small and right-aligned under the NYC
- * Health logo. It was moved to StickyContextBar for a while so it would
- * stay reachable while scrolled, but that bar returns null on pages with no
- * `sections` (e.g. /about), which meant those pages had no language access
- * at all. PageHeader has no such guard — it renders on every route — so
- * this is the one placement that's guaranteed reachable everywhere.
+ * LanguageToggle lives here again, small and right-aligned on the logo row.
+ * It was moved to StickyContextBar for a while so it would stay reachable
+ * while scrolled, but that bar returns null on pages with no `sections`
+ * (e.g. /about), which meant those pages had no language access at all.
+ * PageHeader has no such guard — it renders on every route — so this is
+ * the one placement that's guaranteed reachable everywhere.
  * "About this tool" and the "?" shortcuts button stay in StickyContextBar:
  * both are only meaningful in the context of browsing a profile page, so
  * scoping them there is fine.
@@ -97,36 +103,39 @@ export default function PageHeader() {
 
   return (
     <header
-      className="text-white px-4 sm:px-10 py-2.5 w-full flex items-start justify-between gap-4"
+      className="text-white px-4 sm:px-10 py-2.5 w-full"
       style={{ backgroundColor: 'var(--color-brand)' }}
     >
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-blue-100 mb-0.5 tracking-wide uppercase">
-          New York City
-        </p>
-        <h1 className="text-xl sm:text-2xl font-bold leading-tight">
-          Community Health Profiles
-        </h1>
-        <p className="mt-1 text-sm text-blue-100 max-w-xl hidden sm:block">
-          {subtitle}
-        </p>
-      </div>
-
-      <div className="flex flex-col items-end gap-2 shrink-0 pt-4">
-        {/* pt-4 skips past the "New York City" eyebrow line on the left so the
-            logo lines up with the "Community Health Profiles" heading below it */}
-        {/* NYC Health logo — white version via CSS filter */}
+      {/* Row 1 — NYC Health logo far left, LanguageToggle far right. Kept
+          slim (small pb, subtle hairline) so it reads as a lightweight
+          utility strip rather than competing with the title row below. */}
+      <div className="flex items-center justify-between gap-4 pb-1.5 border-b border-blue-100/20">
         <Image
           src="https://www.nyc.gov/assets/doh/respiratory-illness-data/assets/NYC_Health_color_main.png"
           alt="NYC Health"
-          width={120}
-          height={30}
-          className="opacity-90 h-7 sm:h-9 w-auto"
+          width={217}
+          height={100}
+          className="opacity-90 h-7 sm:h-8 w-auto shrink-0"
           style={{ filter: 'brightness(0) invert(1)' }}
           priority
         />
-        {/* Small, right-aligned under the logo — see UTILITY CONTROLS note above */}
+
+        {/* Small, right-aligned — see UTILITY CONTROLS note above */}
         <LanguageToggle variant="onBrand" />
+      </div>
+
+      {/* Row 2 — site title + subtitle, below the logo. Title sits at the
+          left, subtitle is pushed to the far right of the same row.
+          flex-nowrap keeps them as side-by-side columns (subtitle never
+          drops to its own row) while the subtitle's own text still wraps
+          onto multiple lines if it's too long. */}
+      <div className="pt-2 min-w-0 flex flex-nowrap items-baseline justify-between gap-4">
+        <h1 className="text-xl sm:text-2xl font-bold leading-tight shrink-0">
+          {headerContent.siteName}
+        </h1>
+        <p className="text-sm text-blue-100 max-w-xs sm:max-w-xl text-right hidden sm:block whitespace-pre-line">
+          {subtitle}
+        </p>
       </div>
     </header>
   );

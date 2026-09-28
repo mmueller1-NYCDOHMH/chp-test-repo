@@ -45,7 +45,7 @@ export default function NeighborhoodNotFound() {
             <h1 className="text-2xl font-bold text-gray-900">
               Neighborhood not found
             </h1>
-            <p className="text-sm text-gray-500 leading-relaxed">
+            <p className="text-sm text-gray-600 leading-relaxed">
               The URL you followed doesn't match any of NYC's 59 community
               districts. It may be a typo or a link that has changed.
             </p>
@@ -62,7 +62,7 @@ export default function NeighborhoodNotFound() {
             Browse all neighborhoods
           </Link>
 
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-600">
             Or use the neighborhood search in the sidebar to find a community district.
           </p>
 

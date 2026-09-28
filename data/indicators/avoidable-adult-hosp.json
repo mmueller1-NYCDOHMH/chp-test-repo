@@ -1,0 +1,657 @@
+{
+  "Section": "healthcare",
+  "Subsection": "injury-hospitalizations",
+  "IndicatorKey": "avoidable-adult-hosp",
+  "Data": [
+    {
+      "GeoType": "Citywide",
+      "GeoID": 0,
+      "Geography": "NYC",
+      "Value": 1075.0,
+      "DisplayValue": "1,075",
+      "LCLValue": 1067.1,
+      "UCLValue": 1082.0,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "Borough",
+      "GeoID": 1,
+      "Geography": "Manhattan",
+      "Value": 793.0,
+      "DisplayValue": "793",
+      "LCLValue": 778.6,
+      "UCLValue": 807.0,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "Borough",
+      "GeoID": 2,
+      "Geography": "Bronx",
+      "Value": 1779.0,
+      "DisplayValue": "1,779",
+      "LCLValue": 1754.2,
+      "UCLValue": 1803.6,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "Borough",
+      "GeoID": 3,
+      "Geography": "Brooklyn",
+      "Value": 970.0,
+      "DisplayValue": "970",
+      "LCLValue": 957.0,
+      "UCLValue": 983.2,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "Borough",
+      "GeoID": 4,
+      "Geography": "Queens",
+      "Value": 858.0,
+      "DisplayValue": "858",
+      "LCLValue": 845.3,
+      "UCLValue": 870.0,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "Borough",
+      "GeoID": 5,
+      "Geography": "Staten Island",
+      "Value": 1042.0,
+      "DisplayValue": "1,042",
+      "LCLValue": 1012.2,
+      "UCLValue": 1071.5,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 101,
+      "Geography": "Financial District",
+      "Value": 416.0,
+      "DisplayValue": "416",
+      "LCLValue": 348.3,
+      "UCLValue": 484.4,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 102,
+      "Geography": "Greenwich Village and Soho",
+      "Value": 225.0,
+      "DisplayValue": "225",
+      "LCLValue": 193.9,
+      "UCLValue": 255.5,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 103,
+      "Geography": "Lower East Side and Chinatown",
+      "Value": 751.0,
+      "DisplayValue": "751",
+      "LCLValue": 709.9,
+      "UCLValue": 792.4,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 104,
+      "Geography": "Clinton and Chelsea",
+      "Value": 543.0,
+      "DisplayValue": "543",
+      "LCLValue": 502.9,
+      "UCLValue": 583.9,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 105,
+      "Geography": "Midtown",
+      "Value": 561.0,
+      "DisplayValue": "561",
+      "LCLValue": 497.9,
+      "UCLValue": 625.0,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 106,
+      "Geography": "Stuyvesant Town and Turtle Bay",
+      "Value": 429.0,
+      "DisplayValue": "429",
+      "LCLValue": 394.9,
+      "UCLValue": 462.8,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 107,
+      "Geography": "Upper West Side",
+      "Value": 530.0,
+      "DisplayValue": "530",
+      "LCLValue": 499.0,
+      "UCLValue": 560.2,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 108,
+      "Geography": "Upper East Side",
+      "Value": 348.0,
+      "DisplayValue": "348",
+      "LCLValue": 322.9,
+      "UCLValue": 372.2,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 109,
+      "Geography": "Morningside Heights and Hamilton Heights",
+      "Value": 1198.0,
+      "DisplayValue": "1,198",
+      "LCLValue": 1124.0,
+      "UCLValue": 1272.0,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 110,
+      "Geography": "Central Harlem",
+      "Value": 1923.0,
+      "DisplayValue": "1,923",
+      "LCLValue": 1831.8,
+      "UCLValue": 2014.3,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 111,
+      "Geography": "East Harlem",
+      "Value": 1813.0,
+      "DisplayValue": "1,813",
+      "LCLValue": 1730.5,
+      "UCLValue": 1896.2,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 112,
+      "Geography": "Washington Heights and Inwood",
+      "Value": 1013.0,
+      "DisplayValue": "1,013",
+      "LCLValue": 965.1,
+      "UCLValue": 1061.8,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 201,
+      "Geography": "Mott Haven and Melrose",
+      "Value": 2163.0,
+      "DisplayValue": "2,163",
+      "LCLValue": 2054.2,
+      "UCLValue": 2272.4,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 202,
+      "Geography": "Hunts Point and Longwood",
+      "Value": 1767.0,
+      "DisplayValue": "1,767",
+      "LCLValue": 1635.3,
+      "UCLValue": 1898.1,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 203,
+      "Geography": "Morrisania and Crotona",
+      "Value": 2473.0,
+      "DisplayValue": "2,473",
+      "LCLValue": 2349.7,
+      "UCLValue": 2596.2,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 204,
+      "Geography": "Highbridge and Concourse",
+      "Value": 1757.0,
+      "DisplayValue": "1,757",
+      "LCLValue": 1680.4,
+      "UCLValue": 1834.5,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 205,
+      "Geography": "Fordham and University Heights",
+      "Value": 1992.0,
+      "DisplayValue": "1,992",
+      "LCLValue": 1899.3,
+      "UCLValue": 2085.3,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 206,
+      "Geography": "Belmont and East Tremont",
+      "Value": 2314.0,
+      "DisplayValue": "2,314",
+      "LCLValue": 2189.8,
+      "UCLValue": 2438.0,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 207,
+      "Geography": "Kingsbridge Heights and Bedford",
+      "Value": 1603.0,
+      "DisplayValue": "1,603",
+      "LCLValue": 1525.6,
+      "UCLValue": 1679.9,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 208,
+      "Geography": "Riverdale and Fieldston",
+      "Value": 868.0,
+      "DisplayValue": "868",
+      "LCLValue": 808.0,
+      "UCLValue": 927.4,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 209,
+      "Geography": "Parkchester and Soundview",
+      "Value": 1619.0,
+      "DisplayValue": "1,619",
+      "LCLValue": 1554.8,
+      "UCLValue": 1684.1,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 210,
+      "Geography": "Throgs Neck and Co-op City",
+      "Value": 1141.0,
+      "DisplayValue": "1,141",
+      "LCLValue": 1078.8,
+      "UCLValue": 1203.1,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 211,
+      "Geography": "Morris Park and Bronxdale",
+      "Value": 1494.0,
+      "DisplayValue": "1,494",
+      "LCLValue": 1417.0,
+      "UCLValue": 1570.8,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 212,
+      "Geography": "Williamsbridge and Baychester",
+      "Value": 1522.0,
+      "DisplayValue": "1,522",
+      "LCLValue": 1454.2,
+      "UCLValue": 1589.3,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 301,
+      "Geography": "Greenpoint and Williamsburg",
+      "Value": 749.0,
+      "DisplayValue": "749",
+      "LCLValue": 701.1,
+      "UCLValue": 795.9,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 302,
+      "Geography": "Fort Greene and Brooklyn Heights",
+      "Value": 783.0,
+      "DisplayValue": "783",
+      "LCLValue": 729.4,
+      "UCLValue": 836.7,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 303,
+      "Geography": "Bedford Stuyvesant",
+      "Value": 1404.0,
+      "DisplayValue": "1,404",
+      "LCLValue": 1334.9,
+      "UCLValue": 1473.6,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 304,
+      "Geography": "Bushwick",
+      "Value": 1131.0,
+      "DisplayValue": "1,131",
+      "LCLValue": 1056.1,
+      "UCLValue": 1206.2,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 305,
+      "Geography": "East New York and Starrett City",
+      "Value": 1498.0,
+      "DisplayValue": "1,498",
+      "LCLValue": 1433.9,
+      "UCLValue": 1563.0,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 306,
+      "Geography": "Park Slope and Carroll Gardens",
+      "Value": 765.0,
+      "DisplayValue": "765",
+      "LCLValue": 702.6,
+      "UCLValue": 827.9,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 307,
+      "Geography": "Sunset Park",
+      "Value": 662.0,
+      "DisplayValue": "662",
+      "LCLValue": 610.0,
+      "UCLValue": 713.4,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 308,
+      "Geography": "Crown Heights and Prospect Heights",
+      "Value": 1141.0,
+      "DisplayValue": "1,141",
+      "LCLValue": 1065.2,
+      "UCLValue": 1216.8,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 309,
+      "Geography": "South Crown Heights and Lefferts Gardens",
+      "Value": 1192.0,
+      "DisplayValue": "1,192",
+      "LCLValue": 1117.6,
+      "UCLValue": 1265.9,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 310,
+      "Geography": "Bay Ridge and Dyker Heights",
+      "Value": 524.0,
+      "DisplayValue": "524",
+      "LCLValue": 485.2,
+      "UCLValue": 562.2,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 311,
+      "Geography": "Bensonhurst",
+      "Value": 470.0,
+      "DisplayValue": "470",
+      "LCLValue": 439.9,
+      "UCLValue": 500.1,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 312,
+      "Geography": "Borough Park",
+      "Value": 544.0,
+      "DisplayValue": "544",
+      "LCLValue": 505.1,
+      "UCLValue": 582.9,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 313,
+      "Geography": "Coney Island",
+      "Value": 1120.0,
+      "DisplayValue": "1,120",
+      "LCLValue": 1058.4,
+      "UCLValue": 1182.5,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 314,
+      "Geography": "Flatbush and Midwood",
+      "Value": 845.0,
+      "DisplayValue": "845",
+      "LCLValue": 796.6,
+      "UCLValue": 893.9,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 315,
+      "Geography": "Sheepshead Bay",
+      "Value": 628.0,
+      "DisplayValue": "628",
+      "LCLValue": 590.9,
+      "UCLValue": 664.6,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 316,
+      "Geography": "Brownsville",
+      "Value": 2178.0,
+      "DisplayValue": "2,178",
+      "LCLValue": 2062.5,
+      "UCLValue": 2293.9,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 317,
+      "Geography": "East Flatbush",
+      "Value": 1182.0,
+      "DisplayValue": "1,182",
+      "LCLValue": 1124.2,
+      "UCLValue": 1239.7,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 318,
+      "Geography": "Flatlands and Canarsie",
+      "Value": 1065.0,
+      "DisplayValue": "1,065",
+      "LCLValue": 1015.0,
+      "UCLValue": 1114.9,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 401,
+      "Geography": "Long Island City and Astoria",
+      "Value": 828.0,
+      "DisplayValue": "828",
+      "LCLValue": 783.7,
+      "UCLValue": 872.7,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 402,
+      "Geography": "Woodside and Sunnyside",
+      "Value": 464.0,
+      "DisplayValue": "464",
+      "LCLValue": 427.2,
+      "UCLValue": 499.9,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 403,
+      "Geography": "Jackson Heights",
+      "Value": 714.0,
+      "DisplayValue": "714",
+      "LCLValue": 671.3,
+      "UCLValue": 756.2,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 404,
+      "Geography": "Elmhurst and Corona",
+      "Value": 698.0,
+      "DisplayValue": "698",
+      "LCLValue": 657.1,
+      "UCLValue": 738.4,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 405,
+      "Geography": "Ridgewood and Maspeth",
+      "Value": 788.0,
+      "DisplayValue": "788",
+      "LCLValue": 741.5,
+      "UCLValue": 834.9,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 406,
+      "Geography": "Rego Park and Forest Hills",
+      "Value": 544.0,
+      "DisplayValue": "544",
+      "LCLValue": 503.6,
+      "UCLValue": 584.6,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 407,
+      "Geography": "Flushing and Whitestone",
+      "Value": 521.0,
+      "DisplayValue": "521",
+      "LCLValue": 494.4,
+      "UCLValue": 547.1,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 408,
+      "Geography": "Hillcrest and Fresh Meadows",
+      "Value": 686.0,
+      "DisplayValue": "686",
+      "LCLValue": 644.2,
+      "UCLValue": 728.7,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 409,
+      "Geography": "Kew Gardens and Woodhaven",
+      "Value": 974.0,
+      "DisplayValue": "974",
+      "LCLValue": 917.7,
+      "UCLValue": 1029.4,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 410,
+      "Geography": "South Ozone Park and Howard Beach",
+      "Value": 1088.0,
+      "DisplayValue": "1,088",
+      "LCLValue": 1026.9,
+      "UCLValue": 1148.2,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 411,
+      "Geography": "Bayside and Little Neck",
+      "Value": 483.0,
+      "DisplayValue": "483",
+      "LCLValue": 444.3,
+      "UCLValue": 522.3,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 412,
+      "Geography": "Jamaica and Hollis",
+      "Value": 1327.0,
+      "DisplayValue": "1,327",
+      "LCLValue": 1277.4,
+      "UCLValue": 1376.6,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 413,
+      "Geography": "Queens Village",
+      "Value": 1079.0,
+      "DisplayValue": "1,079",
+      "LCLValue": 1031.7,
+      "UCLValue": 1126.5,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 414,
+      "Geography": "Rockaway and Broad Channel",
+      "Value": 1879.0,
+      "DisplayValue": "1,879",
+      "LCLValue": 1791.8,
+      "UCLValue": 1967.0,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 501,
+      "Geography": "St. George and Stapleton",
+      "Value": 1241.0,
+      "DisplayValue": "1,241",
+      "LCLValue": 1186.6,
+      "UCLValue": 1295.5,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 502,
+      "Geography": "South Beach and Willowbrook",
+      "Value": 906.0,
+      "DisplayValue": "906",
+      "LCLValue": 857.1,
+      "UCLValue": 955.4,
+      "ValueType": "estimate"
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 503,
+      "Geography": "Tottenville and Great Kills",
+      "Value": 878.0,
+      "DisplayValue": "878",
+      "LCLValue": 830.9,
+      "UCLValue": 924.5,
+      "ValueType": "estimate"
+    }
+  ]
+}

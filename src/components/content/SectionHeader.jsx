@@ -17,7 +17,7 @@ export default function SectionHeader({ title = 'Section', subtitle, sectionId }
   return (
     <div className="pt-2 mb-4 border-t border-gray-100">
       <div className="group flex items-center gap-2">
-        <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-xs font-semibold text-blue-600 uppercase tracking-widest">{title}</h3>
 
         {sectionId && (
           <button
@@ -28,7 +28,7 @@ export default function SectionHeader({ title = 'Section', subtitle, sectionId }
             // state, so a hover-only reveal would make this unreachable for
             // touch users. From sm: up (mouse/trackpad assumed) it reverts to
             // the quieter hover/focus-reveal pattern.
-            className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-100 p-1 -m-1 rounded text-gray-400 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-100 p-1 -m-1 rounded text-gray-600 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             {copied ? (
               <svg className="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">

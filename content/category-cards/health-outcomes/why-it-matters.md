@@ -1,1 +1,0 @@
-Health outcomes reflect the cumulative effect of social, economic, and environmental conditions over time. Disparities in life expectancy and preventable death across neighborhoods signal where interventions are most needed.

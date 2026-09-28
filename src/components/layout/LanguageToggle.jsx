@@ -35,7 +35,7 @@
  *                           other than PageHeader again.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 
 const LANGUAGES = [
   { code: 'en',    label: 'English',    native: 'English'   },
@@ -69,6 +69,9 @@ export default function LanguageToggle({ variant = 'onBrand' }) {
   const [open, setOpen]         = useState(false);
   const [current, setCurrent]   = useState('en');
   const containerRef            = useRef(null);
+  const toggleRef               = useRef(null);
+  const listRef                 = useRef(null);
+  const listId                  = useId();
   const isOnBrand                = variant === 'onBrand';
 
   // Read cookie on mount so the toggle reflects any active translation
@@ -88,6 +91,39 @@ export default function LanguageToggle({ variant = 'onBrand' }) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [open]);
 
+  // A11Y (2026-09-26): disclosure-menu keyboard support. On open, focus
+  // moves to the current language; ↑/↓ (and Home/End) move between
+  // options; Escape closes and returns focus to the toggle; Tab closes.
+  useEffect(() => {
+    if (!open) return;
+    const raf = requestAnimationFrame(() => {
+      const btns = listRef.current?.querySelectorAll('button');
+      const idx  = LANGUAGES.findIndex(l => l.code === current);
+      btns?.[Math.max(0, idx)]?.focus();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleListKeyDown(e) {
+    const btns = Array.from(listRef.current?.querySelectorAll('button') ?? []);
+    const i = btns.indexOf(document.activeElement);
+    let next = null;
+    if (e.key === 'ArrowDown') next = (i + 1) % btns.length;
+    else if (e.key === 'ArrowUp') next = (i - 1 + btns.length) % btns.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = btns.length - 1;
+    else if (e.key === 'Escape') {
+      e.preventDefault();
+      setOpen(false);
+      toggleRef.current?.focus();
+      return;
+    } else if (e.key === 'Tab') {
+      setOpen(false);
+      return;
+    }
+    if (next != null) { e.preventDefault(); btns[next]?.focus(); }
+  }
+
   function selectLanguage(code) {
     setOpen(false);
     if (code === current) return;
@@ -104,9 +140,10 @@ export default function LanguageToggle({ variant = 'onBrand' }) {
 
       <div ref={containerRef} className="relative notranslate" lang="en">
         <button
+          ref={toggleRef}
           onClick={() => setOpen(v => !v)}
-          aria-haspopup="listbox"
           aria-expanded={open}
+          aria-controls={listId}
           aria-label={`Language: ${currentLang.label}. Change language.`}
           className={`flex items-center gap-1.5 px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 rounded ${
             isOnBrand
@@ -135,25 +172,38 @@ export default function LanguageToggle({ variant = 'onBrand' }) {
         </button>
 
         {open && (
+          // A11Y (2026-09-26): was role="listbox" with <li role="option">
+          // wrapping a <button> — interactive controls nested inside
+          // options is invalid ARIA and read inconsistently. Now a plain
+          // disclosure list of buttons; the current language is marked
+          // with aria-current.
           <ul
-            role="listbox"
+            id={listId}
+            ref={listRef}
+            onKeyDown={handleListKeyDown}
             aria-label="Select language"
             className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg ring-1 ring-black/10 overflow-hidden z-50 py-1 text-gray-700"
           >
             {LANGUAGES.map(lang => {
               const isSelected = lang.code === current;
               return (
-                <li key={lang.code} role="option" aria-selected={isSelected}>
+                <li key={lang.code}>
                   <button
+                    type="button"
+                    aria-current={isSelected ? 'true' : undefined}
                     onClick={() => selectLanguage(lang.code)}
-                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-sm transition-colors
+                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500
                       ${isSelected
                         ? 'bg-brand-tint text-brand font-medium'
                         : 'text-gray-700 hover:bg-brand-tint hover:text-brand'
                       }`}
                     dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
                   >
-                    <span>{lang.native}</span>
+                    {/* A11Y (2026-09-26, WCAG 3.1.2): lang so screen readers
+                        pronounce each native name in its own language — the
+                        container is lang="en", so "Español", "中文" etc. were
+                        read with the English voice. */}
+                    <span lang={lang.code}>{lang.native}</span>
                     {isSelected && (
                       <svg className="w-4 h-4 shrink-0 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />

@@ -21,9 +21,18 @@
  *
  * PROPS:
  *   onNavigate  — called after the user selects a result (optional)
+ *   autoFocus   — whether the input grabs focus the instant this tab mounts.
+ *                 Default true (desktop aside behavior). The mobile bottom
+ *                 sheet instance (Sidebar.jsx) passes false: autoFocus there
+ *                 opens the on-screen keyboard immediately on tab-open, which
+ *                 makes mobile browsers zoom/scroll to the input before the
+ *                 user has seen the rest of the tab (the indicator list,
+ *                 "Viewing <neighborhood>", etc). On mobile the user should
+ *                 see the full tab first and opt into the keyboard by tapping
+ *                 the input themselves.
  *
  * NOTE ON FOCUS RING COLOR:
- * The search input has autoFocus, so it's in its focused state the instant
+ * When autoFocus is on, the search input is in its focused state the instant
  * this tab opens — same situation as IntroModal's neighborhood search. Its
  * focus ring is ring-brand rather than the site-wide ring-blue-500 for the
  * same reason: since users see it focused far more than resting, the focus
@@ -40,7 +49,12 @@ import { highlight }              from '@/lib/utils/highlight';
 // ── Example query suggestions for the empty state ──────────────────────────
 const SUGGESTIONS = ['asthma', 'poverty', 'obesity', 'infant', 'safety'];
 
-export default function IndicatorSearch({ onNavigate, categoryFilter = null, onClearFilter, activeNeighborhood = null }) {
+// Matches the Tailwind `md` breakpoint used everywhere else in the app for
+// the mobile/desktop split (Sidebar's aside vs. bottom sheet), and the same
+// max-width MobileCategoryContext.jsx itself checks.
+const MOBILE_MAX_WIDTH = 767;
+
+export default function IndicatorSearch({ onNavigate, categoryFilter = null, onClearFilter, activeNeighborhood = null, autoFocus = true }) {
   const [query, setQuery]           = useState('');
   const [focusedIndex, setFocused]  = useState(-1);
   const inputRef                    = useRef(null);
@@ -96,29 +110,67 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
 
   // ── Select a result ───────────────────────────────────────────────────────
   const handleSelect = useCallback((ind) => {
-    // Off a neighborhood page (e.g. /about): navigate to the default neighborhood
-    // at the section anchor — same pattern as TopicNav.
+    // Scroll target: the indicator's own card (id="indicator-{key}", set by
+    // ExpandableChartCard and the bespoke At a glance / Health outcomes /
+    // Avertable deaths cards), falling back to its section when a card isn't
+    // on the page. 2026-09-27 per Morgan — was always the section.
+    const sectionId = ind.anchor?.replace(/^#/, '');
+    const cardId    = ind.indicatorAnchor?.replace(/^#/, '');
+
+    // Off a neighborhood page (e.g. /about): navigate to the default
+    // neighborhood; the browser's own #hash jump lands on the card.
     if (!isNeighborhoodPage) {
-      router.push(`/neighborhood/${DEFAULT_NEIGHBORHOOD_ID}${ind.anchor}`);
+      router.push(`/neighborhood/${DEFAULT_NEIGHBORHOOD_ID}${ind.indicatorAnchor ?? ind.anchor}`);
       onNavigate?.();
       return;
     }
 
-    // On a neighborhood page: scroll to the section anchor so the section title
-    // is visible, then flash the section to orient the user.
-    scrollToSection(ind.anchor);
-    onNavigate?.();
-
-    const sectionId = ind.anchor?.replace(/^#/, '');
-    if (sectionId) {
+    // On a neighborhood page: scroll to the card, then flash it to orient
+    // the user.
+    const runScroll = () => {
+      const targetId = cardId && document.getElementById(cardId) ? cardId : sectionId;
+      if (!targetId) return;
+      scrollToSection(`#${targetId}`);
+      onNavigate?.();
       setTimeout(() => {
-        const el = document.getElementById(sectionId);
+        const el = document.getElementById(targetId);
         if (!el) return;
         el.classList.remove('section-flash');
         void el.offsetWidth;
         el.classList.add('section-flash');
         el.addEventListener('animationend', () => el.classList.remove('section-flash'), { once: true });
       }, 150);
+    };
+
+    if (typeof window !== 'undefined' && window.innerWidth <= MOBILE_MAX_WIDTH) {
+      // 1. A result from a category other than the one currently paged in
+      //    lives in a section MobileCategoryPager has set `hidden` on. Switch
+      //    into that category first so the section is actually rendered
+      //    (display: revert, not display: none) before we try to measure it —
+      //    scrollToSection()'s getBoundingClientRect() reads 0×0 on a hidden
+      //    element, so without this the "scroll" silently goes nowhere.
+      //    IndicatorSearch/Sidebar sits OUTSIDE <MobileCategoryProvider> in
+      //    PageLayout.jsx (siblings, not ancestor/descendant), so we can't
+      //    reach setPagedCategoryId via useMobileCategory() here — same
+      //    window-event pattern as chp:open-intro-modal elsewhere in the app.
+      //    MobileCategoryContext.jsx listens for this on chp:set-paged-category.
+      const sectionEl      = sectionId ? document.getElementById(sectionId) : null;
+      const targetCategory = sectionEl?.getAttribute('data-chp-category');
+      if (targetCategory && targetCategory !== 'always') {
+        window.dispatchEvent(new CustomEvent('chp:set-paged-category', { detail: { categoryId: targetCategory } }));
+      }
+
+      // 2. Selecting a result also dismisses the on-screen keyboard (the
+      //    search input was focused) and closes the bottom sheet — both
+      //    resize the viewport a beat after this handler runs. Measuring
+      //    before either of those settle (the category swap above included)
+      //    computes an offset that's stale the instant they do, so the
+      //    scroll lands in the wrong place or looks like it did nothing.
+      //    Blur explicitly and wait for everything to settle before measuring.
+      inputRef.current?.blur();
+      setTimeout(runScroll, 300);
+    } else {
+      runScroll();
     }
   }, [isNeighborhoodPage, onNavigate, router]);
 
@@ -156,7 +208,7 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
       {/* ── Search input ────────────────────────────────────────── */}
       <div className="relative">
         <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none"
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
           aria-hidden="true"
         >
@@ -169,7 +221,7 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
           onChange={e => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Search indicators…"
-          autoFocus
+          autoFocus={autoFocus}
           aria-label="Search indicators"
           aria-controls="indicator-search-results"
           aria-activedescendant={focusedIndex >= 0 ? `search-result-${focusedIndex}` : undefined}
@@ -198,7 +250,7 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
           <button
             onClick={onClearFilter}
             aria-label={`Remove ${categoryFilter} filter`}
-            className="text-gray-500 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded"
+            className="text-gray-600 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded"
           >
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -310,9 +362,13 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
       </div>
 
       {/* ── Keyboard hint ───────────────────────────────────────── */}
+      {/* Raw arrow glyphs are hidden from assistive tech (screen readers read
+          them inconsistently, if at all) in favor of a visually-hidden
+          equivalent that spells the keys out. */}
       {results.length > 0 && (
         <p className="text-xs text-gray-600 text-center pt-1 border-t border-gray-100 shrink-0">
-          ↑↓ navigate · Enter select · Esc clear
+          <span aria-hidden="true">↑↓ navigate · Enter select · Esc clear</span>
+          <span className="sr-only">Use up and down arrow keys to navigate results, Enter to select, Escape to clear</span>
         </p>
       )}
 

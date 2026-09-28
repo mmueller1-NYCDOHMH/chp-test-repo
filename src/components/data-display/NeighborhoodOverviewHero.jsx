@@ -18,7 +18,7 @@
  * Adding, removing, or reordering tiles/charts requires only a config change.
  *
  * STAT TILE CONFIG SHAPE (each item in the `statTiles` prop array):
- *   indicatorKey    — matches a file in /data/indicators/ (e.g. 'total-population')
+ *   indicatorKey    — matches a file in /data/indicators/ (e.g. 'overall-pop')
  *   label           — tile heading
  *   unit            — sub-label shown below the value
  *   displaySuffix   — appended to DisplayValue
@@ -29,6 +29,17 @@
  *                     false = lower is healthier (e.g. obesity)
  *                     null  = direction-less; delta renders in neutral styling
  *   showDelta       — explicit false to suppress the delta badge entirely
+ *   title, subtitle, source, sourceUrl, description
+ *                   — carried through to the tile so clicking it can open
+ *                     a fuller-view modal with the same content the
+ *                     indicator "Details" flyout shows elsewhere
+ *   dataSource, isPercent
+ *                   — carried through so a flagged CD row (small sample
+ *                     size) can show the right caveat footnote — see
+ *                     getFlaggedEstimateFootnote() in compareIndicator.js
+ *
+ * Each tile is clickable — see ComparisonStatTilesClient.jsx, which opens a
+ * centered expand modal (StatTileDetailModal) on click/Enter/Space.
  *
  * PYRAMID CHART CONFIG SHAPE (each item in the `pyramidCharts` prop array):
  *   indicatorKey    — matches a file in /data/indicators/ with a Distribution array
@@ -60,6 +71,9 @@ import {
   buildStatTile,
   buildPyramidChart,
 } from '@/lib/data/resolveOverviewData';
+import overviewSectionsCopy from '../../../content/site/overviewSections.json';
+
+const { sourceFootnoteSuffix: HERO_FOOTNOTE_SUFFIX } = overviewSectionsCopy.neighborhoodOverviewHero;
 
 // ─── Sub-components moved to ComparisonStatTilesClient.jsx ───────────────────
 // StatTile is now rendered by the client component so it can read comparison
@@ -71,6 +85,7 @@ import {
 export default function NeighborhoodOverviewHero({
   statTiles     = [],
   pyramidCharts = [],
+  sourceFootnote = '',
   context,
 }) {
   const { geoId, neighborhood } = context ?? {};
@@ -80,8 +95,26 @@ export default function NeighborhoodOverviewHero({
   const resolvedTiles = statTiles.map((cfg) => {
     const { cdRow, nycRow } = resolveIndicatorRows(cfg.indicatorKey, geoId);
     const tile = buildStatTile(cfg, cdRow, nycRow);
-    // Carry displaySuffix through so the client component can format comparison values identically
-    return { ...tile, displaySuffix: cfg.displaySuffix ?? '' };
+    // Carry displaySuffix through so the client component can format comparison values identically.
+    // Also carry title/subtitle/source/sourceUrl/description through so each tile can open its
+    // expand modal with real content — see ComparisonStatTilesClient.jsx.
+    return {
+      ...tile,
+      displaySuffix:  cfg.displaySuffix  ?? '',
+      title:          cfg.title       ?? cfg.label,
+      subtitle:       cfg.subtitle    ?? null,
+      source:         cfg.source      ?? null,
+      sourceUrl:      cfg.sourceUrl   ?? null,
+      description:    cfg.description ?? null,
+      dataSource:     cfg.dataSource  ?? null,
+      isPercent:      cfg.isPercent   ?? false,
+      // buildStatTile() (above) doesn't carry higherIsBetter through to its
+      // returned tile object — it only uses cfg.higherIsBetter internally to
+      // compute the delta pill's direction. The expand modal's insight badge
+      // needs the flag itself (not just the delta), so it can tell "up" from
+      // "good" — see getInsightBadgeClass() in ComparisonStatTilesClient.jsx.
+      higherIsBetter: cfg.higherIsBetter ?? null,
+    };
   });
 
   // Raw data per stat-tile indicator — passed to the client wrapper so it can
@@ -122,11 +155,12 @@ export default function NeighborhoodOverviewHero({
       />
 
       {/* ── Source footnote ─────────────────────────────────── */}
+      {/* Sources + years are built from each tile's data/metadata file
+          (loadOverviewHeroConfig → buildSourceFootnote), so they update with
+          the data. The closing sentence lives in
+          /content/site/overviewSections.json (sourceFootnoteSuffix). */}
       <p className="text-xs text-gray-600 border-t border-gray-100 pt-4">
-        Source: American Community Survey 5-Year Estimates. Population, age,
-        race/ethnicity, nativity, and limited English proficiency reflect the
-        most recent available ACS release. Single-value metrics compare the
-        neighborhood to NYC citywide.
+        {[sourceFootnote, HERO_FOOTNOTE_SUFFIX].filter(Boolean).join(' ')}
       </p>
 
     </div>

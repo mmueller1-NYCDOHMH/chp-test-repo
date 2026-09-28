@@ -1,0 +1,21 @@
+{
+  "IndicatorKey": "avertable-death",
+  "Title": "Avertable Deaths",
+  "Label": "",
+  "Subtitle": "",
+  "AgeAdjustment": "No",
+  "MethodsNote": "The five highest-income neighborhoods in the avertable deaths analysis were Financial District (MN 01), Greenwich Village/ Soho (MN 02), Stuyvesant Town/ Turtle Bay (MN 06), Upper West Side (MN 07), and Upper East Side (MN 08). The average death rate from these five neighborhoods were applied to all other Community Districts, and the percentage of deaths that would have been averted calculated. Midtown (MN 05), Woodside/ Sunnyside (QN 02), and Elmhurst/ Corona (QN 04) have a negative value for avertable deaths, because their death rate is lower than the average death rate of the five highest-income neighborhoods, however this was not presented in the profiles for these neighborhoods. Data include New York City residents who died in New York State, in and outside of NYC.",
+  "ReliabilityNote": "",
+  "Source": "NYC DOHMH, Bureau of Vital Statistics and U.S. Census Bureau, American Community Survey",
+  "DenominatorSource": "NYC DOHMH, matched from US Census Bureau intercensal population estimates, vintage 2015",
+  "TimePeriod": "2015-2019",
+  "Unit": "",
+  "Decimals": 0,
+  "Section": "social",
+  "Subsection": "economic",
+  "type": "Percent",
+  "of": "deaths",
+  "detail": "that would be avoided if death rate was the same as the 5 wealthiest neighborhoods",
+  "units": "",
+  "indicatorDetail": ""
+}

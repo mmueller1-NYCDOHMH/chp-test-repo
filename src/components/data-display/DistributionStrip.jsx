@@ -18,10 +18,24 @@
  *                      highlights the matching dot when no dot is directly hovered
  *   onHoverGeoId     — (geoId: number|null) => void; fired on dot hover so the
  *                      choropleth map can highlight the corresponding CD
+ *   referenceValue   — optional numeric value to mark with a neutral dashed
+ *                      line (e.g. avertable-deaths' "0% = same as baseline
+ *                      neighborhoods" — a fixed conceptual reference that
+ *                      isn't the citywide row, so it needs its own marker).
+ *                      Reuses this component's own min/max/pct scale, so it
+ *                      always lines up with the dots — added 2026-09-16 for
+ *                      AvertableDeathsChart.jsx, opt-in and additive; every
+ *                      existing caller is unaffected when left unset.
+ *   referenceCaption — optional caption rendered centered below the strip
+ *                      when referenceValue is set (e.g. "0% = same as
+ *                      baseline neighborhoods").
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SELECTED, COMPARISON, CITYWIDE, BAR_DEFAULT } from '@/lib/charts/chartColors';
+import { useRovingDots } from './useRovingDots';
+
+const REFERENCE_LINE_COLOR = '#D1D5DB'; // gray-300 — neutral, distinct from the CITYWIDE blue tick
 
 // Note: keyframes need a literal color (can't reference a CSS var scoped
 // elsewhere reliably inside a <style> tag rendered per-instance), so SELECTED
@@ -38,7 +52,7 @@ const DOT_KEYFRAMES = `
   }
 `;
 
-export default function DistributionStrip({ indicatorData = [], geoId, comparisonGeoId = null, mapHoveredGeoId = null, onHoverGeoId }) {
+export default function DistributionStrip({ indicatorData = [], geoId, comparisonGeoId = null, mapHoveredGeoId = null, onHoverGeoId, referenceValue = null, referenceCaption = null }) {
   const [hovered,  setHovered]  = useState(null);
   const [entered,  setEntered]  = useState(false);
   const hideTimer = useRef(null);
@@ -67,7 +81,13 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
 
   const { cdRows, citywide, selected, comparison, min, max, minRow, maxRow } = useMemo(() => {
     const cdRows    = indicatorData.filter(r => r.GeoType === 'CD' && r.Value != null);
-    const citywide  = indicatorData.find(r => r.GeoID === 0);
+    // r.Value != null guard added 2026-09-16: without it, an indicator whose
+    // citywide row exists but carries Value: null (e.g. avertable-death,
+    // where the metric isn't meaningful citywide) would still pass the
+    // `citywide` truthiness check below, and `null` coerces to 0 in the pct()
+    // arithmetic — drawing a citywide tick/label at a bogus position instead
+    // of correctly omitting it, the way a missing citywide row already does.
+    const citywide  = indicatorData.find(r => r.GeoID === 0 && r.Value != null);
     const selected  = cdRows.find(r => r.GeoID === geoId);
     const comparison = comparisonGeoId != null ? cdRows.find(r => r.GeoID === comparisonGeoId) ?? null : null;
     const values    = cdRows.map(r => r.Value);
@@ -78,13 +98,23 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
     return { cdRows, citywide, selected, comparison, min, max, minRow, maxRow };
   }, [indicatorData, geoId, comparisonGeoId]);
 
+  // A11Y (2026-09-26): one Tab stop for the whole strip; arrow keys move
+  // between dots in value order (see useRovingDots.js). Previously every
+  // dot was tabIndex=0 — ~59 Tab stops per strip.
+  const sortedRows = useMemo(() => [...cdRows].sort((a, b) => a.Value - b.Value), [cdRows]);
+  const roving = useRovingDots(sortedRows, {
+    initialGeoId: geoId,
+    onEscape: () => { setHovered(null); onHoverGeoId?.(null); },
+  });
+
   if (!cdRows.length) return null;
 
   const range = max - min || 1;
   const pct = v => ((v - min) / range) * 100;
 
-  const selectedPct = selected  ? pct(selected.Value)  : null;
-  const citywidePct = citywide  ? pct(citywide.Value)  : null;
+  const selectedPct  = selected ? pct(selected.Value) : null;
+  const citywidePct  = citywide ? pct(citywide.Value) : null;
+  const referencePct = referenceValue != null ? pct(referenceValue) : null;
 
   // If the two static labels are within 12pp, drop the citywide one below
   const labelsClose =
@@ -111,6 +141,7 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
         {/* Hover tooltip — sits above the track, fades in */}
         <div
           id="distribution-tooltip"
+          aria-hidden="true" /* dot aria-labels already carry name + value */
           role="tooltip"
           className="absolute bottom-full mb-1.5 -translate-x-1/2 pointer-events-none z-20"
           style={{
@@ -138,17 +169,19 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
           )}
         </div>
 
-        {/* Strip track + dots */}
-        <div className="relative h-5">
+        {/* Strip track + dots — one keyboard group (see useRovingDots) */}
+        <div className="relative h-5" {...roving.groupProps('How this neighborhood compares')}>
           {/* Track */}
           <div className="absolute inset-x-0 top-[9px] h-[2px] rounded bg-gray-100" />
 
           {/* All CD dots */}
           {cdRows.map((row, i) => {
             const isSelected = row.GeoID === geoId;
+            const isComp     = comparison?.GeoID === row.GeoID;
             const isHovered  = activeHoverId === row.GeoID;
             const cleanName  = row.Geography.replace(/\s*\(CD\d+\)/i, '').trim();
             const displayVal = row.DisplayValue ?? row.Value;
+            const tag        = isSelected ? ' (selected)' : isComp ? ' (comparison)' : '';
 
             // Entrance: dots animate in left-to-right with 4ms stagger.
             // Selected dot gets an additional box-shadow pulse after arriving.
@@ -159,21 +192,23 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
               <div
                 key={row.GeoID}
                 role="img"
-                aria-label={`${cleanName}: ${displayVal}`}
-                aria-describedby={isHovered ? 'distribution-tooltip' : undefined}
-                tabIndex={0}
-                className="absolute top-1/2 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+                aria-label={`${cleanName}${tag}: ${displayVal}. ${roving.rankOf(row)} of ${roving.total}`}
+                {...roving.dotProps(row)}
+                className="absolute top-1/2 rounded-full cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                /* outline, not ring: the selected dot's inline boxShadow
+                   (and the pulse keyframes) would override a Tailwind ring,
+                   leaving it with no visible focus indicator. */
                 style={{
                   left:       `${pct(row.Value)}%`,
-                  width:      isSelected ? 10 : 6,
-                  height:     isSelected ? 10 : 6,
-                  background: isSelected ? SELECTED : isHovered ? '#374151' : BAR_DEFAULT,
-                  border:     isSelected ? '2px solid white' : 'none',
-                  zIndex:     isSelected ? 3 : isHovered ? 4 : 1,
+                  width:      isSelected || isComp ? 10 : 6,
+                  height:     isSelected || isComp ? 10 : 6,
+                  background: isSelected ? SELECTED : isComp ? COMPARISON : isHovered ? '#374151' : BAR_DEFAULT,
+                  border:     isSelected || isComp ? '2px solid white' : 'none',
+                  zIndex:     isHovered ? 5 : isSelected || isComp ? 3 : 1,
                   // Entrance animation; hover transform takes over once entered
                   ...(entered
                     ? {
-                        transform:  `translate(-50%, -50%) scale(${isHovered && !isSelected ? 1.5 : 1})`,
+                        transform:  `translate(-50%, -50%) scale(${isHovered && !isSelected ? (isComp ? 1.4 : 1.5) : 1})`,
                         transition: 'transform 120ms ease, background 120ms ease',
                         animation:  isSelected
                           ? `chp-dot-pulse 500ms ease-in-out ${pulseDelay}ms 2`
@@ -187,43 +222,31 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
                 }}
                 onMouseEnter={() => handleMouseEnter(row)}
                 onMouseLeave={handleMouseLeave}
-                onFocus={() => handleMouseEnter(row)}
+                onFocus={() => { roving.setActiveId(row.GeoID); handleMouseEnter(row); }}
                 onBlur={handleMouseLeave}
               />
             );
           })}
 
-          {/* Comparison neighborhood dot — amber */}
-          {comparison && (() => {
-            const isHovered    = activeHoverId === comparison.GeoID;
-            const compPct      = pct(comparison.Value);
-            const cleanName    = comparison.Geography.replace(/\s*\(CD\d+\)/i, '').trim();
-            const displayVal   = comparison.DisplayValue ?? comparison.Value;
-            return (
-              <div
-                key={`comp-${comparison.GeoID}`}
-                role="img"
-                aria-label={`${cleanName} (comparison): ${displayVal}`}
-                aria-describedby={isHovered ? 'distribution-tooltip' : undefined}
-                tabIndex={0}
-                className="absolute top-1/2 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C94D18] focus-visible:ring-offset-1"
-                style={{
-                  left:       `${compPct}%`,
-                  width:      10,
-                  height:     10,
-                  background: COMPARISON,
-                  border:     '2px solid white',
-                  zIndex:     isHovered ? 5 : 3,
-                  transform:  `translate(-50%, -50%) scale(${isHovered ? 1.4 : 1})`,
-                  transition: 'transform 120ms ease, background 120ms ease',
-                }}
-                onMouseEnter={() => handleMouseEnter(comparison)}
-                onMouseLeave={handleMouseLeave}
-                onFocus={() => handleMouseEnter(comparison)}
-                onBlur={handleMouseLeave}
-              />
-            );
-          })()}
+          {/* Comparison neighborhood dot — amber. (A11Y 2026-09-26: the
+              separate overlay dot that used to be drawn here was folded into
+              the main loop above, so the comparison CD is a single dot that is
+              both keyboard-navigable and visibly focus-ringed.) */}
+
+          {/* Neutral reference line (e.g. avertable-deaths' 0% baseline) —
+              same dashed-tick treatment as the citywide tick below, but a
+              neutral gray so it doesn't read as "citywide". Drawn first so
+              the citywide tick (when both are present) stacks on top. */}
+          {referencePct != null && (
+            <div
+              className="absolute top-0 bottom-0 w-px pointer-events-none"
+              style={{
+                left: `${referencePct}%`,
+                background: `repeating-linear-gradient(to bottom, ${REFERENCE_LINE_COLOR} 0 3px, transparent 3px 6px)`,
+                zIndex: 2,
+              }}
+            />
+          )}
 
           {/* Citywide dashed tick */}
           {citywidePct != null && (
@@ -243,20 +266,20 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
           {/* Min value — anchored at left edge */}
           {minRow && (
             <span className="absolute left-0 top-0 flex flex-col items-start leading-none">
-              <span className="text-xs text-gray-500 whitespace-nowrap">
+              <span className="text-xs text-gray-600 whitespace-nowrap">
                 {minRow.DisplayValue ?? minRow.Value}
               </span>
-              <span className="text-xs text-gray-500 whitespace-nowrap mt-0.5">min</span>
+              <span className="text-xs text-gray-600 whitespace-nowrap mt-0.5">min</span>
             </span>
           )}
 
           {/* Max value — anchored at right edge */}
           {maxRow && (
             <span className="absolute right-0 top-0 flex flex-col items-end leading-none">
-              <span className="text-xs text-gray-500 whitespace-nowrap">
+              <span className="text-xs text-gray-600 whitespace-nowrap">
                 {maxRow.DisplayValue ?? maxRow.Value}
               </span>
-              <span className="text-xs text-gray-500 whitespace-nowrap mt-0.5">max</span>
+              <span className="text-xs text-gray-600 whitespace-nowrap mt-0.5">max</span>
             </span>
           )}
 
@@ -284,6 +307,10 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
             </span>
           )}
         </div>
+
+        {referenceCaption && (
+          <p className="mt-1 text-center text-[11px] text-gray-400">{referenceCaption}</p>
+        )}
       </div>
     </div>
   );

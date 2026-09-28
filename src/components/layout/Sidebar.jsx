@@ -42,8 +42,12 @@
  * NOTES:
  * - Client component (uses interactivity + routing)
  * - NeighborhoodMap is dynamic-imported (ssr:false) to avoid Leaflet SSR crash
+ * - As of 2026-09-04, the explorer-badge gamification logic, the mobile
+ *   bottom-sheet state/gestures, and the tab/URL/keyboard-shortcut logic
+ *   live in dedicated hooks under ./sidebar/ — this file owns layout, the
+ *   tab strip contents, and the JSX tree.
  */
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -52,7 +56,10 @@ import MapHoverTooltip from '@/components/core/MapHoverTooltip';
 import IndicatorSearch from '@/components/controls/IndicatorSearch';
 import ShortcutsToast         from '@/components/layout/ShortcutsToast';
 import ComparisonNeighborhoodSelector from '@/components/controls/ComparisonNeighborhoodSelector';
-import { siteNav } from '@/config/nav/siteNav';
+import { useExplorerBadge } from './sidebar/useExplorerBadge';
+import { useMobileSheet } from './sidebar/useMobileSheet';
+import { useSidebarTabs } from './sidebar/useSidebarTabs';
+import { handleTablistKeyDown } from '@/lib/utils/tablistKeyDown';
 
 const NeighborhoodMap = dynamic(
   () => import('@/components/maps/NeighborhoodMap'),
@@ -84,41 +91,6 @@ const TABS = [
   },
 ];
 
-const VALID_TABS    = TABS.map(t => t.id);
-const DEFAULT_TAB   = 'neighborhood';
-const TAB_URL_PARAM = 'tab';
-
-/**
- * Given a section ID dispatched by chp:section-activated, return the
- * top-level siteNav category label (e.g. "Health conditions").
- * Handles both subcategory IDs (e.g. "chronic-conditions") and category
- * anchor IDs (e.g. "cat-health-conditions" → strips prefix, matches by id).
- * Returns null if the id doesn't map to any known category.
- */
-function resolveCategoryLabel(sectionId) {
-  // Category-level click: id = 'cat-{categoryId}'
-  if (sectionId.startsWith('cat-')) {
-    const catId = sectionId.slice(4); // strip 'cat-'
-    return siteNav.find(c => c.id === catId)?.label ?? null;
-  }
-  // Subcategory-level click: find which category owns this section id
-  for (const cat of siteNav) {
-    if (cat.subcategories.some(sub => sub.id === sectionId)) {
-      return cat.label;
-    }
-  }
-  return null;
-}
-
-const EXPLORER_KEY = 'chp_visited_cds';
-const TROPHY_KEY   = 'chp_trophy_earned';
-
-// ── Mobile sheet gesture tuning ───────────────────────────────────────────
-const SHEET_OPEN_HEIGHT_RATIO = 0.85; // matches the previous fixed 85vh
-const SAFE_AREA_GAP           = 60;   // px gap to preserve below the notch when expanded
-const FAST_SWIPE_VELOCITY     = 0.5;  // px/ms — above this counts as a "quick" swipe
-const TAP_MOVEMENT_THRESHOLD  = 8;    // px — below this, a touch counts as a tap
-
 export default function Sidebar({ sections, neighborhoods, indicatorSummaries, pageNav }) {
   const router = useRouter();
 
@@ -135,363 +107,54 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
     : null;
 
   // ── Neighborhood explorer badge ───────────────────────────────────────────
-  const [exploredCount,   setExploredCount]   = useState(0);
-  const [trophyEarned,    setTrophyEarned]    = useState(false);
-  const [showAchievement, setShowAchievement] = useState(false);
-  const achievementTimer = useRef(null);
+  const { exploredCount, trophyEarned, showAchievement, handleExplorerBadgeClick } = useExplorerBadge(activeId);
 
-  // Record each visited neighborhood and update count
-  useEffect(() => {
-    if (!activeId) return;
-    try {
-      const stored          = JSON.parse(localStorage.getItem(EXPLORER_KEY) || '[]');
-      const set             = new Set(stored);
-      const wasAlreadyFull  = set.size >= 59;
-      set.add(activeId);
-      localStorage.setItem(EXPLORER_KEY, JSON.stringify([...set]));
-      setExploredCount(set.size);
-      // First time all 59 are visited — earn the trophy permanently
-      if (set.size >= 59 && !wasAlreadyFull) {
-        localStorage.setItem(TROPHY_KEY, '1');
-        setTrophyEarned(true);
-      }
-    } catch { /* localStorage unavailable */ }
-  }, [activeId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ── Tabs, URL sync, keyboard shortcuts, TopicNav sync ────────────────────
+  const { activeTab, setActiveTab, categoryFilter, setCategoryFilter, panelRefs, focusPanelOnNextChange } = useSidebarTabs();
 
-  // Initialise count + trophy from storage on mount.
-  // Also backfills TROPHY_KEY for users who hit 59 before this code was added.
-  useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem(EXPLORER_KEY) || '[]');
-      setExploredCount(stored.length);
-      if (stored.length >= 59 || localStorage.getItem(TROPHY_KEY) === '1') {
-        if (stored.length >= 59) localStorage.setItem(TROPHY_KEY, '1');
-        setTrophyEarned(true);
-      }
-    } catch { /* ignore */ }
-  }, []);
-
-  // Listen for the all-59 flash achievement from NeighborhoodMap
-  useEffect(() => {
-    function onAllExplored() {
-      setShowAchievement(true);
-      clearTimeout(achievementTimer.current);
-      achievementTimer.current = setTimeout(() => setShowAchievement(false), 3000);
-    }
-    window.addEventListener('chp:all-explored', onAllExplored);
-    return () => {
-      window.removeEventListener('chp:all-explored', onAllExplored);
-      clearTimeout(achievementTimer.current);
-    };
-  }, []);
-
-  // Listen for the mobile map-pin tap in TopicNav → open the bottom sheet
-  useEffect(() => {
-    function onOpenMobileSheet() { openSheet(); }
-    window.addEventListener('chp:open-mobile-sheet', onOpenMobileSheet);
-    return () => window.removeEventListener('chp:open-mobile-sheet', onOpenMobileSheet);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  function handleExplorerBadgeClick() {
-    try {
-      const visited = JSON.parse(localStorage.getItem(EXPLORER_KEY) || '[]');
-      window.dispatchEvent(new CustomEvent('chp:open-intro-modal', {
-        detail: { visitedIds: visited },
-      }));
-    } catch {
-      window.dispatchEvent(new CustomEvent('chp:open-intro-modal'));
-    }
-  }
-
-  const [activeTab, _setActiveTab]          = useState(DEFAULT_TAB);
-  const [categoryFilter, setCategoryFilter] = useState(null);
-
-  // Live ref mirror of activeTab — lets handleSectionActivated (registered
-  // once, deps []) read the current tab without a stale closure, and without
-  // resorting to the setState functional-updater form for side effects
-  // (history.replaceState/setState calls inside a useState updater run
-  // during React's render phase and trigger "Cannot update a component
-  // while rendering a different component").
-  const activeTabRef = useRef(activeTab);
-  useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
-
-  // Global keyboard shortcuts (outside any text field):
-  //   /  — jump to neighborhood search
-  //   m  — open the intro / neighborhood picker modal
-  useEffect(() => {
-    function handleKeyDown(e) {
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-      const tag = document.activeElement?.tagName?.toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) return;
-
-      if (e.key === '/') {
-        e.preventDefault();
-        setActiveTab('neighborhood');
-        // Wait one tick for the tab switch to re-render, then ask UnifiedSearch
-        // to enter edit mode and focus itself — a plain querySelector can't
-        // find the input when the control is currently collapsed to its
-        // populated/pill state (no <input> in the DOM at that point).
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('chp:focus-neighborhood-search'));
-        }, 50);
-      }
-
-      if (e.key === 'f' || e.key === 'F') {
-        e.preventDefault();
-        setActiveTab('search');
-        setTimeout(() => {
-          document.querySelector('input[aria-label="Search indicators"]')?.focus();
-        }, 50);
-      }
-
-      if (e.key === 'm' || e.key === 'M') {
-        e.preventDefault();
-        window.dispatchEvent(new CustomEvent('chp:open-intro-modal'));
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Hydrate tab from URL on mount
-  useEffect(() => {
-    const param = new URLSearchParams(window.location.search).get(TAB_URL_PARAM);
-    if (param && VALID_TABS.includes(param)) _setActiveTab(param);
-  }, []);
-
-  // Tab setter that also syncs the URL without navigation.
-  // Clears the category filter when returning to the neighborhood tab —
-  // the filter is set by TopicNav clicks and should reset on explicit tab change.
-  const setActiveTab = useCallback((tab) => {
-    _setActiveTab(tab);
-    if (tab === DEFAULT_TAB) setCategoryFilter(null);
-    const url = new URL(window.location.href);
-    if (tab === DEFAULT_TAB) {
-      url.searchParams.delete(TAB_URL_PARAM);
-    } else {
-      url.searchParams.set(TAB_URL_PARAM, tab);
-    }
-    history.replaceState(null, '', url.toString());
-  }, []);
-
-  // ── TopicNav → sidebar tab sync ──────────────────────────────────────────
-  // chp:section-activated fires on every intentional TopicNav click (never
-  // on scroll-spy). Two behaviours depending on what was clicked:
-  //
-  //   Top-level category (id = 'cat-{categoryId}')
-  //     → Switch to "Find indicator" tab, pre-filtered to that category.
-  //
-  //   Subcategory (plain section id, e.g. 'chronic-conditions')
-  //     → If currently on "Find indicator", return to "Neighborhood" so the
-  //       map/context is visible alongside the content. No-op otherwise.
-  //
-  // Both branches use the functional-update form of _setActiveTab so they
-  // always read the real current state — the [] effect avoids a stale closure.
-  useEffect(() => {
-    function handleSectionActivated(e) {
-      const id = e.detail?.id ?? '';
-
-      if (id.startsWith('cat-')) {
-        // Top-level category click → open filtered indicator search
-        const label = resolveCategoryLabel(id);
-        if (!label) return;
-        setCategoryFilter(label);
-        _setActiveTab('search');
-        const url = new URL(window.location.href);
-        url.searchParams.set(TAB_URL_PARAM, 'search');
-        history.replaceState(null, '', url.toString());
-      } else if (activeTabRef.current === 'search') {
-        // Subcategory click → revert to neighborhood if on search tab.
-        // Read the live tab via ref (not a functional setState updater) so
-        // the side effects below run as normal event-handler logic instead
-        // of during React's render phase.
-        setCategoryFilter(null);
-        _setActiveTab(DEFAULT_TAB);
-        const url = new URL(window.location.href);
-        url.searchParams.delete(TAB_URL_PARAM);
-        history.replaceState(null, '', url.toString());
-      }
-    }
-    window.addEventListener('chp:section-activated', handleSectionActivated);
-    return () => window.removeEventListener('chp:section-activated', handleSectionActivated);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Mobile bottom sheet state ─────────────────────────────────────────────
-  // isSheetOpen = user intent; isSheetMounted keeps DOM alive during exit anim.
-  // sheetTop tracks the sheet's top edge in px from the viewport top — driving
-  // both drag-follow and the snap/close/expand animations via a single value.
-  const [isSheetOpen,    setIsSheetOpen]    = useState(false);
-  const [isSheetMounted, setIsSheetMounted] = useState(false);
-  const [sheetTop,       setSheetTop]       = useState(null);
-  const [isDragging,     setIsDragging]     = useState(false);
-  const [transitionMs,   setTransitionMs]   = useState(300);
-  const [safeAreaTop,    setSafeAreaTop]    = useState(0);
-  const safeAreaProbeRef     = useRef(null);
-  const unmountTimerRef      = useRef(null);
-  const hasPushedHistoryRef  = useRef(false);
-  const isProgrammaticPopRef = useRef(false);
-  const dragRef = useRef({
-    startY: 0, startTop: 0, lastY: 0, lastTime: 0, velocity: 0, dragging: false, moved: false,
-  });
-
-  // Measure the safe-area inset (notch / status bar) once so the expanded
-  // sheet position can respect SAFE_AREA_GAP below it.
-  useEffect(() => {
-    if (safeAreaProbeRef.current) {
-      setSafeAreaTop(safeAreaProbeRef.current.getBoundingClientRect().height);
-    }
-  }, []);
-
-  function getWindowHeight() { return typeof window !== 'undefined' ? window.innerHeight : 800; }
-  function getOpenTop()      { return getWindowHeight() * (1 - SHEET_OPEN_HEIGHT_RATIO); }
-  function getMinTop()       { return safeAreaTop + SAFE_AREA_GAP; }
-  function getMaxTop()       { return getWindowHeight(); }
-  function currentTop()      { return sheetTop != null ? sheetTop : getOpenTop(); }
-
-  function openSheet() {
-    setIsSheetOpen(true);
-    setIsSheetMounted(true);
-    if (!hasPushedHistoryRef.current) {
-      window.history.pushState({ chpMobileSheet: true }, '');
-      hasPushedHistoryRef.current = true;
-    }
-    clearTimeout(unmountTimerRef.current);
-    setTransitionMs(300);
-    requestAnimationFrame(() => setSheetTop(getOpenTop()));
-  }
-
-  // Animates the sheet down and off-screen, then unmounts it. Doesn't touch
-  // browser history — used for real back-navigation, where the history entry
-  // has already been consumed by the time this runs.
-  function animateClose(fast) {
-    setIsSheetOpen(false);
-    setTransitionMs(fast ? 200 : 300);
-    setSheetTop(getMaxTop());
-    clearTimeout(unmountTimerRef.current);
-    unmountTimerRef.current = setTimeout(() => setIsSheetMounted(false), (fast ? 200 : 300) + 20);
-  }
-
-  // User-initiated close (X button, backdrop tap, drag-to-close, tap-to-close).
-  // Also unwinds the history entry pushed by openSheet, so the back button
-  // doesn't need an extra press once the sheet is already closed.
-  function closeSheet(opts) {
-    const fast = !!(opts && opts.fast);
-    animateClose(fast);
-    if (hasPushedHistoryRef.current) {
-      hasPushedHistoryRef.current = false;
-      isProgrammaticPopRef.current = true;
-      window.history.back();
-    }
-  }
-
-  // Back button / native back-gesture closes the sheet instead of navigating
-  // away, since openSheet() pushed a history entry to catch exactly this.
-  useEffect(() => {
-    function onPopState() {
-      if (isProgrammaticPopRef.current) {
-        isProgrammaticPopRef.current = false;
-        return;
-      }
-      if (isSheetOpen) {
-        hasPushedHistoryRef.current = false;
-        animateClose(true);
-      }
-    }
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
-  }, [isSheetOpen]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Close sheet on Escape
-  useEffect(() => {
-    if (!isSheetOpen) return;
-    function onKey(e) { if (e.key === 'Escape') closeSheet(); }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [isSheetOpen]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Drag handle gesture handlers ──────────────────────────────────────────
-  function handleHandlePointerDown(e) {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-    dragRef.current = {
-      startY: e.clientY,
-      startTop: currentTop(),
-      lastY: e.clientY,
-      lastTime: Date.now(),
-      velocity: 0,
-      dragging: true,
-      moved: false,
-    };
-    setIsDragging(true);
-    setTransitionMs(0); // follow the finger with no CSS lag
-  }
-
-  function handleHandlePointerMove(e) {
-    const d = dragRef.current;
-    if (!d.dragging) return;
-    const deltaFromStart = e.clientY - d.startY;
-    if (Math.abs(deltaFromStart) > TAP_MOVEMENT_THRESHOLD) d.moved = true;
-    const now = Date.now();
-    const dt  = now - d.lastTime;
-    if (dt > 0) d.velocity = (e.clientY - d.lastY) / dt; // px/ms, positive = downward
-    d.lastY = e.clientY;
-    d.lastTime = now;
-    const clamped = Math.min(getMaxTop(), Math.max(getMinTop(), d.startTop + deltaFromStart));
-    setSheetTop(clamped);
-  }
-
-  function handleHandlePointerEnd(e) {
-    const d = dragRef.current;
-    if (!d.dragging) return;
-    d.dragging = false;
-    setIsDragging(false);
-
-    if (!d.moved) {
-      // A tap on the handle — dismiss.
-      closeSheet({ fast: true });
-      return;
-    }
-
-    const netDelta = e.clientY - d.startY; // + is net downward movement
-
-    if (netDelta < 0) {
-      // Net upward swipe — ease up to near-full-height, clearing the notch.
-      setTransitionMs(300);
-      setSheetTop(getMinTop());
-      return;
-    }
-
-    if (d.velocity > FAST_SWIPE_VELOCITY) {
-      // Fast downward swipe — dismiss quickly.
-      closeSheet({ fast: true });
-      return;
-    }
-
-    // Slow downward drag — leave the sheet exactly where the finger lifted.
-    const releaseTop = Math.min(getMaxTop(), Math.max(getMinTop(), d.startTop + netDelta));
-    if (releaseTop >= getMaxTop() - 1) {
-      closeSheet({ fast: false });
-    } else {
-      setTransitionMs(0);
-      setSheetTop(releaseTop);
-    }
-  }
+  // ── Mobile bottom sheet ───────────────────────────────────────────────────
+  const {
+    sheetRef,
+    isSheetMounted,
+    isDragging,
+    transitionMs,
+    currentTop,
+    getOpenTop,
+    getMaxTop,
+    safeAreaProbeRef,
+    closeSheet,
+    handleHandlePointerDown,
+    handleHandlePointerMove,
+    handleHandlePointerEnd,
+  } = useMobileSheet();
 
   // ── Shared tab strip JSX — rendered in both desktop and mobile sheet ───────
   // NOTE: This is a plain function (not a React component) so it shares
   // Sidebar's fiber. Avoids adding a new component layer that would cause
   // React Strict Mode to double-invoke NeighborhoodMap's Leaflet effects.
-  function renderTabs() {
+  function renderTabs(instance) {
     return (
-      <div role="tablist" aria-label="Sidebar views" className="flex border-b border-gray-200 shrink-0">
+      <div
+        role="tablist"
+        aria-label="Sidebar views"
+        className="flex border-b border-gray-200 shrink-0"
+        // A11Y (2026-09-26): arrow keys / Home / End between tabs (ARIA tabs
+        // pattern). Focus stays on the tab — focusPanelOnNextChange is only
+        // set for mouse/Enter clicks below.
+        onKeyDown={(e) => handleTablistKeyDown(e, TABS.map(t => t.id), activeTab, setActiveTab)}
+      >
         {TABS.map(tab => (
           <button
             key={tab.id}
             role="tab"
             aria-selected={activeTab === tab.id}
+            tabIndex={activeTab === tab.id ? 0 : -1}
             aria-controls={`sidebar-panel-${tab.id}`}
             id={`sidebar-tab-${tab.id}`}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => {
+              focusPanelOnNextChange.current = instance;
+              setActiveTab(tab.id);
+            }}
             className={[
               'flex-1 py-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 inline-flex items-center justify-center gap-1.5',
               activeTab === tab.id
@@ -522,12 +185,12 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
           <div className="flex items-center justify-between px-4 pt-2 pb-1">
             <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 group-hover:text-amber-800 transition-colors">
               {/* Trophy cup SVG */}
-              <svg className="w-3.5 h-3.5 shrink-0 text-amber-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <svg className="w-3.5 h-3.5 shrink-0 text-amber-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M11.25 3v2.25H6.75A2.25 2.25 0 0 0 4.5 7.5v.75A4.5 4.5 0 0 0 8.534 12.6 6.01 6.01 0 0 0 11.25 14.9V18H9a.75.75 0 0 0 0 1.5h6a.75.75 0 0 0 0-1.5h-2.25v-3.1a6.01 6.01 0 0 0 2.716-2.3A4.5 4.5 0 0 0 19.5 8.25V7.5a2.25 2.25 0 0 0-2.25-2.25H12.75V3h-1.5ZM6 7.5v.75a3 3 0 0 0 2.716 2.992A6.03 6.03 0 0 1 6 7.5Zm10.284 3.242A3 3 0 0 0 18 8.25V7.5a.75.75 0 0 0-.75-.75h-4.5a6.03 6.03 0 0 1-.716 3.992 3 3 0 0 0 4.25 0Z" />
               </svg>
               All 59 explored!
             </span>
-            <span className="text-xs font-semibold text-amber-600 tabular-nums">59 / 59</span>
+            <span className="text-xs font-semibold text-amber-700 tabular-nums">59 / 59</span>
           </div>
           {/* Full gold progress bar */}
           <div className="relative h-[4px] w-full bg-amber-100 mb-1">
@@ -549,7 +212,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
             {showAchievement ? 'All of NYC explored' : 'Neighborhoods explored'}
           </span>
           <span className="text-xs font-semibold text-brand tabular-nums">
-            {exploredCount} <span className="font-normal text-gray-500">/ 59</span>
+            {exploredCount} <span className="font-normal text-gray-600">/ 59</span>
           </span>
         </div>
         <div className="relative h-[4px] w-full bg-gray-100 mb-1">
@@ -610,7 +273,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
           absolutely-positioned children like the keyboard shortcuts popover.
         */}
 
-        {renderTabs()}
+        {renderTabs('desktop')}
         {renderFooter()}
 
         {/* ── Scrollable panel area — overflow lives here, not on the aside ── */}
@@ -619,10 +282,12 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
           {/* ── Neighborhood mode ──────────────────────────────────────── */}
           {activeTab === 'neighborhood' && (
             <div
+              ref={(el) => { panelRefs.current['desktop-neighborhood'] = el; }}
               role="tabpanel"
               id="sidebar-panel-neighborhood"
               aria-labelledby="sidebar-tab-neighborhood"
-              className="flex flex-col flex-1 min-h-0"
+              tabIndex={-1}
+              className="flex flex-col flex-1 min-h-0 focus:outline-none"
             >
               {/* Search — scrolls away as user scrolls down */}
               <div className="px-6 pt-4 pb-3 shrink-0">
@@ -673,14 +338,14 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                   in place of the section nav that appears on neighborhood profiles */}
               {pageNav?.length > 0 && (
                 <nav aria-label="On this page" className="px-6 pt-4 pb-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-2">
                     On this page
                   </p>
                   {pageNav.map(({ href, label }) => (
                     <a
                       key={href}
                       href={href}
-                      className="block text-sm text-gray-500 hover:text-blue-600 py-1.5 rounded transition-colors"
+                      className="block text-sm text-gray-600 hover:text-blue-600 py-1.5 rounded transition-colors"
                     >
                       {label}
                     </a>
@@ -693,10 +358,12 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
           {/* ── Find indicator mode ────────────────────────────────────── */}
           {activeTab === 'search' && (
             <div
+              ref={(el) => { panelRefs.current['desktop-search'] = el; }}
               role="tabpanel"
               id="sidebar-panel-search"
               aria-labelledby="sidebar-tab-search"
-              className="flex flex-col flex-1 min-h-0"
+              tabIndex={-1}
+              className="flex flex-col flex-1 min-h-0 focus:outline-none"
             >
               <IndicatorSearch
                 onNavigate={() => setActiveTab('neighborhood')}
@@ -739,6 +406,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
 
           {/* Sheet */}
           <div
+            ref={sheetRef} /* A11Y: focus trap + return (useMobileSheet) */
             role="dialog"
             aria-modal="true"
             aria-label="Neighborhood panel"
@@ -767,12 +435,18 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                 role="button"
                 tabIndex={0}
                 aria-label="Drag to resize, tap to close"
-                className="w-8 h-1 rounded-full bg-gray-300 touch-none cursor-grab"
-              />
+                // A11Y (2026-09-28, WCAG 2.5.8 target size): the handle itself
+                // was the 32×4px bar. Now a 48×24px hit area with the same
+                // bar drawn inside it.
+                className="w-12 h-6 flex items-center justify-center rounded-full touch-none cursor-grab focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                <span aria-hidden="true" className="block w-8 h-1 rounded-full bg-gray-300" />
+              </div>
               <button
+                data-sheet-autofocus /* A11Y: focus lands here when the sheet opens */
                 onClick={() => closeSheet()}
                 aria-label="Close panel"
-                className="absolute right-4 w-8 h-8 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="absolute right-4 w-8 h-8 flex items-center justify-center rounded-full text-gray-600 border border-transparent hover:text-brand hover:border-brand hover:bg-brand-tint transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -780,7 +454,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
               </button>
             </div>
 
-            {renderTabs()}
+            {renderTabs('sheet')}
             {renderFooter()}
 
             {/* Scrollable content — no Leaflet map */}
@@ -788,16 +462,37 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
 
               {activeTab === 'neighborhood' && (
                 <div
+                  ref={(el) => { panelRefs.current['sheet-neighborhood'] = el; }}
                   role="tabpanel"
                   id="sidebar-panel-neighborhood"
                   aria-labelledby="sidebar-tab-neighborhood"
-                  className="flex flex-col flex-1 min-h-0"
+                  tabIndex={-1}
+                  className="flex flex-col flex-1 min-h-0 focus:outline-none"
                 >
                   <div className="px-6 pt-4 pb-3 shrink-0">
                     <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-2">
                       Find neighborhood
                     </p>
                     <UnifiedSearch neighborhoods={neighborhoods} />
+
+                    {/* Map-based picker — the only mobile entry point to this
+                        used to be a separate icon-only "browse map" button in
+                        StickyContextBar, which sat directly under TopicNav's
+                        own icon-only pin and opened a different UI (this was
+                        the mobile-ux-review.md spotlight finding). Now that
+                        TopicNav's pill always opens THIS sheet, the map view
+                        lives one tap deeper here instead of as a second
+                        top-level icon. */}
+                    <button
+                      type="button"
+                      onClick={() => { closeSheet(); window.dispatchEvent(new CustomEvent('chp:open-intro-modal')); }}
+                      className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs font-medium text-gray-600 hover:text-brand py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                      </svg>
+                      Prefer a map? Browse all neighborhoods
+                    </button>
                   </div>
 
                   {/* Compare to — mirrors the desktop aside's section above.
@@ -833,16 +528,19 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
 
               {activeTab === 'search' && (
                 <div
+                  ref={(el) => { panelRefs.current['sheet-search'] = el; }}
                   role="tabpanel"
                   id="sidebar-panel-search"
                   aria-labelledby="sidebar-tab-search"
-                  className="flex flex-col flex-1 min-h-0"
+                  tabIndex={-1}
+                  className="flex flex-col flex-1 min-h-0 focus:outline-none"
                 >
                   <IndicatorSearch
                     onNavigate={() => { setActiveTab('neighborhood'); closeSheet(); }}
                     categoryFilter={categoryFilter}
                     onClearFilter={() => setCategoryFilter(null)}
                     activeNeighborhood={neighborhood ?? null}
+                    autoFocus={false}
                   />
                 </div>
               )}

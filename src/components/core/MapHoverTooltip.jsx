@@ -79,9 +79,11 @@ export default function MapHoverTooltip({ indicatorSummaries = {}, selectedNeigh
   );
 
   return (
+    // A11Y (2026-09-27): aria-live removed. The whole Map Preview panel was
+    // a live region, so every district the pointer crossed was read aloud
+    // (and the full panel text each time). The map is a mouse-driven,
+    // supplementary view; search is the accessible route to each district.
     <div
-      aria-live="polite"
-      aria-atomic="true"
       className="mt-3 rounded-lg border overflow-hidden relative transition-colors duration-200"
       style={{ borderColor: showHoverLayer ? MAP_HOVER_TOOLTIP_BORDER_ACTIVE : MAP_HOVER_TOOLTIP_BORDER_IDLE }}
     >

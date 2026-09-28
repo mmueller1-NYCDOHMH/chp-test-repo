@@ -1,1 +1,0 @@
-Most indicators are age-adjusted rates, which allow fair comparisons between neighborhoods with different age distributions. A higher rate does not always mean worse outcomes — check the indicator description for directionality.

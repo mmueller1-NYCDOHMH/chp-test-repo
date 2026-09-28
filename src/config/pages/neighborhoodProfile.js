@@ -2,54 +2,43 @@
  * FILE: neighborhoodProfile.js
  *
  * PURPOSE:
- * Defines the structure and content configuration for a neighborhood profile page.
+ * The ordered list of everything that renders on a neighborhood profile page.
  *
- * DESCRIPTION:
- * This config drives the entire page layout. The sections array is the
- * ordered list of everything that renders on the page.
+ * 2026-09-26: ORDER COMES FROM THE COPY DECK. Categories and sections are
+ * laid out in the order they appear in content/copy/measure-copy.csv (via
+ * siteNav.js / structure.json). To add, remove or reorder a section, change
+ * the sheet — not this file.
  *
- * ADDING A SECTION:
- * Standard sections (header + chart grid) can be added with one line:
- *   buildStandardSection(SECTION_ID_CONSTANT)
- * Sections that need non-standard layouts keep their own file under /config/sections/.
- *
- * ADDING A CATEGORY:
- * 1. Add it to siteNav.js with a contentSlug
- * 2. Create /content/category-cards/{contentSlug}/ with intro.md and optional
- *    what-is-included.md, why-it-matters.md, how-to-read.md
- * 3. Insert buildCategorySection(siteNav.find(c => c.id === '...')) here
+ * This file only decides HOW a section renders:
+ *   - most sections: buildStandardSection(id) — header + indicator card grid
+ *   - sections with bespoke layouts: CUSTOM_SECTIONS below (own file under /config/sections/)
+ *   - bespoke sections nested under another section (Avertable Deaths under
+ *     Economic): their blocks (minus their own header) are appended INSIDE
+ *     the parent section, from structure.json's bespokeSections — so they
+ *     read as part of that subcategory, not a standalone section
+ *     (2026-09-27, per Morgan).
  *
  * EDITING CATEGORY INTRO TEXT:
- * Edit /content/category-cards/{contentSlug}/intro.md — no code changes needed.
- *
- * NOTES:
- * - Rendering behavior is handled by CHPBuilder
- * - See /CONTENT_GUIDE.md for step-by-step checklists
+ * Edit the category's intro row in content/copy/measure-copy.csv (Section
+ * filled, Subsection and Key blank, intro in Context).
  */
 
 import { siteNav }              from '../nav/siteNav';
+import structure                from '../../../content/copy/structure.json';
 import sectionTitles            from '../content/sectionTitles.json';
 import { neighborhoodOverview } from '../sections/neighborhoodOverview';
-import { education }            from '../sections/education';
-import { injuryHospitalizations } from '../sections/injuryHospitalizations';
-
-// ── Info card slots present in every category ─────────────────────────────────
-// Edit titles here to rename them everywhere at once.
-const INFO_CARDS = [
-  { title: "What's included",  key: 'what-is-included' },
-  { title: 'Why it matters',   key: 'why-it-matters'   },
-  { title: 'How to read this', key: 'how-to-read'      },
-];
+import { avertableDeaths } from '../sections/avertableDeaths';
+import { healthOutcomes } from '../sections/healthOutcomes';
 
 /**
- * Builds the category header + info-card block for a top-level nav category.
- * Reads content from /content/category-cards/{cat.contentSlug}/.
- * Add/remove a card slot by editing INFO_CARDS above.
+ * Builds the category header block (title + intro) for a top-level nav category.
+ * Intro text comes from the sheet's category intro row (via siteNav).
+ * 2026-09-25: the three info cards (What's included / Why it matters /
+ * How to read this) were removed from category intros.
  *
  * @param {object} cat - a siteNav category entry (must have id, label, contentSlug)
  */
 function buildCategorySection(cat) {
-  const slug = cat.contentSlug ?? cat.id;
   return {
     id:       `cat-${cat.id}`,
     category: true,
@@ -60,17 +49,7 @@ function buildCategorySection(cat) {
         type: 'categoryHeader',
         props: {
           title:          cat.label,
-          introContentKey: `${slug}/intro`,
-        },
-      },
-      {
-        id:   `cat-${cat.id}-info-cards`,
-        type: 'categoryInfoCards',
-        props: {
-          cards: INFO_CARDS.map(({ title, key }) => ({
-            title,
-            contentKey: `${slug}/${key}`,
-          })),
+          intro:          cat.intro,
         },
       },
     ],
@@ -79,8 +58,8 @@ function buildCategorySection(cat) {
 
 /**
  * Builds a standard section: a section-header block + an indicatorChartGrid.
- * Reads the display title from /src/config/content/sectionTitles.json.
- * Indicator list is loaded automatically from /content/sections/{id}.json.
+ * Heading from sectionTitles.json (generated from the Sections tab); the
+ * cards are injected by Block.jsx from the copy deck.
  *
  * Use this for every section that follows the standard layout.
  * Sections with non-standard layouts (overview hero, placeholder text, etc.)
@@ -104,57 +83,58 @@ function buildStandardSection(id) {
         type:  'indicatorChartGrid',
         props: {
           sectionLabel: title,
-          // indicators loaded from /content/sections/{id}.json
+          // indicators injected by Block.jsx from the copy deck
         },
       },
     ],
   };
 }
 
-// ── Flat ordered category list — drives both category blocks and section groupings ──
-// To add a new top-level category: add it to siteNav.js (with contentSlug),
-// then insert buildCategorySection(cat) at the right position below.
-const [social, neighborhood, healthCare, maternalChildHealth, mentalHealthSubstanceUse, healthConditions] = siteNav;
+// Sections with their own layout file. Everything else is a standard section.
+const CUSTOM_SECTIONS = {
+  'health-outcomes':         healthOutcomes,
+  'avertable-deaths':        avertableDeaths,
+};
+
+const renderSection = (id) => CUSTOM_SECTIONS[id] ?? buildStandardSection(id);
+
+// Parent section + its bespoke sections' blocks folded in (no extra header).
+function renderSectionWithBespoke(id, bespokeSections = []) {
+  const parent = renderSection(id);
+  if (!bespokeSections.length) return parent;
+  const extraBlocks = bespokeSections.flatMap(b =>
+    (renderSection(b.id).children ?? []).filter(block => block.type !== 'sectionHeader')
+  );
+  // 2026-09-27 (per Morgan): bespoke cards render as extra cells INSIDE the
+  // parent's indicator grid (Block.jsx → IndicatorChartGrid children), so
+  // e.g. Avertable Deaths sits next to Rent Burden at the same width/height.
+  // Falls back to appending below if the parent has no card grid.
+  const hasGrid = parent.children.some(block => block.type === 'indicatorChartGrid');
+  if (!hasGrid) return { ...parent, children: [...parent.children, ...extraBlocks] };
+  return {
+    ...parent,
+    children: parent.children.map(block =>
+      block.type === 'indicatorChartGrid'
+        ? { ...block, extraBlocks: [...(block.extraBlocks ?? []), ...extraBlocks] }
+        : block
+    ),
+  };
+}
+
+const sectionsById = Object.fromEntries(
+  structure.categories.flatMap(cat => cat.sections.map(sec => [sec.id, sec]))
+);
 
 export const neighborhoodProfile = {
   id: 'neighborhood-profile',
 
   sections: [
     neighborhoodOverview,
-
-    // ── Social ────────────────────────────────────────────────────────────────
-    buildCategorySection(social),
-    buildStandardSection('community-safety'),
-    buildStandardSection('economic-conditions'),
-    education,                    // placeholder — no chart data yet
-
-    // ── Neighborhood ──────────────────────────────────────────────────────────
-    buildCategorySection(neighborhood),
-    buildStandardSection('environmental-risk'),
-    buildStandardSection('food-environment'),
-    buildStandardSection('housing-quality'),
-    buildStandardSection('transportation-safety'),
-
-    // ── Health care ───────────────────────────────────────────────────────────
-    buildCategorySection(healthCare),
-    buildStandardSection('health-care-access'),
-    injuryHospitalizations,       // kept explicit: section title differs from sectionTitles key
-    buildStandardSection('prevention'),
-
-    // ── Maternal & child health ───────────────────────────────────────────────
-    buildCategorySection(maternalChildHealth),
-    buildStandardSection('maternal'),
-    buildStandardSection('infant-child'),
-
-    // ── Mental health & substance use ─────────────────────────────────────────
-    buildCategorySection(mentalHealthSubstanceUse),
-    buildStandardSection('mental-wellness'),
-    buildStandardSection('substance-use'),
-
-    // ── Health conditions ─────────────────────────────────────────────────────
-    buildCategorySection(healthConditions),
-    buildStandardSection('chronic-conditions'),
-    buildStandardSection('infectious-disease'),
-    buildStandardSection('health-outcomes'),
+    ...siteNav.flatMap(cat => [
+      buildCategorySection(cat),
+      ...cat.subcategories.map(sub =>
+        renderSectionWithBespoke(sub.id, sectionsById[sub.id]?.bespokeSections)
+      ),
+    ]),
   ],
 };

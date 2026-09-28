@@ -11,13 +11,17 @@
  * Accepts a flat array of indicator records (one per CD) and a GeoJSON of
  * all 59 CDs. Each feature is colored on a sequential blue scale based on
  * where its value falls between the dataset min and max, EXCEPT the
- * selected and comparison CDs, which get a solid semantic fill (SELECTED /
- * COMPARISON from chartColors.js) instead of their value-scale color, so
- * they're findable at a glance rather than blending into the gradient.
+ * selected and comparison CDs, which get a semantic stroke (SELECTED /
+ * COMPARISON from chartColors.js) while retaining their value-scale fill, so
+ * they're findable at a glance without obscuring the choropleth value.
  * Hovering shows a tooltip with the district name and its value, and fires
  * onHoverGeoId so sibling components (e.g. DistributionStrip) can react.
  *
- * The map is display-only — dragging, zooming, and clicking are all disabled.
+ * The map supports the same pan/zoom interactions as the main sidebar map
+ * (NeighborhoodMap.jsx) — dragging, scroll-wheel zoom, pinch-to-zoom, and the
+ * Leaflet zoom control are all enabled. Feature clicks are still suppressed
+ * (this map is for exploring the choropleth, not for navigating to a CD). A
+ * "back to origin" button resets pan/zoom to the initial citywide view.
  *
  * COLOR SCALE:
  * Linear interpolation across 5 steps from light blue (#dbeafe) to
@@ -47,6 +51,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { CHOROPLETH_STOPS, MAP_STYLES, SELECTED, COMPARISON } from '@/lib/charts/chartColors';
 import { fetchGeoJson } from '@/lib/utils/fetchGeoJson';
+import { TILE_URL_LIGHT_NOLABELS, TILE_ATTRIBUTION } from '@/lib/utils/mapTiles';
+import messages from '../../../content/site/messages.json';
 
 const NYC_CENTER = [40.7128, -74.006];
 const NYC_ZOOM   = 10;
@@ -90,6 +96,7 @@ export default function ChoroplethMap({ indicatorData = [], geoId = null, onHove
   const stripHoveredGeoIdRef = useRef(stripHoveredGeoId);
   const comparisonGeoIdRef   = useRef(comparisonGeoId);
   const geoJsonLayerRef      = useRef(null); // holds the Leaflet GeoJSON layer instance
+  const mapRef               = useRef(null); // holds the Leaflet L.Map instance
 
   useEffect(() => { onHoverGeoIdRef.current = onHoverGeoId; }, [onHoverGeoId]);
 
@@ -150,6 +157,13 @@ export default function ChoroplethMap({ indicatorData = [], geoId = null, onHove
     return () => mql.removeEventListener('change', applyZoom);
   }, []);
 
+  // ── Back to origin — resets pan/zoom to the initial citywide view ───────────
+  function handleBackToOrigin() {
+    const map = mapRef.current;
+    if (!map) return;
+    map.setView(NYC_CENTER, zoom, { animate: true });
+  }
+
   // ── Style helpers ─────────────────────────────────────────────────────────
   function featureStyle(feature) {
     const featureGeoId   = parseInt(feature.properties.GEOCODE, 10);
@@ -159,26 +173,17 @@ export default function ChoroplethMap({ indicatorData = [], geoId = null, onHove
     const isStripHovered = stripHoveredGeoIdRef.current === featureGeoId;
 
     return {
-      // Selected CD is now a solid fill (like comparison) rather than a
-      // value-colored fill with just a highlight border — makes it findable
-      // at a glance instead of blending into the choropleth gradient.
-      fillColor:   isSelected     ? SELECTED     // same purple used for the primary CD everywhere else
-                 : isComparison   ? COMPARISON   // same rust used for comparison CD everywhere else
-                 : row            ? valueToColor((row.Value - minVal) / range)
+      // Keep the choropleth value fill for every CD; selected and comparison
+      // neighborhoods are distinguished by their semantic stroke below.
+      fillColor:   row            ? valueToColor((row.Value - minVal) / range)
                  :                  MAP_STYLES.base.fillColor,
-      // Selected/comparison fillOpacity is high (0.75) rather than fully
-      // opaque — keeps a touch of translucency but avoids the wash-out that
-      // happened at lower opacities (e.g. 5646F5 reading as pale lavender at
-      // 0.35 over the CartoDB light basemap).
-      fillOpacity: isSelected     ? 0.75
-                 : isComparison   ? 0.75
-                 : row            ? (isStripHovered ? 1 : 0.82)
+      fillOpacity: row            ? (isStripHovered ? 1 : 0.82)
                  :                  0.3,
       color:       isSelected     ? SELECTED
                  : isComparison   ? COMPARISON
                  : isStripHovered ? '#111827'
                  :                  '#9ca3af',
-      weight:      isSelected ? 2 : isComparison ? 1 : isStripHovered ? 2 : 0.8,
+      weight:      isSelected || isComparison ? 3 : isStripHovered ? 2 : 0.8,
     };
   }
 
@@ -208,11 +213,11 @@ export default function ChoroplethMap({ indicatorData = [], geoId = null, onHove
   if (geoError || (!indicatorData.filter(r => r.GeoType === 'CD').length && leaflet)) {
     return (
       <div className="h-full w-full bg-gray-50 flex flex-col items-center justify-center gap-2 text-center px-6">
-        <svg className="w-8 h-8 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+        <svg className="w-8 h-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503-10.498 4.875 2.437a.75.75 0 0 1 .374.65v8.163a.75.75 0 0 1-1.127.65L15 18.13l-4.5 2.25-4.5-2.25-3.125 1.563A.75.75 0 0 1 2 18.98v-8.163a.75.75 0 0 1 .374-.65L7.25 7.73l4.5 2.25 4.5-2.25-.497-.498Z" />
         </svg>
-        <p className="text-sm text-gray-500">Map unavailable</p>
-        <p className="text-xs text-gray-500">Could not load geographic data</p>
+        <p className="text-sm text-gray-600">{messages.mapUnavailable}</p>
+        <p className="text-xs text-gray-600">{messages.mapUnavailableDetail}</p>
       </div>
     );
   }
@@ -221,23 +226,46 @@ export default function ChoroplethMap({ indicatorData = [], geoId = null, onHove
 
   const { MapContainer, TileLayer, GeoJSON, useMap } = leaflet;
 
+  const buttonClass = 'w-7 h-7 flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 hover:text-brand hover:border-brand hover:bg-brand-tint transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shadow-sm';
 
   return (
     <div className="relative h-full w-full overflow-hidden">
+      {/* Back to origin — resets pan/zoom to the initial citywide view */}
+      <div className="absolute top-2 right-2 z-[1000] flex items-center gap-1">
+        <button
+          onClick={handleBackToOrigin}
+          aria-label="Back to origin"
+          title="Back to origin"
+          className={buttonClass}
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path strokeLinecap="round" d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+          </svg>
+        </button>
+      </div>
+
       <MapContainer
         key={zoom}
+        ref={mapRef}
         center={NYC_CENTER}
         zoom={zoom}
-        scrollWheelZoom={false}
-        touchZoom={false}
-        dragging={false}
-        tap={false}
-        zoomControl={false}
+        // caps zoom-out at the initial citywide view
+        minZoom={zoom}
+        scrollWheelZoom
+        touchZoom
+        dragging
+        tap
+        zoomControl
         attributionControl={false}
         className="w-full h-full"
       >
+        {/* Esri Light Gray Canvas base layer, no labels, no API key —
+            keeps street/place names from cluttering the choropleth fill.
+            See lib/utils/mapTiles.js. */}
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
+          url={TILE_URL_LIGHT_NOLABELS}
+          attribution={TILE_ATTRIBUTION}
         />
         {geo && (
           <GeoJSON

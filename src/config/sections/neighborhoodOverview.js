@@ -7,10 +7,11 @@
  *
  * NOTES:
  * - statTiles and pyramidCharts are loaded automatically from
- *   /content/sections/neighborhood-overview.json by Block.jsx.
- * - To change which tiles appear or their order: edit that JSON file — no JS needed.
- * - To add a new tile: add the indicator key to the JSON and ensure
- *   /content/indicators/{key}.meta.json exists with the tile metadata.
+ *   the copy deck (content/copy/measure-copy.csv) by Block.jsx.
+ * - To change which tiles appear or their order: edit the "At a glance" rows
+ *   in the CSV — no JS needed.
+ * - To add a new tile: add a row with its Key (Section "At a glance"); the
+ *   data team supplies data/indicators/{key}.json + data/metadata/{key}-meta.json.
  */
 
 import { NEIGHBORHOOD_OVERVIEW_ID } from '../registries/sectionIds';
@@ -24,7 +25,7 @@ export const neighborhoodOverview = {
       type: 'neighborhoodOverviewHero',
       props: {
         // statTiles and pyramidCharts injected from
-        // /content/sections/neighborhood-overview.json by Block.jsx
+        // the copy deck (content/copy/measure-copy.csv) by Block.jsx
       }
     }
   ]

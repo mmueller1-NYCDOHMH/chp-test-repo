@@ -1,0 +1,21 @@
+{
+  "IndicatorKey": "flu-vaccination",
+  "Title": "Flu Vaccination",
+  "Label": "Flu Vaccination",
+  "Subtitle": "Percentage of adults ages 18 and older who report receiving a flu vaccination in the last 12 months.",
+  "AgeAdjustment": "Yes, to the US 2000 standard population",
+  "MethodsNote": "Weighted to represent the NYC adult population, and to compensate for unequal probability of selection and nonresponse bias. Data by community district are weighted per the American Community Survey, 2015. Data for borough and NYC are weighted per the American Community Survey, 2014. The data source combined Financial District (MN 01) and Greenwich Village/Soho (MN 02), Clinton/Chelsea (MN 04) and Midtown (MN 05), Mott Haven/Melrose (BX 01) and Hunts Point/Longwood (BX 02), and Morrisania/Crotona (BX 03) and Belmont/East Tremont (BX 06). For these four pairs, the same estimate was applied to both CDs.",
+  "ReliabilityNote": "Interpret with caution due to small sample size",
+  "Source": "NYC DOHMH, Community Health Survey",
+  "DenominatorSource": "N/A",
+  "TimePeriod": "2023-2024",
+  "Unit": "%",
+  "Decimals": 1,
+  "Section": "healthcare",
+  "Subsection": "prevention",
+  "type": "Percent",
+  "of": "adults age 18+",
+  "detail": "who report receiving a flu vaccine in the last 12 months",
+  "units": "",
+  "indicatorDetail": ""
+}

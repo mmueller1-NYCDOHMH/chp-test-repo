@@ -1,0 +1,16 @@
+{
+  "IndicatorKey": "cancer-rank-count",
+  "Title": "Top 3 types of cancers among premature deaths",
+  "Label": "",
+  "Subtitle": "",
+  "AgeAdjustment": "No",
+  "MethodsNote": "Breast cancer is limited to female population.",
+  "ReliabilityNote": "",
+  "Source": "NYC DOHMH, Bureau of Vital Statistics",
+  "DenominatorSource": "NYC DOHMH population estimates, modified from US Census Bureau interpolated intercensal population estimates, 2011-2015, vintage 2015",
+  "TimePeriod": "2011-2015",
+  "Unit": "",
+  "Decimals": 0,
+  "Section": "health-conditions",
+  "Subsection": "health-outcomes"
+}

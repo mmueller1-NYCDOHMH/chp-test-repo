@@ -1,0 +1,22 @@
+{
+  "_note": "Standard wording used across the site. Edit the words here — the logic that picks them (thresholds, which footnote applies) stays in code: src/lib/utils/compareIndicator.js and src/lib/copy/resolveNarrative.js.",
+
+  "comparison": {
+    "higher":  "higher than",
+    "lower":   "lower than",
+    "similar": "similar to"
+  },
+
+  "flaggedFootnote": {
+    "survey":                 "*Interpret estimate with caution due to small sample size.",
+    "administrativePercent":  "*Interpret proportion with caution due to small number of events.",
+    "administrativeRate":     "*Interpret rate with caution due to small number of events."
+  },
+
+  "estimateDescription": [
+    { "atLeastPercent": 75, "word": "Most" },
+    { "atLeastPercent": 50, "word": "Many" },
+    { "atLeastPercent": 25, "word": "Some" },
+    { "atLeastPercent": 0,  "word": "Few" }
+  ]
+}

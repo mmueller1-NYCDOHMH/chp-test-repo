@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from 'next/script';
 import 'leaflet/dist/leaflet.css';
 import "./globals.css";
+import RouteAnnouncer from "@/components/layout/RouteAnnouncer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,6 +49,12 @@ export default function RootLayout({ children }) {
         >
           Skip to main content
         </a>
+
+        {/* Announces client-side route changes to screen readers — see
+            RouteAnnouncer.jsx for why this is needed (Next.js App Router
+            navigation doesn't trigger a fresh document read). */}
+        <RouteAnnouncer />
+
         {children}
 
         {/* Google Translate — init callback defined inline so it runs before the script */}

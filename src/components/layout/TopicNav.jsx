@@ -23,307 +23,107 @@
  * An IntersectionObserver watches all real (non-dummy) section elements.
  * The active category and subcategory highlight as sections scroll into
  * the top 25% of the viewport. The URL hash updates silently via
- * history.replaceState.
+ * history.replaceState. (Lives in ./topicNav/useScrollSpy.js.)
  *
- * PROPS: none — reads nav structure from /config/nav/siteNav.js
+ * MOBILE ENTRY-POINT BAR (mobile-ux-review.md spotlight fix):
+ * The mobile row used to lead with a single icon-only "Map view" pin that
+ * opened Sidebar's bottom sheet — visually near-identical to a second
+ * icon-only pin in StickyContextBar that opened a completely different UI
+ * (the full IntroModal map picker). Flagged as the single highest-severity
+ * mobile finding across the UX review. Both icons are now replaced by one
+ * labeled pill row: a "change neighborhood" pill showing the current
+ * neighborhood's name, and a "Compare" pill (empty or active) — both open
+ * the same bottom sheet, which already contains neighborhood search AND
+ * the comparison selector. StickyContextBar's icon and mobile comparison
+ * pill were removed as redundant (see StickyContextBar.jsx).
+ *
+ * PROPS:
+ *   neighborhoods — array of { id, name, borough, geoId, cdNumber }, used
+ *                   only to resolve the current neighborhood's display name
+ *                   for the mobile pill (mirrors UnifiedSearch's lookup)
+ *
+ * NOTES:
+ * - As of 2026-09-04, scroll-spy, the desktop dropdown, and mobile
+ *   viewport/tab-scroll tracking live in dedicated hooks under
+ *   ./topicNav/ — this file owns layout and the JSX tree.
  */
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useCallback } from 'react';
+import { usePathname, useRouter, useParams } from 'next/navigation';
 import { siteNav }           from '@/config/nav/siteNav';
 import { scrollToSection as scrollUtil } from '@/lib/utils/scrollToSection';
 import { DEFAULT_NEIGHBORHOOD_ID } from '@/lib/utils/constants';
 import { TOPICNAV_SEPARATOR } from '@/lib/charts/chartColors';
 import { useMobileCategory } from '@/lib/context/MobileCategoryContext';
+import { useComparison } from '@/lib/context/ComparisonContext';
+import { useScrollSpy } from './topicNav/useScrollSpy';
+import { useDropdown } from './topicNav/useDropdown';
+import { useMobileTabTracking } from './topicNav/useMobileTabTracking';
 
-// Fallback neighborhood when navigating to a section from a non-profile page.
-// Matches the default redirect in /app/page.js.
-
-const NAV_HEIGHT = 56;
-
-export default function TopicNav() {
-  const [openCategoryId, setOpenCategoryId]       = useState(null);
-  const [dropdownPos, setDropdownPos]             = useState({ top: 0, left: 0 });
-  const [activeId, setActiveId]                   = useState(null);
-  const [focusedSubIdx, setFocusedSubIdx]         = useState(-1);
-  const [isMobile, setIsMobile]                   = useState(false);
-  // Which edge ('left' | 'right') the active mobile tab is currently pinned
-  // to, or null while it's sitting normally in the row (not stuck to
-  // either edge). Lets the pinned state use a lighter treatment than the
-  // tab's normal in-place active look, and square off whichever side is
-  // actually flush against the bar's edge.
-  const [stuckSide, setStuckSide]                 = useState(null);
-
+export default function TopicNav({ neighborhoods = [] }) {
   // EXPERIMENTAL (mobile pseudo-pages) — see MobileCategoryContext.jsx.
   // setPagedCategoryId is only used inside handleMobileTap below; on
   // desktop nothing reads pagedCategoryId so this has no effect.
   const { setPagedCategoryId } = useMobileCategory();
 
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)');
-    setIsMobile(mq.matches);
-    const handler = (e) => { setIsMobile(e.matches); if (e.matches) setOpenCategoryId(null); };
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
+  // ── Mobile entry-point pills (neighborhood + compare) ────────────────────
+  // Same lookup UnifiedSearch uses: match the [id] route param against the
+  // neighborhoods list to get a display name for the "change neighborhood"
+  // pill. Falls back to a generic label when no neighborhood is selected
+  // (e.g. on /about) — the pill still opens the bottom sheet either way.
+  const params            = useParams();
+  const activeGeoId       = params?.id ? String(params.id) : null;
+  const selectedNeighborhood = activeGeoId
+    ? neighborhoods.find(n => String(n.id) === activeGeoId)
+    : null;
+  const { comparisonNeighborhood, setComparisonNeighborhood } = useComparison();
+
+  const openMobileSheet = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('chp:open-mobile-sheet'));
   }, []);
-  const intersectingRef                     = useRef(new Set());
-  const closeTimerRef                       = useRef(null);
-  const categoryBtnRefs                     = useRef([]);
-  const mobileCategoryBtnRefs               = useRef([]);
-  const mobileTabRowRef                     = useRef(null);
-  const dropdownItemRefs                    = useRef([]);
-  // Suppresses scroll-spy's setActiveId while a tap-triggered smooth scroll
-  // is still animating. Without this, the IntersectionObserver keeps firing
-  // for the sections still passing by mid-animation and stomps the tap's
-  // intended target back to whatever was previously on screen — the
-  // "bounces back to the previously active tab" bug.
-  const suppressSpyRef                      = useRef(false);
-  const spySettleTimerRef                   = useRef(null);
 
-  const realSectionIds = siteNav
-    .flatMap(cat => cat.subcategories)
-    .filter(sub => !sub.dummy)
-    .map(sub => sub.id);
+  // ── Scroll-spy ────────────────────────────────────────────────────────────
+  const { activeId, navigateToSection } = useScrollSpy();
 
-  const allSubIds = siteNav.flatMap(cat => cat.subcategories).map(sub => sub.id);
-
+  // A subcategory section intersecting the viewport maps back to its parent
+  // category (normal scroll-spy case). Right after a category-label click,
+  // though, activeId is briefly the category's OWN header id (`cat-${id}`,
+  // set by scrollToSection below) since the click lands on the header
+  // itself, before the user has scrolled into any subcategory section — so
+  // that id needs to resolve back to its category too, or the tab it was
+  // just clicked from goes unhighlighted until the user scrolls further.
   const activeCategoryId = siteNav.find(cat =>
-    cat.subcategories.some(sub => sub.id === activeId)
+    cat.subcategories.some(sub => sub.id === activeId) || activeId === `cat-${cat.id}`
   )?.id ?? null;
 
-  // ── Close dropdown on scroll ─────────────────────────────────────────────
+  // ── Mobile viewport + tab-scroll tracking ─────────────────────────────────
+  const { isMobile, stuckSide, mobileTabRowRef, mobileCategoryBtnRefs } = useMobileTabTracking(activeCategoryId);
+
+  // ── Desktop dropdown ──────────────────────────────────────────────────────
+  const {
+    openCategoryId,
+    setOpenCategoryId,
+    dropdownPos,
+    focusedSubIdx,
+    categoryBtnRefs,
+    dropdownItemRefs,
+    openCategory,
+    handleMouseEnter,
+    handleMouseLeave,
+    keepOpen,
+    handleCategoryKeyDown,
+    handleDropdownKeyDown,
+  } = useDropdown(isMobile);
+
+  // Close the dropdown when switching into mobile view — mirrors the
+  // original matchMedia 'change' handler's side effect. (openCategoryId
+  // already starts null, so this is a no-op on first mount either way.)
   useEffect(() => {
-    function handleScroll() { setOpenCategoryId(null); }
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    if (isMobile) setOpenCategoryId(null);
+  }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Close dropdown on Escape (global) ────────────────────────────────────
-  useEffect(() => {
-    function handleKeyDown(e) {
-      if (e.key === 'Escape' && openCategoryId) {
-        e.preventDefault();
-        const idx = siteNav.findIndex(c => c.id === openCategoryId);
-        setOpenCategoryId(null);
-        setFocusedSubIdx(-1);
-        categoryBtnRefs.current[idx]?.focus();
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [openCategoryId]);
-
-  // ── Focus dropdown item when focusedSubIdx changes ────────────────────────
-  useEffect(() => {
-    if (focusedSubIdx >= 0) {
-      dropdownItemRefs.current[focusedSubIdx]?.focus();
-    }
-  }, [focusedSubIdx]);
-
-
-  // ── Dropdown handlers ────────────────────────────────────────────────────
-  function openDropdown(categoryId, buttonEl) {
-    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-    if (buttonEl) {
-      const rect = buttonEl.getBoundingClientRect();
-      setDropdownPos({ top: rect.bottom, left: rect.left });
-    }
-    setOpenCategoryId(categoryId);
-    setFocusedSubIdx(-1);
-  }
-
-  function handleMouseEnter(categoryId, buttonEl) {
-    if (isMobile) return;
-    openDropdown(categoryId, buttonEl);
-  }
-
-  function handleMouseLeave() {
-    closeTimerRef.current = setTimeout(() => { setOpenCategoryId(null); setFocusedSubIdx(-1); }, 100);
-  }
-
-  function keepOpen() {
-    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-  }
-
-  // ── Category button keyboard handler ─────────────────────────────────────
-  function handleCategoryKeyDown(e, category, btnEl) {
-    if (isMobile) return;
-    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      openDropdown(category.id, btnEl);
-      // Focus first non-disabled item after render
-      setTimeout(() => {
-        const firstEnabled = (siteNav.find(c => c.id === category.id)?.subcategories ?? [])
-          .findIndex(s => !s.dummy);
-        setFocusedSubIdx(firstEnabled >= 0 ? firstEnabled : 0);
-      }, 0);
-    }
-  }
-
-  // ── Dropdown item keyboard handler ────────────────────────────────────────
-  function handleDropdownKeyDown(e, subIdx) {
-    const subs = openCategory?.subcategories ?? [];
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setFocusedSubIdx(i => Math.min(i + 1, subs.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      const prev = subIdx - 1;
-      if (prev < 0) {
-        // Return focus to category button
-        const idx = siteNav.findIndex(c => c.id === openCategoryId);
-        setFocusedSubIdx(-1);
-        setOpenCategoryId(null);
-        categoryBtnRefs.current[idx]?.focus();
-      } else {
-        setFocusedSubIdx(prev);
-      }
-    } else if (e.key === 'Tab') {
-      setOpenCategoryId(null);
-      setFocusedSubIdx(-1);
-    }
-  }
-
-  // ── Tap/programmatic navigation → activeId, with scroll-spy suppressed ───
-  // Sets activeId immediately (so the tapped tab highlights right away) and
-  // blocks the IntersectionObserver from overwriting it until the resulting
-  // smooth-scroll has finished settling. The suppression window is extended
-  // on every scroll event (see the effect below) so it covers scrolls of any
-  // distance/duration, with a short fallback in case the tap didn't cause
-  // any scrolling at all (target already in view).
-  function navigateToSection(id) {
-    suppressSpyRef.current = true;
-    setActiveId(id);
-    clearTimeout(spySettleTimerRef.current);
-    spySettleTimerRef.current = setTimeout(() => { suppressSpyRef.current = false; }, 200);
-  }
-
-  // Re-arms the suppression window on each scroll tick while it's active,
-  // so it lasts exactly as long as the animated scroll is still moving.
-  useEffect(() => {
-    function handleScrollSettle() {
-      if (!suppressSpyRef.current) return;
-      clearTimeout(spySettleTimerRef.current);
-      spySettleTimerRef.current = setTimeout(() => { suppressSpyRef.current = false; }, 150);
-    }
-    window.addEventListener('scroll', handleScrollSettle, { passive: true });
-    return () => window.removeEventListener('scroll', handleScrollSettle);
-  }, []);
-
-  // ── Scroll-spy ───────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!realSectionIds.length) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            intersectingRef.current.add(entry.target.id);
-          } else {
-            intersectingRef.current.delete(entry.target.id);
-          }
-        });
-        // Pick the topmost intersecting section in nav order.
-        // Using realSectionIds (not allSubIds) since only real sections are observed.
-        // rootMargin only clips the top (nav height) — no bottom clip — so a section
-        // is "intersecting" any time any pixel of it is visible below the nav.
-        // This makes the detection symmetric: works the same scrolling up or down.
-        if (suppressSpyRef.current) return;
-        const active = realSectionIds.find(id => intersectingRef.current.has(id));
-        if (active) setActiveId(active);
-      },
-      { rootMargin: `-${NAV_HEIGHT}px 0px 0px 0px`, threshold: 0 }
-    );
-
-    realSectionIds.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ── Hash sync ────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (activeId) history.replaceState(null, '', `#${activeId}`);
-  }, [activeId]);
-
-  // ── Mobile: keep the active category tab in view as scroll-spy advances ──
-  // The tab row scrolls horizontally, so as the user scrolls the page down
-  // through categories, the highlighted tab can drift out of the visible
-  // area. Scroll it back into view (centered) whenever the active category
-  // changes — this only fires on actual category changes, not every scroll
-  // tick, since activeCategoryId is derived from the (already-debounced-by-
-  // section-boundary) scroll-spy id.
-  useEffect(() => {
-    if (!isMobile || !activeCategoryId) return;
-    const idx = siteNav.findIndex(c => c.id === activeCategoryId);
-    const btn = mobileCategoryBtnRefs.current[idx];
-    btn?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-  }, [isMobile, activeCategoryId]);
-
-  // ── Mobile: track whether the active tab is actually pinned ──────────────
-  // btn.offsetLeft/offsetWidth reflect the tab's normal (un-stuck) box —
-  // sticky positioning doesn't affect offset measurements, only paint
-  // position — so comparing them against the row's current scroll window
-  // tells us whether the tab would be off-screen without sticky (i.e. it's
-  // actively pinned right now) vs. just sitting normally in view.
-  useEffect(() => {
-    if (!isMobile || !activeCategoryId) { setStuckSide(null); return; }
-    const row = mobileTabRowRef.current;
-    const idx = siteNav.findIndex(c => c.id === activeCategoryId);
-    const btn = mobileCategoryBtnRefs.current[idx];
-    if (!row || !btn) return;
-
-    // The row scroll-snaps to each tab (snap-x/snap-start), so when the
-    // active tab lands exactly at the leading edge after a swipe,
-    // row.scrollLeft and btn.offsetLeft can land EXACTLY equal rather than
-    // strictly past one another. A strict >/< missed that flush-exact case
-    // (still touching the edge, should still square off) — use >=/<= with
-    // a sub-pixel tolerance so it's treated as stuck.
-    function checkStuck() {
-      const EPSILON = 1; // px
-      let side = null;
-      if (row.scrollLeft >= btn.offsetLeft - EPSILON) side = 'left';
-      else if (row.scrollLeft + row.clientWidth <= btn.offsetLeft + btn.offsetWidth + EPSILON) side = 'right';
-      setStuckSide(prev => (prev === side ? prev : side));
-    }
-    checkStuck();
-    row.addEventListener('scroll', checkStuck, { passive: true });
-    return () => row.removeEventListener('scroll', checkStuck);
-  }, [isMobile, activeCategoryId]);
-
-  // ── Smart hash restore on page load ─────────────────────────────────────
-  // Scrolls to the hash anchor when the neighbourhood page loads with one.
-  // Fires for:
-  //   1. External entries — direct URL, new tab, external link.
-  //   2. Same-origin entries from non-neighbourhood pages — e.g. the user
-  //      clicked an indicator while on /about, which called router.push with
-  //      a hash. The hash is intentional and should be honoured.
-  //
-  // Does NOT fire when navigating from one neighbourhood page to another —
-  // in that case the hash is leftover scroll-spy state, not an intentional
-  // jump target.
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (!hash) return;
-
-    const referrer            = document.referrer;
-    const isExternal          = !referrer || !referrer.startsWith(window.location.origin);
-    const isFromNeighbourhood = referrer.includes('/neighborhood/');
-
-    // Only suppress when coming from another neighbourhood page
-    if (!isExternal && isFromNeighbourhood) return;
-
-    // Defer until after first paint so sections are in the DOM.
-    const raf = requestAnimationFrame(() => {
-      scrollUtil(hash);
-      const id = hash.replace(/^#/, '');
-      navigateToSection(id);
-    });
-    return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const pathname = usePathname();
+  const router   = useRouter();
+  const isNeighborhoodPage = pathname?.startsWith('/neighborhood/');
 
   // ── Scroll or navigate to a section anchor ───────────────────────────────
   // On neighborhood pages: smooth-scroll in place (existing behaviour).
@@ -335,7 +135,7 @@ export default function TopicNav() {
       setOpenCategoryId(null);
       return;
     }
-    scrollUtil(anchor);
+    scrollUtil(anchor, { focus: true }); // A11Y: move focus to the section heading
     const id = String(anchor).replace(/^#/, '');
     navigateToSection(id);
     setOpenCategoryId(null);
@@ -343,12 +143,6 @@ export default function TopicNav() {
     // immediately without waiting for IntersectionObserver to settle.
     window.dispatchEvent(new CustomEvent('chp:section-activated', { detail: { id } }));
   }
-
-  const pathname = usePathname();
-  const router   = useRouter();
-  const isNeighborhoodPage = pathname?.startsWith('/neighborhood/');
-
-  const openCategory = siteNav.find(c => c.id === openCategoryId) ?? null;
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
@@ -358,35 +152,101 @@ export default function TopicNav() {
         aria-label="Topic navigation"
         className="sticky top-0 z-40 w-full min-w-0 bg-white border-b border-gray-200 shadow-sm"
       >
-        {/* ── Mobile: pinned map icon + horizontally scrolling topic tabs ─────
-             Active state is driven by activeCategoryId (derived from
+        {/* ── Mobile: entry-point pills + horizontally scrolling topic tabs ───
+             Two stacked rows. Row 1 replaces what used to be a single
+             icon-only "Map view" pin (see MOBILE ENTRY-POINT BAR note above)
+             with two labeled pills. Row 2 is the existing topic tab strip,
+             unchanged apart from no longer sharing its row with the pin.
+             Active tab state is driven by activeCategoryId (derived from
              scroll-spy's activeId), same source as desktop, so the
              highlighted tab tracks scroll position. The active tab is also
              auto-scrolled into view within this row as it changes — see
-             the effect above.                                            */}
-        <div className="md:hidden flex items-center gap-2 px-3 py-2.5 min-w-0" aria-label="Health topics">
-          {/* Map pin icon — left side, fixed (does not scroll with topics).
-              Opens Sidebar's mobile bottom sheet via a global event so this
-              component doesn't need a direct reference to Sidebar's state. */}
-          <button
-            type="button"
-            aria-label="Map view"
-            onClick={() => window.dispatchEvent(new CustomEvent('chp:open-mobile-sheet'))}
-            className="shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 text-white"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none" aria-hidden="true">
-              <path d="M10.3346 1.72266C7.00175 1.72266 4.30615 4.41825 4.30615 7.75115C4.30615 12.2725 10.3346 18.9469 10.3346 18.9469C10.3346 18.9469 16.3631 12.2725 16.3631 7.75115C16.3631 4.41825 13.6675 1.72266 10.3346 1.72266Z" fill="white" />
-              <path d="M10.3347 9.90372C11.5238 9.90372 12.4877 8.93978 12.4877 7.75069C12.4877 6.5616 11.5238 5.59766 10.3347 5.59766C9.14559 5.59766 8.18164 6.5616 8.18164 7.75069C8.18164 8.93978 9.14559 9.90372 10.3347 9.90372Z" fill="#2563eb" />
-            </svg>
-          </button>
+             useMobileTabTracking.                                        */}
+        <div className="md:hidden flex flex-col min-w-0">
 
-          {/* Topic tabs — single row, horizontal finger-scroll.
+          {/* Row 1 — neighborhood + compare pills */}
+          <div className="flex items-center gap-2 px-3 pt-2.5 pb-1.5 min-w-0">
+            {/* Neighborhood pill — always visible, self-labeled (no more
+                bare icon). Opens Sidebar's mobile bottom sheet via a global
+                event so this component doesn't need a direct reference to
+                Sidebar's state. Sheet already contains neighborhood search
+                AND the comparison selector. */}
+            <button
+              type="button"
+              onClick={openMobileSheet}
+              aria-label={
+                selectedNeighborhood
+                  ? `Viewing ${selectedNeighborhood.name}. Tap to change neighborhood.`
+                  : 'Choose a neighborhood'
+              }
+              className="flex-1 min-w-0 flex items-center gap-1.5 bg-brand-tint border border-brand rounded-full pl-2.5 pr-2 py-1.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              <svg className="w-3.5 h-3.5 shrink-0 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+              </svg>
+              <span className="flex-1 min-w-0 text-xs font-medium text-brand truncate">
+                {selectedNeighborhood ? selectedNeighborhood.name : 'Choose a neighborhood'}
+              </span>
+              <svg className="w-3 h-3 shrink-0 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Compare pill — empty state invites starting a comparison;
+                active state mirrors the amber treatment used everywhere else
+                comparison shows up (insight text, distribution strip,
+                choropleth). Both states open the same bottom sheet, which
+                already renders ComparisonNeighborhoodSelector. The clear (×)
+                button stops propagation so clearing doesn't also reopen the
+                sheet. */}
+            {comparisonNeighborhood ? (
+              <span className="shrink-0 flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full pl-2 pr-1 py-1.5 max-w-[42%]">
+                <button
+                  type="button"
+                  onClick={openMobileSheet}
+                  aria-label={`Comparing to ${comparisonNeighborhood.name}. Tap to change.`}
+                  className="flex items-center gap-1 min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" aria-hidden="true" />
+                  <span className="text-xs font-medium text-amber-800 truncate">
+                    {comparisonNeighborhood.name}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setComparisonNeighborhood(null); }}
+                  aria-label={`Remove comparison with ${comparisonNeighborhood.name}`}
+                  className="shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-amber-700 hover:text-amber-900 hover:bg-amber-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                >
+                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={openMobileSheet}
+                aria-label="Compare with another neighborhood"
+                className="shrink-0 flex items-center gap-1 bg-white border border-dashed border-gray-300 text-gray-600 rounded-full px-2.5 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+                </svg>
+                <span className="text-xs font-medium">Compare</span>
+              </button>
+            )}
+          </div>
+
+          {/* Row 2 — topic tabs, single row, horizontal finger-scroll.
               `relative` matters here, not just visually: without a
               positioned ancestor between the buttons and the sticky <nav>,
               a button's offsetLeft/offsetParent resolves all the way up to
               <nav> (itself `sticky`, i.e. positioned) instead of this row —
               throwing off the stuck-side math below, which assumes
               offsetLeft is relative to the row's own scrollable content. */}
+          <div className="flex items-center px-3 pb-2.5 min-w-0" aria-label="Health topics">
           <div
             ref={mobileTabRowRef}
             className="relative flex-1 min-w-0 flex gap-2 overflow-x-auto scrollbar-none overscroll-x-contain [-webkit-overflow-scrolling:touch] snap-x snap-mandatory"
@@ -394,13 +254,18 @@ export default function TopicNav() {
             {siteNav.map((category, index) => {
               const isActive  = activeCategoryId === category.id;
               const firstSub  = category.subcategories.find(s => !s.dummy);
-              // Prefer the first real subcategory's anchor. category.anchor
-              // (e.g. "#cat-social") is a virtual id that only Sidebar.jsx's
-              // hash→category lookup understands — no section in the DOM
-              // actually carries that id, so scrollUtil's getElementById
-              // silently no-ops and the tap does nothing. Only fall back to
-              // category.anchor when every subcategory is a `dummy`
-              // placeholder (nothing real to scroll to yet).
+              // Prefer the first real subcategory's anchor here (unlike the
+              // desktop click handler below, which targets category.anchor
+              // directly). category.anchor (e.g. "#cat-social") DOES have a
+              // matching DOM id — buildCategorySection in
+              // neighborhoodProfile.js renders it — but on mobile the actual
+              // scroll destination for an on-page tap is decided by
+              // MobileCategoryContext (always the category header, via
+              // setPagedCategoryId below), not by this anchor value; this
+              // one only matters for (a) the off-profile-page redirect a few
+              // lines down and (b) gating the tap when nothing real exists
+              // yet. Falls back to category.anchor only when every
+              // subcategory is a `dummy` placeholder.
               const anchor    = firstSub?.anchor ?? category.anchor;
 
               function handleMobileTap() {
@@ -487,6 +352,7 @@ export default function TopicNav() {
               );
             })}
           </div>
+          </div>
         </div>
 
         {/* ── Desktop: horizontal scrolling nav ───────────────────────────── */}
@@ -497,13 +363,13 @@ export default function TopicNav() {
           {siteNav.map((category, index) => {
             const isOpen   = openCategoryId === category.id;
             const isActive = activeCategoryId === category.id;
-            // Same fallback as the mobile tab row below: category.anchor
-            // (e.g. "#cat-social") has no matching DOM id, so a direct click
-            // on the category label (as opposed to a dropdown subcategory
-            // item, which always has a real anchor) needs to target the
-            // first real subcategory instead or scrollToSection no-ops.
-            const clickAnchor = category.subcategories.find(s => !s.dummy)?.anchor
-              ?? category.anchor;
+            // Clicking the category label scrolls to that category's OWN
+            // header — e.g. "#cat-health-care", rendered by
+            // buildCategorySection in neighborhoodProfile.js — i.e. the top
+            // of the category, not its first subcategory's chart section.
+            // Dropdown subcategory items (below) still scroll to their own
+            // real section anchors.
+            const clickAnchor = category.anchor;
 
             return (
               <li
@@ -525,8 +391,8 @@ export default function TopicNav() {
                 )}
                 <button
                   ref={el => { categoryBtnRefs.current[index] = el; }}
-                  aria-haspopup="true"
                   aria-expanded={isOpen}
+                  aria-controls={isOpen ? `topic-dropdown-${category.id}` : undefined}
                   aria-current={isActive ? 'location' : undefined}
                   onClick={() => { if (clickAnchor) scrollToSection(clickAnchor); }}
                   onKeyDown={e => handleCategoryKeyDown(e, category, categoryBtnRefs.current[index])}
@@ -549,16 +415,26 @@ export default function TopicNav() {
         </ul>
       </nav>
 
-      {/* ── Dropdown — rendered as fixed so it escapes any overflow context ── */}
+      {/* ── Dropdown — rendered as fixed so it escapes any overflow context ──
+          A11Y (2026-09-28): disclosure-navigation pattern instead of an ARIA
+          menu. It was <ul role="menu"> with <li> children and role="menuitem"
+          buttons, which is invalid ARIA (axe: aria-required-children,
+          aria-required-parent, listitem — all critical) and the wrong
+          pattern for site navigation. Now: the category button toggles
+          aria-expanded + aria-controls, and this is a plain list of buttons
+          inside its own labelled <nav> (it's rendered outside the TopicNav
+          <nav>, so without this it sat outside any landmark — axe region).
+          Arrow-key handling from useDropdown still works as a convenience. */}
       {!isMobile && openCategory && (
-        <ul
-          role="menu"
-          aria-label={openCategory.label}
+        <nav
+          aria-label={`${openCategory.label} sections`}
+          id={`topic-dropdown-${openCategory.id}`}
           onMouseEnter={keepOpen}
           onMouseLeave={handleMouseLeave}
           style={{ top: dropdownPos.top, left: dropdownPos.left }}
-          className="fixed z-50 min-w-[200px] py-1.5 bg-white border border-gray-200 rounded-md shadow-lg"
+          className="fixed z-50 min-w-[200px] bg-white border border-gray-200 rounded-md shadow-lg"
         >
+        <ul className="py-1.5">
           {openCategory.subcategories.map((sub, subIdx) => {
             const isSubActive = activeId === sub.id;
 
@@ -566,7 +442,6 @@ export default function TopicNav() {
               <li key={sub.id}>
                 <button
                   ref={el => { dropdownItemRefs.current[subIdx] = el; }}
-                  role="menuitem"
                   disabled={sub.dummy}
                   onClick={() => { if (!sub.dummy) scrollToSection(sub.anchor); }}
                   onKeyDown={e => handleDropdownKeyDown(e, subIdx)}
@@ -576,7 +451,7 @@ export default function TopicNav() {
                     isSubActive
                       ? 'bg-brand-tint text-brand font-medium'
                       : sub.dummy
-                      ? 'text-gray-500 cursor-default'
+                      ? 'text-gray-600 cursor-default'
                       : 'text-gray-700 hover:bg-brand-tint hover:text-brand cursor-pointer',
                   ].join(' ')}
                 >
@@ -596,6 +471,7 @@ export default function TopicNav() {
             );
           })}
         </ul>
+        </nav>
       )}
     </>
   );

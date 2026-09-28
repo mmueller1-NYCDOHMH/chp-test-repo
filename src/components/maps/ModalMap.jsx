@@ -37,6 +37,7 @@ import { useEffect, useRef } from 'react';
 import { slugify } from '@/lib/utils/slugify';
 import { MODAL_MAP_STYLES, BOROUGH_PALETTE } from '@/lib/charts/chartColors';
 import { fetchGeoJson } from '@/lib/utils/fetchGeoJson';
+import { TILE_URL_BASE, TILE_URL_LABELS, TILE_ATTRIBUTION } from '@/lib/utils/mapTiles';
 
 const NYC_CENTER = [40.7128, -74.006];
 const NYC_ZOOM   = 10;
@@ -85,6 +86,7 @@ export default function ModalMap({ neighborhoods = [], hoveredId, visitedIds, on
       mapInstance = L.map(containerRef.current, {
         center:           NYC_CENTER,
         zoom:             NYC_ZOOM,
+        minZoom:          NYC_ZOOM,
         scrollWheelZoom:  true,
         zoomControl:      true,
         // Hides the bottom-right Leaflet/OSM attribution banner, matching
@@ -92,10 +94,14 @@ export default function ModalMap({ neighborhoods = [], hoveredId, visitedIds, on
         attributionControl: false,
       });
 
+      // Esri Light Gray Canvas: base layer + labels overlay stacked on
+      // top, standing in for CARTO's old "light_all" tile now that CARTO
+      // requires an API key. See lib/utils/mapTiles.js.
       L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-        { attribution: '&copy; OpenStreetMap contributors &copy; CARTO' }
+        TILE_URL_BASE,
+        { attribution: TILE_ATTRIBUTION }
       ).addTo(mapInstance);
+      L.tileLayer(TILE_URL_LABELS).addTo(mapInstance);
 
       // Helper: compute visited-CD borough style given a numeric geoId.
       function visitedStyle(geoId) {

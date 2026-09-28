@@ -58,12 +58,25 @@ export const BAR_INVALID = '#9CA3AF';  // gray-400   — suppressed / null value
 // ── Choropleth map gradient ────────────────────────────────────────────────
 // Used by ChoroplethMap.jsx (fill colors) AND IndicatorFlyoutContent.jsx
 // (the legend gradient). Both must stay in sync — they share this array.
+
+// export const CHOROPLETH_STOPS = [
+//   '#dbeafe',  // blue-100 — lowest values
+//   '#93c5fd',  // blue-300
+//   '#60a5fa',  // blue-400
+//   '#2563eb',  // blue-600
+//   '#1e3a8a',  // blue-900 — highest values
+// ];
+
+// Refined teal (2026-09-25) — perceptually even lightness steps
+// (L* ≈ 93 / 82 / 67 / 48 / 30), muted to match the site palette, and a
+// lowest stop dark enough not to blend into the basemap. Teal avoids
+// SELECTED purple, COMPARISON rust, and brand/hover navy.
 export const CHOROPLETH_STOPS = [
-  '#dbeafe',  // blue-100 — lowest values
-  '#93c5fd',  // blue-300
-  '#60a5fa',  // blue-400
-  '#2563eb',  // blue-600
-  '#1e3a8a',  // blue-900 — highest values
+  '#DDF0EC', // lowest
+  '#A3D5CB',
+  '#5FB0A3',
+  '#2B7F76',
+  '#0E4F4A', // highest
 ];
 
 // ── Leaflet map interaction styles ─────────────────────────────────────────

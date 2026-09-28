@@ -5,14 +5,14 @@
  * Loads glossary terms and provides the parseGlossaryTerms utility.
  *
  * EDITING GLOSSARY TERMS:
- * Terms and definitions live in /content/glossary.json — edit that file
+ * Terms and definitions live in /content/site/glossary.json — edit that file
  * directly. No code changes needed to add, remove, or update a term.
  *
  * This file only contains the parsing logic that turns plain subtitle
  * strings into glossary-linked segments for GlossaryTerm.jsx.
  */
 
-import glossaryData from '../../content/glossary.json';
+import glossaryData from '../../content/site/glossary.json';
 
 // Strip the internal _note key; export only the term entries.
 const { _note: _removed, ...glossaryTerms } = glossaryData;

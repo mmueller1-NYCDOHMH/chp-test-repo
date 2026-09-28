@@ -1,1 +1,0 @@
-Where people live shapes their health. Neighborhood conditions — clean air, safe streets, access to healthy food, and stable housing — affect residents' daily lives and long-term health outcomes in ways that go beyond individual choices.

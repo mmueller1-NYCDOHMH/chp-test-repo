@@ -25,10 +25,10 @@ import PageHeader from './PageHeader';
 import Footer from './Footer';
 import TopicNav from './TopicNav';
 import StickyContextBar from './StickyContextBar';
+import StickyOffsetSync from './StickyOffsetSync';
 import MobileCategoryPager from './MobileCategoryPager';
 import FlyoutShell from '@/components/core/FlyoutShell';
 import BackToTopButton, { BackToTopButtonMobile } from '@/components/controls/BackToTopButton';
-import UnifiedSearch from '@/components/controls/UnifiedSearch';
 import { ComparisonProvider } from '@/lib/context/ComparisonContext';
 import { MobileCategoryProvider } from '@/lib/context/MobileCategoryContext';
 import { getNeighborhoods } from '@/lib/data/getNeighborhoods';
@@ -38,8 +38,7 @@ import { loadOverviewHeroConfig } from '@/lib/data/loadSectionIndicators';
 export default async function PageLayout({ config, children, pageLabel, pageNav }) {
   const neighborhoods = await getNeighborhoods();
 
-  // At-a-glance keys come from the section JSON, not from the JS config.
-  // loadOverviewHeroConfig reads /content/sections/neighborhood-overview.json.
+  // At-a-glance keys come from the copy deck's "At a glance" rows.
   const heroConfig    = loadOverviewHeroConfig();
   const atAGlanceKeys = (heroConfig?.statTiles ?? []).map(t => t.indicatorKey);
   const indicatorSummaries = getIndicatorSummaries(atAGlanceKeys);
@@ -55,19 +54,13 @@ export default async function PageLayout({ config, children, pageLabel, pageNav 
         {/* Header — full width, spans above sidebar and content */}
         <PageHeader neighborhoods={neighborhoods} />
 
-        {/* Mobile-only: persistent "change neighborhood" pill, directly in
-            the page chrome instead of gated behind an icon that opens a
-            bottom sheet. UnifiedSearch already collapses to a labeled pill
-            (pin icon + neighborhood name + chevron) when a neighborhood is
-            active, and expands into the full borough-grouped search on tap
-            — this just gives that existing component a visible, above-the-
-            fold mount point on mobile instead of only living inside
-            Sidebar's desktop aside / mobile bottom sheet. Desktop already
-            has it via the sidebar, so this is md:hidden.
-            See mobile-ux-review.md ("Surface the pill directly") for why. */}
-        <div className="md:hidden px-3 py-2 bg-white border-b border-gray-100">
-          <UnifiedSearch neighborhoods={neighborhoods} />
-        </div>
+        {/* NOTE: This used to also render a persistent full-width mobile
+            UnifiedSearch pill here (a "surface the pill directly" fix from
+            mobile-ux-review.md). Removed — it duplicated TopicNav's own
+            neighborhood pill, which is sticky (always visible) and lives
+            right below this point, so having a second non-sticky pill here
+            just added a redundant full-width row above it that scrolled
+            away immediately. See TopicNav.jsx MOBILE ENTRY-POINT BAR note. */}
 
         {/* Body row — sidebar + main content side by side */}
         <div className="flex flex-1">
@@ -89,8 +82,11 @@ export default async function PageLayout({ config, children, pageLabel, pageNav 
                 See MobileCategoryContext.jsx for what this is and how to revert. */}
             <MobileCategoryProvider>
 
-              {/* Sticky topic nav — two-level hover dropdown with scroll-spy */}
-              <TopicNav />
+              {/* Sticky topic nav — two-level hover dropdown with scroll-spy.
+                  neighborhoods passed through so its mobile row can resolve
+                  the current neighborhood's display name (see TopicNav.jsx
+                  MOBILE ENTRY-POINT BAR note). */}
+              <TopicNav neighborhoods={neighborhoods} />
 
               {/* Sticky context bar — breadcrumb + copy link + About/language/shortcuts.
                   Only renders on pages with sections, so it's the only place those
@@ -99,10 +95,15 @@ export default async function PageLayout({ config, children, pageLabel, pageNav 
                 sections={config.sections.filter(s => !s.category)}
               />
 
+              {/* A11Y: publishes the sticky bars' combined height as
+                  --chp-sticky-offset for scroll-padding-top (globals.css). */}
+              <StickyOffsetSync />
+
               {/* Page body */}
               <main
                 id="main-content"
-                className="px-4 md:px-8 py-10 max-w-5xl w-full mx-auto"
+                tabIndex={-1} /* A11Y: lets the skip link / route-change focus land here (Safari) */
+                className="px-4 md:px-8 py-10 max-w-5xl w-full mx-auto focus:outline-none"
                 aria-label={pageLabel ?? 'Community Health Profile'}
               >
                 <MobileCategoryPager>

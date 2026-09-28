@@ -13,8 +13,6 @@
  *   resolveIndicatorRows   — finds the neighborhood and citywide rows for an indicator
  *   buildStatTile          — transforms row data + config into a render-ready tile object
  *   buildPyramidChart      — resolves pyramid chart config into render-ready segments
- *   buildNotableFindings   — scans all directional indicators and returns the ones
- *                            with the largest divergence from citywide
  *
  * NOTES:
  * - SERVER-SIDE ONLY — delegates to loadIndicatorData which uses fs.readFileSync
@@ -22,8 +20,8 @@
  */
 
 import { loadIndicatorData }  from '@/lib/data/loadIndicatorData';
-import { indicatorMeta }      from '@/config/indicatorMeta';
 import { computeDelta }       from '@/lib/utils/compareIndicator';
+import { pairDistributionSegments } from '@/lib/utils/distributionSegments';
 
 // ─── resolveIndicatorRows ─────────────────────────────────────────────────────
 
@@ -70,9 +68,29 @@ export function buildStatTile(cfg, cdRow, nycRow) {
     ? `${cdRow.DisplayValue}${cfg.displaySuffix ?? ''}`
     : null;
 
+  // Percent-type indicators store Value as a 0-1 fraction (e.g. 0.21 for
+  // "21%") — DisplayValue already carries the formatted percent string, but
+  // computeDelta() diffs raw Value. Left unscaled, a real 15-point gap
+  // (0.21 vs 0.36) becomes "−0 pts compared to NYC" once toFixed(0) rounds
+  // 0.15 down to nothing. Scale both values back into percentage points
+  // before diffing so the delta text lands in the same units as the
+  // headline DisplayValue and cfg.deltaSuffix (" pts").
+  //
+  // Detected via DisplayValue's own "%" rather than indicator metadata —
+  // same fallback isCountDatatype() in IndicatorChartGrid.jsx uses — because
+  // some percent indicators (born-outside-us, ltd-eng-prof) have no
+  // data/metadata file at all, and their copy-deck tile label (unitOverride)
+  // is editorial copy ("of residents"), not a bare "%".
+  const isPercent = [cdRow?.DisplayValue, nycRow?.DisplayValue].some(
+    v => typeof v === 'string' && v.includes('%')
+  );
+  const scale    = isPercent ? 100 : 1;
+  const cdValue  = cdRow?.Value  != null ? cdRow.Value  * scale : null;
+  const nycValue = nycRow?.Value != null ? nycRow.Value * scale : null;
+
   const delta = cfg.showDelta === false
     ? null
-    : computeDelta(cdRow?.Value ?? null, nycRow?.Value ?? null, cfg);
+    : computeDelta(cdValue, nycValue, cfg);
 
   return {
     key:         cfg.indicatorKey,
@@ -89,7 +107,10 @@ export function buildStatTile(cfg, cdRow, nycRow) {
 
 /**
  * Resolves a pyramid chart config into render-ready segment data by
- * looking up each segment key in the neighborhood and citywide Distribution arrays.
+ * looking up each segment key in the neighborhood and citywide Distribution
+ * arrays (via the shared pairDistributionSegments() — see
+ * distributionSegments.js, also used by ComparisonPyramidChartClient.jsx
+ * and PrematureDeathOverviewSection.jsx).
  *
  * @param {object} cfg   — pyramid chart config (indicatorKey, title, segments)
  * @param {number} geoId — numeric GeoID of the selected neighborhood
@@ -104,15 +125,7 @@ export function buildStatTile(cfg, cdRow, nycRow) {
 export function buildPyramidChart(cfg, geoId) {
   const { cdRow, nycRow } = resolveIndicatorRows(cfg.indicatorKey, geoId);
 
-  const cdByKey  = Object.fromEntries((cdRow?.Distribution  ?? []).map(s => [s.key, s.value]));
-  const nycByKey = Object.fromEntries((nycRow?.Distribution ?? []).map(s => [s.key, s.value]));
-
-  const segments = cfg.segments.map(s => ({
-    key:               s.key,
-    label:             s.label,
-    neighborhoodValue: cdByKey[s.key]  ?? null,
-    citywideValue:     nycByKey[s.key] ?? null,
-  }));
+  const segments = pairDistributionSegments(cdRow, nycRow, cfg.segments);
 
   return {
     indicatorKey: cfg.indicatorKey,
@@ -120,65 +133,4 @@ export function buildPyramidChart(cfg, geoId) {
     segments,
     timePeriod:   cdRow?.TimePeriod ?? nycRow?.TimePeriod ?? null,
   };
-}
-
-// ─── buildNotableFindings ─────────────────────────────────────────────────────
-
-const MAX_FINDINGS = 4;
-
-/**
- * Scans all registered indicators that have a data file and a meaningful
- * directionality (higherIsBetter !== null). Computes the delta vs citywide
- * for the given neighborhood, sorts by absolute magnitude descending, and
- * returns up to MAX_FINDINGS entries.
- *
- * @param {number} geoId — numeric GeoID of the selected neighborhood
- *
- * @returns {Array<{
- *   key:          string,
- *   label:        string,
- *   isBetter:     boolean,
- *   absDelta:     number,
- *   deltaText:    string,
- *   displayValue: string,
- * }>}
- */
-export function buildNotableFindings(geoId) {
-  const directional = Object.values(indicatorMeta).filter(
-    ind => ind.higherIsBetter != null && ind.key
-  );
-
-  const results = [];
-
-  for (const ind of directional) {
-    let rows;
-    try { rows = loadIndicatorData(ind.key); } catch { continue; }
-    if (!rows || !rows.length) continue;
-
-    const cdRow  = rows.find(r => r.GeoID === geoId);
-    const nycRow = rows.find(r => r.GeoID === 0);
-    if (!cdRow || !nycRow || cdRow.Value == null || nycRow.Value == null) continue;
-
-    const delta    = cdRow.Value - nycRow.Value;
-    const absDelta = Math.abs(delta);
-    if (absDelta < 0.5) continue;
-
-    const isBetter  = ind.higherIsBetter ? delta > 0 : delta < 0;
-    const sign      = delta > 0 ? '+' : '−';
-    const decimals  = ind.decimals ?? 0;
-    const suffix    = ind.deltaSuffix ?? '';
-    const deltaText = `${sign}${Math.abs(delta).toFixed(decimals)}${suffix}`;
-
-    results.push({
-      key:          ind.key,
-      label:        ind.label ?? ind.title,
-      isBetter,
-      absDelta,
-      deltaText,
-      displayValue: cdRow.DisplayValue,
-    });
-  }
-
-  results.sort((a, b) => b.absDelta - a.absDelta);
-  return results.slice(0, MAX_FINDINGS);
 }

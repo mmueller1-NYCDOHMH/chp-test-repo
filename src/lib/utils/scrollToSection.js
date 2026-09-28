@@ -8,9 +8,18 @@
  * Usage:
  *   import { scrollToSection } from '@/lib/utils/scrollToSection';
  *   scrollToSection('#community-safety');
+ *   scrollToSection('#community-safety', { focus: true }); // user-initiated jumps
+ *
+ * A11Y (2026-09-26):
+ * - { focus: true } moves keyboard focus to the section's first heading
+ *   after scrolling (WCAG 2.4.3 Focus Order). Without it, the next Tab
+ *   continued from the nav link instead of from the section the user
+ *   jumped to. Only pass it for explicit user actions (nav clicks, search
+ *   results) — not for passive hash restores on page load.
+ * - Honors prefers-reduced-motion (instant jump instead of smooth scroll).
  */
 
-export function scrollToSection(anchor) {
+export function scrollToSection(anchor, { focus = false } = {}) {
   const id  = String(anchor).replace(/^#/, '');
   const el  = document.getElementById(id);
   if (!el) return;
@@ -26,5 +35,16 @@ export function scrollToSection(anchor) {
 
   const top = el.getBoundingClientRect().top + window.scrollY - stickyTotal - 16;
 
-  window.scrollTo({ top, behavior: 'smooth' });
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({ top, behavior: reducedMotion ? 'auto' : 'smooth' });
+
+  if (focus) {
+    // Focus the section's first heading (so screen readers announce where
+    // the user landed), falling back to the section itself. tabIndex=-1
+    // makes it programmatically focusable without adding a Tab stop.
+    // preventScroll: the smooth scroll above already positions it.
+    const target = el.querySelector('h1, h2, h3, h4') ?? el;
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
+  }
 }

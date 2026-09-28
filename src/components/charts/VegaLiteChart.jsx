@@ -20,11 +20,39 @@
  */
 import { useEffect, useRef, useState, memo } from 'react';
 import { useComparison } from '@/lib/context/ComparisonContext';
+import messages from '../../../content/site/messages.json';
 
 // React.memo prevents Vega from rebuilding when parent client components
 // re-render (e.g. comparison context changes) but pass the same spec reference.
 // Since specs are built in server components and serialized once, their object
 // identity is stable across client re-renders, so shallow comparison is sufficient.
+/**
+ * A11Y (2026-09-27, axe svg-img-alt — ~85 hits per neighborhood page):
+ * Vega exposes every mark group inside the chart <svg> as its own unnamed
+ * "graphics-symbol" (spec config.aria:false doesn't reach layered marks).
+ * Instead, the chart wrapper becomes ONE image (role="img") with a short
+ * name taken from the spec's `description` (built in buildBarChartSpec.js:
+ * title, subtitle, "Bar chart of NYC community districts."), and the <svg>
+ * inside it is aria-hidden, so screen readers get a single, named chart.
+ * The full text alternative (range, citywide, selected neighborhood) is
+ * still ExpandableChartCard's sr-only description on the card itself.
+ * Re-applied on resize because Vega can rebuild the <svg>.
+ */
+function labelChartSvg(container, label) {
+  if (!container) return;
+  // The vega-embed wrapper (our container div) is the one named image…
+  container.setAttribute('role', 'img');
+  container.setAttribute('aria-label', label || container.getAttribute('aria-label') || 'Chart');
+  container.removeAttribute('aria-roledescription');
+  // …and the drawing inside it is hidden, so its mark groups (which Vega
+  // tags role="graphics-symbol" with no name) aren't exposed at all.
+  const svg = container.querySelector('svg');
+  if (svg) {
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+  }
+}
+
 const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onViewReady }) {
   const containerRef  = useRef(null);
   const wrapperRef    = useRef(null);
@@ -125,6 +153,12 @@ const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onView
       }).then((result) => {
         if (!cancelled) {
           viewRef.current = result.view;
+          // A11Y: one named image instead of dozens of unnamed mark groups
+          const a11yLabel = spec?.description;
+          labelChartSvg(containerRef.current, a11yLabel);
+          try {
+            result.view.addResizeListener(() => labelChartSvg(containerRef.current, a11yLabel));
+          } catch { /* older vega: no resize event */ }
           // Notify parent so it can capture the view for image export, etc.
           onViewReady?.(result.view);
           // Signal that Vega has rendered — try to start the entrance animation.
@@ -165,9 +199,12 @@ const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onView
       <div
         className="w-full flex items-center justify-center bg-gray-50 rounded-lg border border-dashed border-gray-200"
         style={{ minHeight: '175px' }}
-        aria-label="Chart unavailable"
+        // A11Y (2026-09-26): a render failure used to show the same "No data
+        // available" copy as a genuinely empty chart, so a broken load read as
+        // missing data. Distinct copy now, and a no-role div's aria-label
+        // (which assistive tech ignores) replaced by real text.
       >
-        <p className="text-sm text-gray-500">No data available</p>
+        <p className="text-sm text-gray-600">{messages.chartLoadError}</p>
       </div>
     );
   }

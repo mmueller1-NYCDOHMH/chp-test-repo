@@ -1,33 +1,29 @@
 # NYC Community Health Profiles — Developer Guide
 
+> **Updating copy, indicators, or data?** See **[CONTENT-GUIDE.md](CONTENT-GUIDE.md)** — the copy deck, the Sections tab, data files, tokens, and worked examples. This file is for developers.
+
+_Last reviewed 2026-09-28 against the code._
+
 ---
 
 ## Contents
 
 - [Getting started](#getting-started)
-- [How the config-driven system works](#how-the-config-driven-system-works)
+- [Architecture in one page](#architecture-in-one-page)
+- [How a page renders](#how-a-page-renders)
+- [Content pipeline (`npm run copy`)](#content-pipeline-npm-run-copy)
 - [Folder and file structure](#folder-and-file-structure)
-- [Indicator registry](#indicator-registry)
-- [Section ID constants](#section-id-constants)
-- [Search index](#search-index)
+- [Routes](#routes)
+- [Where indicator metadata comes from](#where-indicator-metadata-comes-from)
+- [Sections: standard vs. custom](#sections-standard-vs-custom)
 - [URL-driven state](#url-driven-state)
-- [Sidebar tabs](#sidebar-tabs)
-- [Neighborhood selector](#neighborhood-selector)
-- [Introduction modal](#introduction-modal)
-- [Loading skeleton](#loading-skeleton)
-- [Dynamic metadata and 404](#dynamic-metadata-and-404)
-- [Keyboard navigation conventions](#keyboard-navigation-conventions)
+- [Window events](#window-events)
 - [Indicator flyout](#indicator-flyout)
-- [Cross-component hover sync (map ↔ strip)](#cross-component-hover-sync-map--strip)
-- [Cross-chart map hover](#cross-chart-map-hover)
-- [Sidebar map: zoom to selected neighborhood](#sidebar-map-zoom-to-selected-neighborhood)
-- [Scroll and anchor system](#scroll-and-anchor-system)
-- [Animation system](#animation-system)
-- [Neighborhood overview hero](#neighborhood-overview-hero)
-- [How to add a new indicator](#how-to-add-a-new-indicator)
-- [How to add a new section](#how-to-add-a-new-section)
-- [How to add a new page](#how-to-add-a-new-page)
-- [How to add a new block type](#how-to-add-a-new-block-type)
+- [Cross-component hover sync](#cross-component-hover-sync)
+- [Scroll and anchors](#scroll-and-anchors)
+- [Accessibility conventions](#accessibility-conventions)
+- [Colors](#colors)
+- [How to add…](#how-to-add)
 - [Key constraints](#key-constraints)
 
 ---
@@ -36,49 +32,83 @@
 
 ```bash
 npm install
-npm run dev
+npm run dev        # runs `npm run copy` first (predev), then next dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the site.
+Open <http://localhost:3000> — the root route redirects to the default neighborhood (`DEFAULT_NEIGHBORHOOD_ID` in `src/lib/utils/constants.js`).
+
+| Script | Does |
+|---|---|
+| `npm run copy` | Builds the generated copy/structure JSON from the CSVs (see below) |
+| `npm run dev` / `npm run build` | Run `copy` first automatically |
+| `npm run lint` | ESLint |
+
+**Environment:** `NYC_GEOCLIENT_KEY` (server-only) for the `/api/geocode` address lookup. Set it in `.env.local` locally and in the Netlify dashboard for deploys (see `netlify.toml`).
+
+**Stack:** Next.js 16 (App Router, React Compiler, Turbopack) · React 19 · Tailwind 4 · Vega-Lite via `vega-embed` · Leaflet / `react-leaflet` · `react-markdown`. Deployed on Netlify with `@netlify/plugin-nextjs`.
 
 ---
 
-## How the config-driven system works
+## Architecture in one page
 
-Every page on the site is defined by a config object, not by bespoke component code. When a route loads, it picks up a config from the page registry, passes it to `CHPBuilder`, and the renderer loops through the config to produce the page. The same components appear on every page — only the config that drives them changes.
+Four layers, each with one job. Components sit underneath and never know which page they're on or where their data came from.
 
-There are five layers, each with a single responsibility:
+| Layer | Lives in | Owns |
+|---|---|---|
+| **Data** | `data/indicators/`, `data/metadata/` (data team) | Values per geography; source, time period, methods, unit, decimals |
+| **Copy & structure** | `content/copy/measure-copy.csv` + `sections.csv` → generated JSON | Which indicators appear, where, in what order, and all indicator copy |
+| **Display presets** | `src/config/presets/` | `indicatorDisplay.js` (delta direction, footnote type, distributions) · `layoutPresets.js` |
+| **Page config** | `src/config/pages/`, `src/config/sections/`, registries | How each section renders (standard grid vs. bespoke block) |
 
-**1. Data files** (`/data/`)
-Raw JSON files containing indicator values for every neighborhood, borough, and citywide. These are the only files touched when data is updated. Components never read these files directly.
+Data reading and normalization live only in `src/lib/data/` (server-only). Anything that needs reshaping (ranking, scaling, suppression) should be asked of the data export rather than added as a JS transform.
 
-**2. Indicator registry** (`/src/config/registries/indicatorRegistry.js` + `/src/config/registries/indicators/`)
-A catalog of every health indicator in the system. Definitions live in topic-scoped files under `/indicators/`; the main `indicatorRegistry.js` assembles them into a single export. Each entry defines the data file key, display title, source citation, unit labels, decimal precision, whether a higher value is healthier, and which section topic it belongs to.
+---
 
-**3. Section configs** (`/src/config/sections/`)
-Each file defines one section of a page: which blocks it contains, in what order, and which indicators each block should display. Sections are reusable — the same section can appear on multiple pages.
-
-**4. Page configs** (`/src/config/pages/`)
-An ordered list of sections that make up a page. Nothing else. No logic, no data, no formatting.
-
-**5. Page registry** (`/src/config/registries/pageRegistry.js`)
-Maps a string key (e.g. `'neighborhood-profile'`) to a page config object. Routes look up their config here.
-
-The rendering path for every page follows this sequence:
+## How a page renders
 
 ```
-URL → route handler → pageRegistry → page config
-                                           ↓
-                              getData() → neighborhood/geography data
-                                           ↓
-                                      CHPBuilder
-                                           ↓
-                          sections → SectionWrapper (layout)
-                                           ↓
-                               blocks → Block → blockRegistry → React component
+/neighborhood/[id]
+  → app/neighborhood/[id]/page.js      validates id (notFound() if unknown), generateMetadata
+  → getData({ geography: id })          name, geoId, borough (from public/data/CD.geojson)
+  → pageRegistry['neighborhood-profile'] → neighborhoodProfile config
+  → CHPBuilder                          loops config.sections
+      → SectionWrapper                  applies the section's layout preset
+          → Block                       looks up block.type in blockRegistry,
+                                        injects cards from the copy deck
+              → component               (IndicatorChartGrid, NeighborhoodOverviewHero, …)
 ```
 
-`CHPBuilder` loops through `config.sections`. For each section it renders a `SectionWrapper` (which applies the layout preset) and then loops through the section's `children` array, rendering each block via `Block`. `Block` looks up the component type in `blockRegistry` and passes the resolved props. No component knows which page it is on or where its data came from.
+`src/config/pages/neighborhoodProfile.js` builds the section list from `structure.json` (via `siteNav.js`), so **section order comes from the copy deck**:
+
+1. `neighborhoodOverview` (At a Glance hero)
+2. For each category: a `categoryHeader` block (title + intro from the deck), then each section:
+   - `CUSTOM_SECTIONS[id]` if it has a bespoke file, otherwise
+   - `buildStandardSection(id)` → `sectionHeader` + `indicatorChartGrid`
+   - Bespoke sections nested under a parent (e.g. Avertable Deaths under Economic) render as extra cells inside the parent's card grid (`extraBlocks`).
+
+`Block.jsx` fills `indicatorChartGrid` / `neighborhoodOverviewHero` props at render time via `loadSectionIndicators()` — every keyed deck row whose `topic` is that section id, in sheet order.
+
+---
+
+## Content pipeline (`npm run copy`)
+
+`scripts/build-copy.js` reads:
+
+- `content/copy/measure-copy.csv` — the DOHMH copy deck
+- `content/copy/sections.csv` — the Sections tab (sheet names → ids, headings, custom sections)
+- `src/config/presets/indicatorDisplay.js` — to know which keys are distributions
+- `src/config/registries/sectionIds.js` — every id there must exist in `sections.csv`
+- `data/indicators/`, `data/metadata/` — existence checks only
+
+and writes (never hand-edit):
+
+| Output | Read by |
+|---|---|
+| `content/copy/indicatorCopy.json` | `src/config/indicatorCopy.js` → cards, search, narrative, indicator page |
+| `content/copy/structure.json` | `siteNav.js`, `neighborhoodProfile.js`, `loadPrintManifest.js` |
+| `src/config/content/sectionTitles.json` | Section headers, custom section files, indicator page |
+
+Errors (unknown Section/Subsection, duplicate Key, missing column, stale section id) exit 1 and write nothing. Warnings (missing data/metadata file, blank `type`/`of`, category without intro) print but don't block.
 
 ---
 
@@ -86,586 +116,251 @@ URL → route handler → pageRegistry → page config
 
 ```
 /
-├── data/
-│   ├── indicators/             ← one JSON file per health indicator
-│   │   ├── poverty.json
-│   │   ├── obesity.json
-│   │   ├── life-expectancy.json
-│   │   └── child-asthma.json
-│   └── hero-stats.json         ← citywide + borough headline stats for the landing page
-│
+├── content/                     ← editable content (see CONTENT-GUIDE.md)
+│   ├── copy/                    ← measure-copy.csv, sections.csv + generated JSON
+│   ├── site/                    ← header, footer, about, intro modal, glossary, phrases, messages
+│   └── print/printSettings.json
+├── data/                        ← data-team exports, read directly
+│   ├── indicators/{key}.json
+│   └── metadata/{key}-meta.json
+├── public/data/CD.geojson       ← community district boundaries (maps + neighborhood list)
+├── scripts/build-copy.js        ← content pipeline
+├── .github/                     ← manual "Cleanup Unused Files" workflow + scanner
 └── src/
-    ├── app/                    ← Next.js App Router routes
-    │   ├── layout.js           ← root layout (fonts, global styles)
-    │   ├── page.js             ← landing page route (/)
-    │   └── neighborhood/
-    │       └── [id]/
-    │           ├── page.js       ← neighborhood profile route (/neighborhood/[id])
-    │           ├── loading.jsx   ← full-page skeleton shown during server fetch
-    │           └── not-found.jsx ← friendly error page for invalid neighborhood IDs
+    ├── app/
+    │   ├── layout.js, globals.css
+    │   ├── page.js                       ← redirects / → default neighborhood
+    │   ├── neighborhood/[id]/            ← page, layout, loading, not-found
+    │   ├── indicator/[key]/              ← standalone indicator page + jumpers + comparison chart
+    │   ├── print/                        ← print layout + print.css + neighborhood/[id]/page.js
+    │   ├── about/                        ← page + loading
+    │   └── api/geocode/route.js          ← server proxy to NYC Geoclient
     │
     ├── components/
-    │   ├── core/
-    │   │   ├── CHPBuilder.jsx             ← main rendering engine; loops config.sections
-    │   │   ├── Block.jsx                  ← resolves a single block to a component + props
-    │   │   ├── FlyoutShell.jsx            ← right-side flyout container + context provider;
-    │   │   │                                 supports 'section' and 'indicator' kinds;
-    │   │   │                                 focus trap, Escape to close, focus return to trigger
-    │   │   ├── IndicatorFlyoutContent.jsx ← body of the indicator flyout: choropleth map,
-    │   │   │                                 title/units/color key, insight sentence,
-    │   │   │                                 distribution strip, description, source;
-    │   │   │                                 fully scrollable; owns map↔strip hover state
-    │   │   ├── IntroModal.jsx             ← first-visit welcome modal with borough-grouped
-    │   │   │                                 neighborhood picker + keyboard navigation + map sync
-    │   │   └── MapHoverTooltip.jsx        ← sidebar "At a Glance" stat panel; shows selected
-    │   │                                     neighborhood's overview indicators at rest and
-    │   │                                     map-hovered district data on hover
-    │   │
-    │   ├── layout/
-    │   │   ├── PageLayout.jsx       ← outer shell: sidebar, header, main content area
-    │   │   ├── PageHeader.jsx       ← top nav bar with NYC Health logo
-    │   │   ├── Sidebar.jsx          ← two-tab strip (Neighborhood / Find indicator);
-    │   │   │                           tab state is URL-driven via ?tab= param
-    │   │   ├── SectionWrapper.jsx   ← wraps each section; applies layout preset classes
-    │   │   ├── TopicNav.jsx         ← sticky two-level topic nav with scroll-spy;
-    │   │   │                           smart hash restore on external/direct entry
-    │   │   ├── StickyContextBar.jsx ← neighborhood name + active section breadcrumb
-    │   │   └── Breadcrumb.jsx
-    │   │
-    │   ├── data-display/
-    │   │   ├── StatCard.jsx
-    │   │   ├── StatGrid.jsx
-    │   │   ├── IndicatorCard.jsx
-    │   │   ├── IndicatorChart.jsx
-    │   │   ├── IndicatorChartGrid.jsx      ← 2-column grid of expandable chart cards
-    │   │   ├── BarChart.jsx
-    │   │   ├── ChartContainer.jsx
-    │   │   ├── HeroCard.jsx
-    │   │   ├── CardRow.jsx
-    │   │   ├── AnimatedValue.jsx           ← fade + slide-up animation for stat values on mount;
-    │   │   │                                  duration 0.75s ease; delay prop for optional stagger
-    │   │   ├── AnimatedBar.jsx             ← scaleX animation for pyramid chart bars on mount;
-    │   │   │                                  duration 0.75s; transform-origin-aware
-    │   │   ├── DistributionStrip.jsx       ← dot-on-a-line chart showing where a neighborhood
-    │   │   │                                  sits among all 59 CDs; hover tooltip with 120ms
-    │   │   │                                  grace period; responds to mapHoveredGeoId prop;
-    │   │   │                                  fires onHoverGeoId for reverse map highlight
-    │   │   ├── ComparisonPyramidChart.jsx  ← back-to-back horizontal bar chart; neighborhood
-    │   │   │                                  bars grow left, citywide bars grow right; shows
-    │   │   │                                  "No data available" placeholder when empty
-    │   │   ├── CityOverviewHero.jsx        ← landing page hero panel
-    │   │   └── NeighborhoodOverviewHero.jsx ← neighborhood profile hero: stat tiles +
-    │   │                                      pyramid charts; all elements animate
-    │   │                                      simultaneously on load
-    │   │
-    │   ├── content/
-    │   │   ├── SectionHeader.jsx
-    │   │   ├── TextBlock.jsx
-    │   │   └── MarkdownRenderer.jsx
-    │   │
-    │   ├── controls/
-    │   │   ├── NeighborhoodSelector.jsx  ← borough-grouped search with keyboard nav
-    │   │   ├── IndicatorSearch.jsx       ← full-text search across all registered indicators
-    │   │   ├── SectionNav.jsx
-    │   │   ├── ComparisonToggle.jsx
-    │   │   ├── GeoContextCard.jsx
-    │   │   └── AboutSectionLink.jsx
-    │   │
-    │   ├── charts/
-    │   │   ├── VegaLiteChart.jsx        ← Vega-Lite chart renderer (vega-embed)
-    │   │   └── ExpandableChartCard.jsx  ← expandable card wrapper; opens indicator flyout
-    │   │                                   via useFlyout(); sets per-indicator anchor id;
-    │   │                                   focus-visible rings on both buttons;
-    │   │                                   Escape closes the expanded modal
-    │   │
-    │   └── maps/
-    │       ├── NeighborhoodMap.jsx  ← sidebar Leaflet map; fires chp:map-hover events;
-    │       │                          fitBounds zooms to the selected neighborhood on load
-    │       ├── ChoroplethMap.jsx    ← flyout choropleth; colors each CD by indicator value;
-    │       │                          drag + pinch-to-zoom enabled; click suppressed;
-    │       │                          fires onHoverGeoId on CD hover (via stable ref);
-    │       │                          responds to stripHoveredGeoId for reverse highlight
-    │       │                          via imperative eachLayer restyle; error/empty state
-    │       │                          shown if GeoJSON or data fails to load
-    │       └── ModalMap.jsx         ← Leaflet map used inside the intro modal
+    │   ├── core/          CHPBuilder, Block, FlyoutShell (+ flyoutShell/ hooks),
+    │   │                  IndicatorFlyoutContent, IntroModal (+ introModal/), MapHoverTooltip
+    │   ├── layout/        PageLayout, PageHeader, Footer, Sidebar (+ sidebar/ hooks),
+    │   │                  TopicNav (+ topicNav/ hooks), StickyContextBar, StickyOffsetSync,
+    │   │                  SectionWrapper, Bone, LanguageToggle, KeyboardShortcutsButton,
+    │   │                  ShortcutsToast, RouteAnnouncer, LoadingAnnouncer, MobileCategoryPager
+    │   ├── data-display/  IndicatorChartGrid, NeighborhoodOverviewHero,
+    │   │                  ComparisonStatTilesClient (+ comparisonStatTiles/),
+    │   │                  ComparisonPyramidChart(+Client), PyramidChartSection,
+    │   │                  ComparisonBarChart(+Client), PrematureDeathOverviewSection,
+    │   │                  PrematureDeathChartsRow, PrematureMortCauseCard,
+    │   │                  AvertableDeathsSection, AvertableDeathsChart, CompareToCityToggle,
+    │   │                  DistributionStrip, RankDotStrip, AnimatedValue, AnimatedBar,
+    │   │                  AtAGlanceTitle, useRovingDots
+    │   ├── charts/        ExpandableChartCard (+ expandableChartCard/: modals, embed,
+    │   │                  notes, legend, focus trap, domToCanvas), VegaLiteChart
+    │   ├── maps/          NeighborhoodMap (+ neighborhoodMap/ hooks), ChoroplethMap, ModalMap
+    │   ├── controls/      UnifiedSearch (+ unifiedSearch/), IndicatorSearch, AddressSearch,
+    │   │                  ComparisonNeighborhoodSelector, NeighborhoodGroups,
+    │   │                  BackToTopButton, ContinueToNextCategoryButton
+    │   ├── content/       CategoryHeader, SectionHeader, GlossaryTerm, MarkdownRenderer
+    │   └── print/         PrintReportHeader/Footer, PrintLegend, PrintButton,
+    │                      PrintCategoryBlock, PrintSubsectionTable, PrintIndicatorRow
     │
     ├── config/
-    │   ├── pages/
-    │   │   ├── landingPage.js
-    │   │   └── neighborhoodProfile.js
-    │   │
-    │   ├── sections/
-    │   │   ├── cityOverview.js
-    │   │   ├── neighborhoodOverview.js
-    │   │   ├── chronicConditions.js
-    │   │   └── socialEconomicConditions.js
-    │   │
-    │   ├── nav/
-    │   │   └── siteNav.js
-    │   │
-    │   ├── registries/
-    │   │   ├── sectionIds.js
-    │   │   ├── blockRegistry.js
-    │   │   ├── pageRegistry.js
-    │   │   ├── componentRegistry.js
-    │   │   ├── indicatorRegistry.js
-    │   │   └── indicators/
-    │   │       ├── chronicConditions.js
-    │   │       └── socialEconomicConditions.js
-    │   │
-    │   ├── presets/
-    │   │   ├── layoutPresets.js
-    │   │   └── indicatorPresets.js
-    │   │
-    │   ├── layout/
-    │   │   └── resolveLayoutClasses.js
-    │   │
-    │   ├── searchIndex.js
-    │   │
-    │   └── content/
-    │       └── sectionCopy.json
+    │   ├── pages/neighborhoodProfile.js   ← section order from the deck; CUSTOM_SECTIONS
+    │   ├── sections/                      ← bespoke sections only: neighborhoodOverview,
+    │   │                                     healthOutcomes, avertableDeaths
+    │   ├── registries/                    ← blockRegistry, pageRegistry, sectionIds
+    │   ├── presets/                       ← indicatorDisplay, layoutPresets
+    │   ├── layout/resolveLayoutClasses.js
+    │   ├── nav/siteNav.js                 ← nav from structure.json
+    │   ├── content/sectionTitles.json     ← generated
+    │   ├── indicatorCopy.js               ← imports generated indicatorCopy.json
+    │   └── searchIndex.js
     │
     └── lib/
-        ├── data/
-        │   ├── getData.js
-        │   ├── loadIndicatorData.js
-        │   ├── getNeighborhoods.js
-        │   ├── getIndicatorSummaries.js
-        │   └── neighborhoods.json
-        │
-        ├── utils/
-        │   ├── resolveProps.js
-        │   ├── resolveTemplate.js
-        │   ├── generateSummary.js
-        │   ├── getFlyoutContent.js
-        │   ├── scrollToSection.js
-        │   ├── compareIndicator.js   ← buildInsight() and computeDelta(); pure functions;
-        │   │                            used by IndicatorFlyoutContent to generate the
-        │   │                            "higher/lower than citywide" insight sentence
-        │   ├── formatGeography.js    ← displayName() strips "(CD12)" suffixes for prose
-        │   └── slugify.js
-        │
-        ├── charts/
-        │   └── buildBarChartSpec.js
-        │
-        └── context/
-            └── ComparisonContext.jsx
+        ├── data/      (server-only) loadIndicatorData, loadSectionIndicators, getIndicatorMeta,
+        │              normalizeDataMeta, getData, getNeighborhoods, resolveOverviewData,
+        │              getIndicatorSummaries, joinDistributionFiles, getCancerRankingData,
+        │              getPrematureMortCauseData, getAvertableDeathsFallback, loadPrintManifest
+        ├── copy/      getNarrativeCopy, resolveNarrative (token substitution)
+        ├── charts/    buildBarChartSpec, chartColors
+        ├── context/   ComparisonContext, MobileCategoryContext (experimental)
+        ├── geoclient/ geocode (client → /api/geocode)
+        ├── glossary.js
+        └── utils/     compareIndicator, distributionSegments, scrollToSection, mapTiles,
+                       fetchGeoJson, formatGeography, slugify, strings, highlight,
+                       resolveProps, resolveTemplate, inertOthers, tablistKeyDown, constants
 ```
+
+Every source file opens with a `FILE / PURPOSE` header comment — read that first.
 
 ---
 
-## Indicator registry
+## Routes
 
-Indicator metadata is split across topic-scoped files, assembled by a barrel file.
+| Route | File | Notes |
+|---|---|---|
+| `/` | `app/page.js` | Redirects to `/neighborhood/{DEFAULT_NEIGHBORHOOD_ID}` |
+| `/neighborhood/[id]` | `app/neighborhood/[id]/page.js` | The profile. `generateMetadata` per neighborhood; unknown id → `not-found.jsx`; `loading.jsx` skeleton |
+| `/indicator/[key]?geo=[id]` | `app/indicator/[key]/page.js` | Standalone, citable indicator page (no app shell): indicator + neighborhood pickers, insight, narrative, ranked chart with comparison, methodology, CSV/PNG download. Target of the flyout's "Full page" link. |
+| `/print/neighborhood/[id]` | `app/print/neighborhood/[id]/page.js` | Printable/accessible report; own minimal layout + `print.css`; structure from the deck, print-only tweaks from `content/print/printSettings.json` |
+| `/about` | `app/about/page.js` | Content from `content/site/about.json` |
+| `/api/geocode?address=` | `app/api/geocode/route.js` | Server proxy to NYC Geoclient; keeps `NYC_GEOCLIENT_KEY` off the client |
 
-```
-/src/config/registries/
-├── indicatorRegistry.js          ← barrel: import from here in all section configs
-└── indicators/
-    ├── chronicConditions.js
-    └── socialEconomicConditions.js
-```
+---
 
-Each indicator entry shape:
+## Where indicator metadata comes from
 
-| Field | Purpose |
+`getIndicatorMeta(key)` (server-only) merges three sources into one object:
+
+| Source | Fields |
 |---|---|
-| `key` | Matches the filename in `/data/indicators/` (no extension) |
-| `topic` | Section ID; import from `sectionIds.js` |
-| `title` | Full display title used in chart headers and the flyout |
-| `subtitle` | Unit or method description |
-| `source` | Full source citation string |
-| `sourceUrl` | Optional canonical URL for the source data |
-| `timePeriod` | Data collection period |
-| `label` | Short label for stat tiles and hero panels |
-| `unit` | Sub-label shown under the value in stat tiles |
-| `displaySuffix` | Appended to the formatted value (e.g. `' yrs'`) |
-| `deltaSuffix` | Appended to the delta vs citywide (e.g. `' pts'`) |
-| `decimals` | Decimal places for the delta value |
-| `higherIsBetter` | Controls delta color direction |
-| `description` | Optional plain-language explanation shown in the indicator flyout |
+| `data/metadata/{key}-meta.json` (via `normalizeDataMeta.js`) | title/label/subtitle fallbacks, source, timePeriod, methodsNote, unit, decimals, ageAdjustment, denominatorSource |
+| `content/copy/indicatorCopy.json` (generated) | title (`Measure`), context, comparison, type, of, detail, units, indicatorDetail, topic, flag |
+| `src/config/presets/indicatorDisplay.js` | higherIsBetter, showDelta, dataSource, sourceUrl, kind/segments, dataMetaKey |
+
+`deltaSuffix` (`' pts'`) is derived when the data team's `Unit` is `%`. Distribution indicators (`age-distribution`, `race-ethnicity`) read metadata from a segment file via `dataMetaKey`.
+
+The old `content/indicators/*.meta.json`, `src/config/indicatorMeta.json`, `content/sections/*.json` and `indicatorRegistry` approaches are all **retired** — don't reintroduce them.
 
 ---
 
-## Section ID constants
+## Sections: standard vs. custom
 
-**File:** `/src/config/registries/sectionIds.js`
+Most sections need no code: a row in `sections.csv` + rows in the deck → `buildStandardSection(id)`.
 
-Single source of truth for every section ID string. Three things must agree on a section's ID: the section config's `id` field, `siteNav.js` subcategory entries, and indicator `topic` fields. Defining the value once means a rename is a compile error, not a silent scroll-spy breakage.
+A section needs its own file in `src/config/sections/` only when it renders something other than a card grid:
 
-```js
-export const CITY_OVERVIEW_ID              = 'city-overview';
-export const NEIGHBORHOOD_OVERVIEW_ID      = 'neighborhood-overview';
-export const CHRONIC_CONDITIONS_ID         = 'chronic-conditions';
-export const SOCIAL_ECONOMIC_CONDITIONS_ID = 'social-health';
-```
+| File | Why it's custom |
+|---|---|
+| `neighborhoodOverview.js` | At a Glance hero (stat tiles + pyramid charts) |
+| `healthOutcomes.js` | Standard grid **plus** the `prematureDeathOverviewSection` block |
+| `avertableDeaths.js` | Dot-distribution chart instead of a bar chart; nested into Economic via a `custom` row in `sections.csv` |
 
-Rules:
-- Only add a constant once the section config file exists.
-- The constant value must exactly match the `id` in the section config.
-- Import the constant in: the section file, the matching indicator topic file, and `siteNav.js`.
+Each custom file uses an id constant from `sectionIds.js`, and `build-copy.js` fails if that id isn't in `sections.csv`.
 
----
+**Block types** (`blockRegistry.js`): `categoryHeader`, `sectionHeader`, `indicatorChartGrid`, `neighborhoodOverviewHero`, `prematureDeathOverviewSection`, `avertableDeathsSection`.
 
-## Search index
-
-**File:** `/src/config/searchIndex.js`
-
-A flat array built at module load time from `indicatorRegistry` and `siteNav`. Each entry has `key`, `title`, `topic`, `anchor` (section-level), and `indicatorAnchor` (per-card). `IndicatorSearch` filters this array on every keystroke. Selecting a result scrolls to `indicatorAnchor` first, falling back to `anchor`. The index is static — never rebuilt at runtime.
+**Layouts** (`layoutPresets.js`): `stacked`, `stackedNoCard`, `twoColumn`, `hero`, `split`, `cardRow`.
 
 ---
 
 ## URL-driven state
 
-Two pieces of UI state live in the URL via `history.replaceState`:
+State that should survive a refresh or a shared link lives in the URL (`history.replaceState` + `URLSearchParams`):
 
-**Comparison toggle** (`?compare=`)
-`ComparisonContext` reads on mount and writes on every change. The default value (`None`) is omitted from the URL to keep links clean.
-
-**Sidebar tab** (`?tab=`)
-`Sidebar` reads on mount and writes on tab switch. Valid values: `'neighborhood'` | `'search'`.
-
-Both params coexist and can be round-tripped together.
-
----
-
-## Sidebar tabs
-
-**File:** `src/components/layout/Sidebar.jsx`
-
-Two tabs: **Neighborhood** (borough chip, selector, map) and **Find indicator** (full-text search). When a user selects an indicator from search results, the sidebar automatically switches back to the Neighborhood tab:
-
-```jsx
-<IndicatorSearch onNavigate={() => setActiveTab('neighborhood')} />
-```
+| Param | Owner | Values |
+|---|---|---|
+| `?compare=` | `ComparisonContext` | `citywide` \| `borough` \| `none` — benchmark reference line |
+| `?compareTo=` | `ComparisonContext` | a neighborhood id — second CD highlighted in every chart |
+| `?tab=` | `sidebar/useSidebarTabs.js` | `neighborhood` \| `search` |
+| `?flyout=` | `FlyoutShell` "Copy link", `EmbedModal` | indicator key. **Written but not yet read on load** — a shared link doesn't reopen the flyout yet. |
+| `?geo=` | `/indicator/[key]` | neighborhood id |
 
 ---
 
-## Neighborhood selector
+## Window events
 
-**File:** `src/components/controls/NeighborhoodSelector.jsx`
+Loosely coupled components talk through `window` `CustomEvent`s (all prefixed `chp:`):
 
-Borough-grouped search. Matches on neighborhood or borough name. Groups results under sticky borough headers in fixed order: Manhattan → Bronx → Brooklyn → Queens → Staten Island.
-
-Keyboard: Arrow keys move through results (skipping headers); `Enter` navigates; `Escape` clears or closes.
-
-ARIA: `role="combobox"` on input, `role="listbox"` on list, `role="option"` on each item, `aria-activedescendant` tracks focus.
-
-Uses `type="text"` (not `type="search"`) — see [Key constraints](#key-constraints).
-
----
-
-## Introduction modal
-
-**Files:** `src/components/core/IntroModal.jsx`, `src/components/maps/ModalMap.jsx`
-
-Shown on first visit; suppressed once dismissed or after a neighborhood is selected (persisted via `localStorage`). Two-column layout: left has search + borough-grouped list; right has a Leaflet map. `hoveredId` state is lifted so hovering either side syncs the other, including arrow-key navigation.
-
-To force the modal to reappear for testing, clear the `chp_intro_seen` key from `localStorage`.
-
----
-
-## Loading skeleton
-
-**File:** `src/app/neighborhood/[id]/loading.jsx`
-
-Next.js renders this automatically during the server fetch. It mirrors the full page structure with `animate-pulse` skeleton bones. No configuration required.
-
----
-
-## Dynamic metadata and 404
-
-`src/app/neighborhood/[id]/page.js` exports `generateMetadata` for per-neighborhood `<title>` and Open Graph tags. Before fetching, the route validates the `id` param and calls `notFound()` for unknown IDs, which renders `not-found.jsx` — a standalone page with a link back to `/`.
-
----
-
-## Keyboard navigation conventions
-
-All search inputs follow the same contract:
-
-| Key | Action |
+| Event | Fired by → used for |
 |---|---|
-| `↓` / `↑` | Move through results |
-| `Enter` | Select focused result (falls back to first if none focused) |
-| `Escape` | Clear query first; dismiss if query is already empty |
-
-All modal and flyout overlays close on `Escape`:
-- Expanded chart modal (`ExpandableChartCard`)
-- Indicator flyout (`FlyoutShell`) — also traps Tab focus within the panel and returns focus to the trigger element on close
-- Intro modal — `Escape` clears query first; second `Escape` dismisses
+| `chp:map-hover` `{ geoId, name }` | `NeighborhoodMap` → bar highlight in every `VegaLiteChart` (via a Vega signal, no re-render) and the sidebar `MapHoverTooltip` preview |
+| `chp:comparison-changed` `{ geoId }` | `ComparisonContext` → charts/maps outside the React tree |
+| `chp:section-activated` | TopicNav scroll-spy → sticky bar breadcrumb, sidebar label |
+| `chp:open-intro-modal`, `chp:focus-neighborhood-search`, `chp:open-mobile-sheet` | Keyboard shortcuts / buttons → the matching UI |
+| `chp:set-paged-category` | Experimental mobile category pager |
+| `chp:all-explored` | Explorer badge easter egg |
 
 ---
 
 ## Indicator flyout
 
-**Files:** `src/components/core/FlyoutShell.jsx`, `src/components/core/IndicatorFlyoutContent.jsx`
+**Files:** `components/core/FlyoutShell.jsx`, `components/core/IndicatorFlyoutContent.jsx`
 
-Clicking "More about this indicator" on any chart card opens a right-side flyout panel. `FlyoutShell` provides a React context (`useFlyout`) that any component beneath it can call:
+"Details →" on any card calls `useFlyout().open({ kind: 'indicator', … })`. The flyout shows the card's own mini bar chart with a rank marker, a choropleth map, the insight sentence (neighborhood vs. citywide, and vs. the comparison neighborhood if set), the flagged-estimate footnote when applicable, the methods note and source, and a "Full page" link to `/indicator/[key]`.
 
-```js
-const { open, close } = useFlyout();
-
-open({
-  kind:          'indicator',
-  title:         'Incarcerations',
-  subtitle:      'Rate per 100,000 adults · Age-adjusted',
-  source:        'NYC Department of Correction (2023–2024)',
-  sourceUrl:     'https://...',
-  description:   'Number of people incarcerated...',
-  indicatorData: [...],   // full flat array: all CD rows + citywide row
-  geoId:         310,     // numeric GeoID of the selected neighborhood
-});
-```
-
-Two payload kinds:
-- `kind: 'indicator'` — renders `IndicatorFlyoutContent`
-- `kind: 'section'` (default) — renders a markdown flyout for section "About" content
-
-**`IndicatorFlyoutContent` layout (top to bottom, fully scrollable):**
-1. Choropleth map (400px tall) — all 59 CDs colored by indicator value; drag and pinch-to-zoom enabled
-2. Indicator name + units + low→high color key
-3. Insight sentence — neighborhood value vs. citywide, with directional badge
-4. Distribution strip — dot-on-a-line across all 59 CDs
-5. "About this indicator" description (if provided)
-6. Data source + optional link
-
-**Animation:** backdrop fades in immediately; panel slides in 50ms later. On close, panel exits with `ease-in`.
-
-**Accessibility:** `role="dialog"` + `aria-modal="true"`; focus moves to first focusable element on open; Tab/Shift-Tab trapped within panel; Escape closes and returns focus to the trigger element; close button has `focus-visible` ring.
+Behavior: `role="dialog"` + `aria-modal`, focus trap, Escape and browser Back close it, focus returns to the trigger (`flyoutShell/useFlyoutA11yEffects.js`, `useFlyoutHistoryBack.js`). On mobile it's a draggable bottom sheet (`flyoutShell/useMobileDragSheet.js`).
 
 ---
 
-## Cross-component hover sync (map ↔ strip)
+## Cross-component hover sync
 
-Hovering a CD on the choropleth highlights the corresponding dot in the distribution strip, and vice versa.
-
-**Map → strip**
-
-`ChoroplethMap` accepts `onHoverGeoId`. The callback is stored in a `ref` so Leaflet's event handlers — bound once at layer creation — always call the current version:
-
-```js
-const onHoverGeoIdRef = useRef(onHoverGeoId);
-useEffect(() => { onHoverGeoIdRef.current = onHoverGeoId; }, [onHoverGeoId]);
-```
-
-`IndicatorFlyoutContent` holds `mapHoveredGeoId` state and passes it to `DistributionStrip`. The strip uses it to highlight the matching dot when no dot is directly hovered (direct hover always wins).
-
-**Strip → map**
-
-`DistributionStrip` accepts `onHoverGeoId` and calls it on dot enter/leave. `IndicatorFlyoutContent` holds `stripHoveredGeoId` and passes it to `ChoroplethMap`.
-
-`ChoroplethMap` stores the value in a ref and imperatively restyles all features when it changes, using a `geoJsonLayerRef` set via the `<GeoJSON>` element's `ref` callback:
+**Choropleth ↔ distribution strip (inside the flyout).** `IndicatorFlyoutContent` holds `mapHoveredGeoId` and `stripHoveredGeoId` and passes each to the other component. `ChoroplethMap` keeps callbacks and hover ids in refs (Leaflet handlers bind once) and restyles imperatively:
 
 ```js
 useEffect(() => {
   stripHoveredGeoIdRef.current = stripHoveredGeoId;
-  if (!geoJsonLayerRef.current) return;
-  geoJsonLayerRef.current.eachLayer(layer => {
+  geoJsonLayerRef.current?.eachLayer(layer => {
     if (layer.feature) layer.setStyle(featureStyle(layer.feature));
   });
 }, [stripHoveredGeoId]);
 ```
 
-This is an imperative update — no React re-render, no GeoJSON remount.
+**Sidebar map → every chart.** `NeighborhoodMap` dispatches `chp:map-hover`; `VegaLiteChart` responds with `view.signal('hoverGeoId', geoId).run()` — no spec rebuild.
 
 ---
 
-## Cross-chart map hover
+## Scroll and anchors
 
-Hovering a community district on the sidebar Leaflet map highlights the corresponding bar in every visible indicator chart and updates the sidebar "At a Glance" panel.
+All programmatic scrolling goes through `lib/utils/scrollToSection.js`, which offsets for the sticky TopicNav + context bar (`StickyOffsetSync` keeps the offset in a CSS variable so focused elements aren't hidden under it).
 
-`NeighborhoodMap` fires a custom window event:
-
-```js
-window.dispatchEvent(new CustomEvent('chp:map-hover', {
-  detail: { geoId: 305, name: 'East Flatbush' }  // geoId: null on mouseout
-}));
-```
-
-Two independent listeners respond:
-
-**Bar highlighting (`VegaLiteChart.jsx`):** drives a named Vega signal directly on the view — no spec rebuild or re-render:
-
-```js
-view.signal('hoverGeoId', e.detail.geoId ?? null).run();
-```
-
-**Sidebar stat panel (`MapHoverTooltip.jsx`):** a "Map Preview" overlay fades in when hovering a different district, and fades out on mouseout. The panel only shows indicators listed in `neighborhoodOverview`'s `statTiles`, and stays in sync with that config automatically.
+Anchors: categories `#cat-{id}`, sections `#{section-id}`, cards `#indicator-{key}`. Search scrolls to the card first, falling back to the section. TopicNav restores `location.hash` on external entry.
 
 ---
 
-## Sidebar map: zoom to selected neighborhood
+## Accessibility conventions
 
-`NeighborhoodMap` calls `fitBounds` in a `useEffect` with `[geo, selectedId, leaflet]` as dependencies — `leaflet` is included because the map is dynamically imported and `mapRef.current` may be `null` when earlier effects fire. The call is also wrapped in `requestAnimationFrame` to give `MapContainer` one frame to mount before it runs.
+- Search inputs (`UnifiedSearch`, `IndicatorSearch`, intro modal): ↑/↓ move, Enter selects, Escape clears then closes; `role="combobox"` / `listbox` / `option` with `aria-activedescendant`.
+- Tablists use `lib/utils/tablistKeyDown.js` (arrow/Home/End).
+- Dot strips use a roving tabindex (`data-display/useRovingDots.js`).
+- Modals: focus trap + Escape (`expandableChartCard/useModalFocusTrap.js`); background made inert with `lib/utils/inertOthers.js` (chart modals, stat-tile modal, intro modal, mobile sidebar sheet).
+- `RouteAnnouncer` and `LoadingAnnouncer` announce navigation and loading to screen readers.
+- Keyboard shortcuts are listed in `KeyboardShortcutsButton.jsx` (`SHORTCUTS`).
+- Charts should ship a visually hidden table or text alternative (the pyramid charts do); check new chart types against this.
 
----
-
-## Scroll and anchor system
-
-**Utility:** `src/lib/utils/scrollToSection.js`
-
-All scroll-to-section calls go through this utility, which accounts for the sticky topic nav height:
-
-```js
-export function scrollToSection(anchor) {
-  const id = String(anchor).replace(/^#/, '');
-  const el = document.getElementById(id);
-  if (!el) return;
-  const navEl = document.getElementById('topic-nav');
-  const navHeight = navEl ? navEl.getBoundingClientRect().height : 56;
-  const top = el.getBoundingClientRect().top + window.scrollY - navHeight - 16;
-  window.scrollTo({ top, behavior: 'smooth' });
-}
-```
-
-Each `ExpandableChartCard` sets `id="indicator-{key}"` on its outer wrapper so `IndicatorSearch` can scroll directly to the card rather than the section top.
-
-**Smart hash restore (TopicNav):** on external entry, `TopicNav` reads `window.location.hash` on mount and scrolls to it, distinguished from in-app navigation via `document.referrer`. This prevents hash bleed when navigating between profiles.
+The latest accessibility audit outputs live in `Claude outputs/` (checklist CSV + axe results).
 
 ---
 
-## Animation system
+## Colors
 
-Two client components handle mount animations. All delays default to `0` so elements in a group animate simultaneously.
-
-**`AnimatedValue`** — fades + slides up a stat value on mount. Used in `NeighborhoodOverviewHero` stat tiles.
-- `opacity: 0 → 1`, `translateY: 6px → 0`
-- Duration: `0.75s ease`
-
-**`AnimatedBar`** — scaleX animates a pyramid chart bar from 0 to full width on mount. `transform-origin` is set per bar to grow toward the center spine.
-- `transform: scaleX(0) → scaleX(1)`
-- Duration: `0.75s cubic-bezier(0.4, 0, 0.2, 1)`
-
-To add stagger, pass a non-zero `delay` (ms) to either component.
+`src/lib/charts/chartColors.js` is the source of truth for chart/map hex values; `src/app/globals.css` mirrors the ones UI needs as CSS variables. **Keep them in sync by hand** — especially `COMPARISON` ↔ `--color-comparison` (`#C94D18`) and `SELECTED` (`#5646F5`). Full tables in CONTENT-GUIDE.md §12.
 
 ---
 
-## Neighborhood overview hero
+## How to add…
 
-**File:** `src/components/data-display/NeighborhoodOverviewHero.jsx`
+**An indicator** — no code. Data files + one deck row + `npm run copy`. Optionally a line in `indicatorDisplay.js`. See CONTENT-GUIDE.md Example A.
 
-Server component. Renders the "at a glance" section at the top of every neighborhood profile:
+**A standard section or category** — no code. `sections.csv` + deck rows. CONTENT-GUIDE.md Examples F–G.
 
-1. **Stat tiles** — animated value, label, optional delta badge (rounded-full pill), time period
-2. **Pyramid charts** — `ComparisonPyramidChart` side by side: Age Breakdown and Race / Ethnicity
-3. **Source footnote**
+**A custom section**
+1. Add a row to `sections.csv` (`section`, or `custom` with `Keys` if it nests inside another section).
+2. Add an id constant to `src/config/registries/sectionIds.js`.
+3. Create `src/config/sections/{name}.js` exporting `{ id, layout, children: [ …blocks ] }` (copy `avertableDeaths.js`).
+4. Register it in `CUSTOM_SECTIONS` in `src/config/pages/neighborhoodProfile.js`.
+5. `npm run copy`.
 
-All data resolved at server-render time via `resolveOverviewData`. Adding, removing, or reordering tiles or charts requires only a config change to `DEFAULT_STAT_TILES` or `DEFAULT_PYRAMID_CHARTS`.
+**A block type**
+1. Build the component under `src/components/data-display/` (server component by default; data reads via `src/lib/data/`).
+2. Register it in `src/config/registries/blockRegistry.js`:
+   ```js
+   import MyBlock from '@/components/data-display/MyBlock';
+   export const BlockRegistry = { …, myBlock: MyBlock };
+   ```
+3. Use it in a section config: `{ id: 'x-my-block', type: 'myBlock', props: { … } }`.
 
-**`ComparisonPyramidChart`** — back-to-back horizontal bar chart. Neighborhood bars grow left from center; citywide bars grow right. Both sides share the same scale. Includes a visually hidden accessible table for screen readers. Renders a dashed "No data available" placeholder when `segments` is empty.
-
----
-
-## How to add a new indicator
-
-**Step 1 — Add the data file**
-
-Create `/data/indicators/{your-key}.json`. The filename (without `.json`) is the key used everywhere else.
-
-**Step 2 — Add to the right topic file**
-
-```js
-// /src/config/registries/indicators/chronicConditions.js
-import { CHRONIC_CONDITIONS_ID } from '../sectionIds';
-
-export const chronicConditionIndicators = {
-  smokingRate: {
-    key:            'smoking-rate',
-    topic:          CHRONIC_CONDITIONS_ID,
-    title:          'Adult Smoking Rate',
-    subtitle:       '% of adults who currently smoke',
-    source:         'NYC Community Health Survey (2019–2022)',
-    sourceUrl:      'https://...',
-    description:    'Share of adults who report currently smoking cigarettes.',
-    timePeriod:     '2019–2022',
-    label:          'Adult Smoking',
-    unit:           'of adults',
-    displaySuffix:  '',
-    deltaSuffix:    ' pts',
-    decimals:       0,
-    higherIsBetter: false,
-  },
-};
-```
-
-If the indicator belongs to a new topic, create `/src/config/registries/indicators/{topicName}.js` and import + spread it in `indicatorRegistry.js`.
-
-**Step 3 — Add it to a section**
-
-```js
-import { indicators, asChartConfig, asStatTile } from '../registries/indicatorRegistry';
-
-asChartConfig(indicators.smokingRate)   // as a chart card
-asStatTile(indicators.smokingRate)      // as a stat tile
-```
-
-No component code changes needed. The indicator automatically appears in `IndicatorSearch`.
-
-Note: the sidebar "At a Glance" panel only shows indicators listed in `neighborhoodOverview`'s `statTiles`. Add it there explicitly if you want it in the sidebar panel.
-
----
-
-## How to add a new section
-
-**Step 1 — Add a section ID constant** in `sectionIds.js`.
-
-**Step 2 — Create the section config file** in `/src/config/sections/`. Import the ID constant; use it for the `id` field.
-
-Available block types (all keys in `blockRegistry.js`): `sectionHeader`, `indicatorChartGrid`, `indicatorCard`, `indicatorChart`, `neighborhoodOverviewHero`, `cityOverviewHero`, `heroCard`, `cardRow`, `stat`, `chart`, `text`, `aboutLink`.
-
-Available layouts (all keys in `layoutPresets.js`): `stacked`, `twoColumn`, `hero`, `split`, `cardRow`.
-
-**Step 3 — Add the section to a page config** in `/src/config/pages/`.
-
-**Step 4 — Wire it into the nav** in `/src/config/nav/siteNav.js` using the imported ID constant.
-
----
-
-## How to add a new page
-
-**Step 1 — Create a page config** in `/src/config/pages/`.
-
-**Step 2 — Register it** in `pageRegistry.js`.
-
-**Step 3 — Create the route** under `/src/app/`. Follow the same pattern as the neighborhood page: validate the param, call `getData()`, look up config from `pageRegistry`, pass both to `CHPBuilder`, export `generateMetadata`. Add `loading.jsx` and `not-found.jsx` alongside.
-
----
-
-## How to add a new block type
-
-**Step 1 — Build the component** under `/src/components/data-display/`.
-
-**Step 2 — Register it** in `blockRegistry.js`:
-
-```js
-import MyNewComponent from '@/components/data-display/MyNewComponent';
-
-export const BlockRegistry = {
-  myBlock: MyNewComponent,
-};
-```
-
-**Step 3 — Use it in a section config:**
-
-```js
-{
-  id:   'my-block-instance',
-  type: 'myBlock',
-  props: { ... }
-}
-```
+**A page type**
+1. Page config in `src/config/pages/`, registered in `pageRegistry.js`.
+2. Route under `src/app/` following `neighborhood/[id]`: validate the param, `getData()`, look up the config, render `CHPBuilder`, export `generateMetadata`, add `loading.jsx` / `not-found.jsx`.
 
 ---
 
 ## Key constraints
 
-- **No data logic in components.** All data reading and normalization happens in `/lib/data/`. Components receive clean, ready-to-render props.
-- **No layout logic in page configs.** Layout is controlled by the `layout` key on a section, mapping to a preset in `layoutPresets.js`.
-- **No formatting logic in section configs.** Formatting lives in indicator topic files and is resolved before props reach a component.
-- **Section configs contain no logic.** They are plain data objects.
-- **Section IDs are defined once** in `sectionIds.js`. Never hard-code a section ID string in more than one place.
-- **Indicator definitions are topic-scoped.** Add new indicators to the matching file in `/config/registries/indicators/`, not directly to `indicatorRegistry.js`.
-- **Search inputs use `type="text"`**, not `type="search"`. Browsers render a native clear button on `type="search"` that conflicts with the custom `×` button.
-- **State that should survive a refresh goes in the URL**, not component state. Use `history.replaceState` + `URLSearchParams`. See `ComparisonContext` and `Sidebar` for the pattern.
-- **Leaflet event handlers bind once at layer creation.** If a prop used inside a Leaflet event handler can change after mount, store it in a `ref` and read `ref.current` inside the handler. See `ChoroplethMap` for the pattern.
-- **Imperative Leaflet updates for cross-component state.** When external state needs to restyle map features (e.g. strip hover → map highlight), use `geoJsonLayerRef.current.eachLayer(layer => layer.setStyle(...))` rather than remounting the GeoJSON layer. Remounting causes a flash and resets tooltips.
+- **No data transforms in components.** Reading and normalizing data happens in `src/lib/data/` (server-only — these modules use `fs`). Prefer asking the data export for pre-shaped data over adding JS transforms.
+- **No indicator copy in code.** Copy lives in the deck; data facts in `data/metadata/`; display rules in `indicatorDisplay.js`.
+- **Never hand-edit generated files** (`indicatorCopy.json`, `structure.json`, `sectionTitles.json`).
+- **Section order and membership come from the deck.** Don't hard-code section lists in page configs.
+- **Section ids are defined once** — in `sections.csv`, plus `sectionIds.js` for sections with a custom file.
+- **Never rename an indicator key once it's live** — keys are in URLs and anchors.
+- **Search inputs use `type="text"`**, not `type="search"` (the native clear button conflicts with the custom ×).
+- **Leaflet handlers bind once.** Read changing props from refs inside handlers, and restyle with `eachLayer(...setStyle)` rather than remounting the GeoJSON layer.
+- **Strict Mode is off** (`next.config.mjs`) because of a dev-only react-leaflet double-mount bug; production is unaffected.

@@ -75,6 +75,23 @@ export function MobileCategoryProvider({ children }) {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
+  // External trigger for setPagedCategoryId — Sidebar.jsx (and IndicatorSearch,
+  // which it renders) lives OUTSIDE this provider in PageLayout.jsx (it's a
+  // sibling of <MobileCategoryProvider>, not a descendant), so it can't reach
+  // setPagedCategoryId via useMobileCategory() directly — that call would
+  // silently hit the defensive default instead. Same window-event pattern as
+  // chp:open-intro-modal / chp:focus-neighborhood-search elsewhere in the app.
+  // Used by IndicatorSearch to un-hide a result's category before scrolling
+  // to it on mobile.
+  useEffect(() => {
+    function handleSetCategory(e) {
+      const categoryId = e.detail?.categoryId;
+      if (categoryId) setPagedCategoryId(categoryId);
+    }
+    window.addEventListener('chp:set-paged-category', handleSetCategory);
+    return () => window.removeEventListener('chp:set-paged-category', handleSetCategory);
+  }, []);
+
   // Only scroll when pagedCategoryId itself actually CHANGES VALUE (a real
   // tab tap or continue-button click) — not merely when this effect
   // re-runs for some other reason. That distinction matters because

@@ -10,16 +10,38 @@
  *   1. Indicator name + subtitle                  ← above the map
  *   2. Choropleth map with color legend overlaid  ← legend floats bottom-left of map
  *   3. Dynamic insight (CD vs citywide)
- *   4. Distribution strip                         ← subtle box treatment
- *   5. Description (if provided)
- *   6. Source row — inline text + ? notes modal   ← no "Data Source" label
+ *   3a. Small-sample-size footnote — only when the selected CD's row is
+ *       itself flagged (ValueStatus: "flagged"); wording picked by
+ *       dataSource/isPercent — see getFlaggedEstimateFootnote() in
+ *       compareIndicator.js and CONTENT-GUIDE.md section 11
+ *   4. CD rank line, with a dot-distribution marker riding alongside the text
+ *      (2026-09-09) — every CD plotted as a small dot on the actual value
+ *      range (RankDotStrip.jsx, shared with the standalone indicator page),
+ *      not a fill/progress bar (fill implies "more = further along toward a
+ *      goal," which doesn't hold here); no box or header of its own
+ *   5. Mini bar (2026-09-09) — the same ranked bar chart (`compactSpec`) the
+ *      originating card renders, passed through as-is so the flyout's chart
+ *      visually matches the card. Replaces the old dot-on-a-line
+ *      DistributionStrip. Hover-synced with the map above via the Vega
+ *      view's `hoverGeoId` signal + standard mouseover/mouseout mark events
+ *      (see handleMiniBarViewReady below) — no changes to VegaLiteChart.jsx
+ *      itself, which stays a plain spec-in/view-out renderer.
+ *   6. Description (if provided)
+ *   7. Source row — inline text + ? notes modal   ← no "Data Source" label
  */
-import { useState, useEffect, useRef, useCallback } from 'react';
+import phrases from '../../../content/site/phrases.json';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { buildInsight } from '@/lib/utils/compareIndicator';
+import {
+  buildInsight,
+  getFlaggedEstimateFootnote,
+  getInsightBadgeClass,
+  DIRECTION_ARROWS,
+} from '@/lib/utils/compareIndicator';
 import { displayName } from '@/lib/utils/formatGeography';
 import { useComparison } from '@/lib/context/ComparisonContext';
-import DistributionStrip from '@/components/data-display/DistributionStrip';
+import VegaLiteChart from '@/components/charts/VegaLiteChart';
+import RankDotStrip from '@/components/data-display/RankDotStrip';
 import { CHOROPLETH_STOPS, SELECTED, COMPARISON } from '@/lib/charts/chartColors';
 
 const ChoroplethMap = dynamic(
@@ -30,11 +52,11 @@ const ChoroplethMap = dynamic(
   }
 );
 
-const DIRECTION_STYLES = {
-  up:      { badge: 'bg-red-50 text-red-700 border-red-200',       arrow: '↑' },
-  down:    { badge: 'bg-green-50 text-green-700 border-green-200', arrow: '↓' },
-  neutral: { badge: 'bg-gray-100 text-gray-600 border-gray-200',   arrow: '–' },
-};
+// DIRECTION_ARROWS / getInsightBadgeClass moved to compareIndicator.js
+// (2026-09-09) so the standalone indicator page (app/indicator/[key]/page.js)
+// can render the exact same up/down/neutral language without duplicating it
+// here. Same logic/comment as ComparisonStatTilesClient.jsx's
+// StatTileDetailModal, which still keeps its own copy.
 
 function cleanSource(source) {
   if (!source) return '';
@@ -50,10 +72,25 @@ export default function IndicatorFlyoutContent({
   indicatorData,
   geoId,
   sectionLabel,
+  dataSource,
+  isPercent,
+  higherIsBetter,
+  compactSpec,
+  chart,        // custom cards: their own chart element, shown in the mini-bar slot
 }) {
   const { comparisonNeighborhood } = useComparison();
 
-  const insight  = buildInsight(indicatorData, geoId, title);
+  const insight  = indicatorData?.length ? buildInsight(indicatorData, geoId, title) : null;
+
+  // Small-sample-size footnote — only when the SELECTED CD's own row is
+  // flagged, not just because the indicator has a flagged row somewhere
+  // among its 59. The "*" itself is already baked into that row's
+  // DisplayValue (e.g. "95%*"), shown above via insight.cdDisplay — this
+  // just explains what it means.
+  const selectedRow     = geoId != null ? (indicatorData ?? []).find(r => r.GeoID === geoId) : null;
+  const flaggedFootnote = selectedRow?.ValueStatus === 'flagged'
+    ? getFlaggedEstimateFootnote(dataSource, isPercent)
+    : null;
 
   // ── Comparison neighborhood value ─────────────────────────────────────────
   const compRow = comparisonNeighborhood?.geoId != null
@@ -70,25 +107,65 @@ export default function IndicatorFlyoutContent({
     if (cityVal == null) return null;
     const diff    = compRow.Value - cityVal;
     const relDiff = cityVal !== 0 ? Math.abs(diff / cityVal) : 0;
-    if (relDiff < 0.05) return { direction: 'neutral', label: 'similar to' };
-    if (diff > 0) return { direction: 'up',   label: relDiff > 0.25 ? 'much higher than' : 'higher than' };
-    return            { direction: 'down', label: relDiff > 0.25 ? 'much lower than'  : 'lower than'  };
+    if (relDiff < 0.05) return { direction: 'neutral', label: phrases.comparison.similar };
+    if (diff > 0) return { direction: 'up',   label: phrases.comparison.higher };
+    return            { direction: 'down', label: phrases.comparison.lower };
   })();
 
-  // ── CD rank among all 59 ────────────────────────────────────────────────────
-  // Sort CD-level rows descending by value so rank 1 = highest value.
-  // Directionality (higher vs lower is better) is intentionally not baked in —
-  // the distribution strip and insight badge already communicate that context.
-  const cdRank = (() => {
-    if (!indicatorData?.length || geoId == null) return null;
-    const cdRows = indicatorData
+  // ── CD rank + inline dot-distribution marker ────────────────────────────────
+  // One sort (ascending, low → high — the same order buildBarChartSpec.js
+  // uses) drives both the "Ranked X of Y" line and RankDotStrip below (which
+  // positions each CD's dot by its actual value, not just this array order).
+  // Directionality (higher vs lower is better) is intentionally not baked in
+  // here — the insight badge already communicates that context.
+  const cdRows = useMemo(() => {
+    if (!indicatorData?.length) return [];
+    return indicatorData
       .filter(r => r.GeoType === 'CD' && r.Value != null && !isNaN(Number(r.Value)))
-      .sort((a, b) => Number(b.Value) - Number(a.Value));
-    const pos = cdRows.findIndex(r => r.GeoID === geoId);
-    return pos === -1 ? null : { rank: pos + 1, total: cdRows.length };
-  })();
+      .sort((a, b) => Number(a.Value) - Number(b.Value));
+  }, [indicatorData]);
+
+  const hasMap = cdRows.length > 0;
+
+  const rankData = useMemo(() => {
+    if (!cdRows.length || geoId == null) return null;
+    const idx = cdRows.findIndex(r => r.GeoID === geoId);
+    if (idx === -1) return null;
+    return {
+      rank:  cdRows.length - idx, // 1 = highest value
+      total: cdRows.length,
+    };
+  }, [cdRows, geoId]);
+
   const [mapHoveredGeoId,   setMapHoveredGeoId]   = useState(null);
   const [stripHoveredGeoId, setStripHoveredGeoId] = useState(null);
+  const miniBarViewRef = useRef(null); // the mini bar's live Vega view, for hover-sync with the map
+
+  // ── Mini bar ↔ map hover-sync ────────────────────────────────────────────
+  // buildBarChartSpec.js already wires a `hoverGeoId` Vega signal for exactly
+  // this purpose (elsewhere driven by a global window event between the
+  // sidebar map and on-page cards); here the flyout's own map and mini bar
+  // are local to the panel, so it's driven directly off mapHoveredGeoId
+  // instead. The reverse direction (bar → map) uses Vega's standard
+  // view-level mouseover/mouseout mark events — both wired without touching
+  // VegaLiteChart.jsx itself.
+  const handleMiniBarViewReady = useCallback((view) => {
+    miniBarViewRef.current = view;
+    view.addEventListener('mouseover', (_event, item) => {
+      if (item?.datum?.GeoID != null) setStripHoveredGeoId(item.datum.GeoID);
+    });
+    view.addEventListener('mouseout', () => setStripHoveredGeoId(null));
+  }, []);
+
+  useEffect(() => {
+    const view = miniBarViewRef.current;
+    if (!view) return;
+    try {
+      view.signal('hoverGeoId', mapHoveredGeoId).run();
+    } catch {
+      // Signal may not exist if compactSpec was built before hoverGeoId was added
+    }
+  }, [mapHoveredGeoId]);
 
   // ── Notes modal ────────────────────────────────────────────────────────────
   const [notesOpen,    setNotesOpen]    = useState(false);
@@ -115,15 +192,15 @@ export default function IndicatorFlyoutContent({
 
   return (
     <>
-      <div className="overflow-y-auto flex-1 min-h-0 overscroll-contain">
+      <div className="overflow-y-auto flex-1 min-h-0 overscroll-contain border-t border-gray-200">
 
         {/* ── 1. Section label + subtitle (above map) ──────────────────────── */}
-        {(sectionLabel || subtitle) && (
+        {(title || subtitle) && (
           <div className="px-5 pt-3 pb-2 flex flex-col gap-0.5">
-            {sectionLabel && (
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest">
-                {sectionLabel}
-              </p>
+            {title && (
+              <h2 className="text-sm font-semibold text-gray-900 leading-snug truncate min-w-0">
+                {title}
+              </h2>
             )}
             {subtitle && (
               <p className="text-xs text-gray-600 leading-snug">{subtitle}</p>
@@ -132,11 +209,14 @@ export default function IndicatorFlyoutContent({
         )}
 
         {/* ── 2. Map with color legend overlaid ────────────────────────────── */}
+        {/* Only when there's a single numeric value per CD to shade by —
+            distribution cards (causes of premature death, cancer types) pass
+            no indicatorData, so there's nothing to map (2026-09-27). */}
+        {hasMap && (
         <div className="flyout-map relative w-full h-[220px] sm:h-[340px] overflow-hidden border-y border-gray-100">
-          {/* Mobile scroll-through overlay — sits above the map on touch devices
-              so finger drags scroll the flyout instead of being eaten by Leaflet.
-              Hidden on sm+ where mouse hover interactions work normally.          */}
-          <div className="sm:hidden absolute inset-0 z-[1001]" aria-hidden="true" />
+          {/* Note: the map is pan/zoomable (matching the main sidebar map), so on
+              touch devices dragging over the map pans it rather than scrolling the
+              flyout body. The "Back to origin" button resets the view. */}
           <ChoroplethMap
             indicatorData={indicatorData ?? []}
             geoId={geoId}
@@ -156,12 +236,14 @@ export default function IndicatorFlyoutContent({
             <span className="text-xs text-gray-600">High</span>
           </div>
         </div>
+        )}
 
         <div className="px-5 pt-4 pb-5 flex flex-col gap-4">
 
           {/* ── 3. Dynamic insight ──────────────────────────────────────────── */}
           {insight && (() => {
-            const { badge, arrow } = DIRECTION_STYLES[insight.direction];
+            const arrow = DIRECTION_ARROWS[insight.direction];
+            const badge = getInsightBadgeClass(insight.direction, higherIsBetter);
             // Show the comparison's citywide direction only when it diverges from selected
             const showCompDirection = compInsight && compInsight.direction !== insight.direction && compName;
             return (
@@ -193,7 +275,8 @@ export default function IndicatorFlyoutContent({
                   </span>
                   the citywide rate of {insight.cityDisplay}
                   {showCompDirection && (() => {
-                    const { badge: compBadge, arrow: compArrow } = DIRECTION_STYLES[compInsight.direction];
+                    const compArrow = DIRECTION_ARROWS[compInsight.direction];
+                    const compBadge = getInsightBadgeClass(compInsight.direction, higherIsBetter);
                     return (
                       <>
                         {', while '}
@@ -216,31 +299,66 @@ export default function IndicatorFlyoutContent({
             );
           })()}
 
-          {/* ── 4. CD rank ──────────────────────────────────────────────────── */}
-          {cdRank && (
-            <p className="text-xs text-gray-500 leading-snug">
-              Ranked{' '}
-              <span className="font-semibold text-gray-700">
-                {cdRank.rank} of {cdRank.total}
-              </span>{' '}
-              community districts by value
-            </p>
+          {/* ── 3a. Small-sample-size caveat — only when the selected CD's row
+                is itself flagged. Matches the "*" already shown on its value
+                above. Text/eligibility per CONTENT-GUIDE.md section 11. ─────── */}
+          {flaggedFootnote && (
+            <p className="text-xs text-gray-600 italic leading-snug -mt-2">{flaggedFootnote}</p>
           )}
 
-          {/* ── 5. Distribution strip — boxed ───────────────────────────────── */}
-          {indicatorData?.length > 0 && (
-            <div className="border border-gray-200 rounded-lg bg-gray-50 px-4 py-3.5">
-              <DistributionStrip
-                indicatorData={indicatorData}
-                geoId={geoId}
-                comparisonGeoId={comparisonNeighborhood?.geoId ?? null}
-                mapHoveredGeoId={mapHoveredGeoId}
-                onHoverGeoId={setStripHoveredGeoId}
-              />
+
+
+          {/* ── 4. CD rank — a dot-distribution marker riding next to the text ──
+                Every CD plotted as a small dot on the actual value range
+                (RankDotStrip.jsx, shared with the standalone indicator page),
+                with this CD's dot enlarged and colored. Not a fill/progress
+                bar (that implies "more filled = further along toward a
+                goal," which isn't true here — higher isn't inherently better
+                or worse). Purely decorative (aria-hidden) — the rank text
+                next to it already carries the same information accessibly. */}
+          {/* {rankData && (
+            <div className="flex items-center gap-2.5">
+              <p className="text-xs text-gray-600 leading-snug">
+                Ranked{' '}
+                <span className="font-semibold text-gray-700">
+                  {rankData.rank} of {rankData.total}
+                </span>{' '}
+                community districts by value
+              </p>
+              <RankDotStrip cdRows={cdRows} selectedId={geoId} />
+            </div>
+          )} */}
+
+          {/* ── 5. Mini bar — same ranked bar chart the card renders ─────────
+                compactSpec is passed straight through from ExpandableChartCard
+                (same object, not re-derived), so this is a visual match for
+                the card rather than a different chart type. Replaces the old
+                boxed dot-on-a-line DistributionStrip. No gray box here,
+                deliberately — the point is that this reads as the same chart
+                as the card, not a distinct flyout-only treatment. ─────────── */}
+          {compactSpec && (
+            <div>
+              {/* <p className="text-xs font-semibold text-gray-700 tracking-wide mb-2">
+                How this neighborhood compares
+              </p> */}
+              <VegaLiteChart spec={compactSpec} onViewReady={handleMiniBarViewReady} />
             </div>
           )}
 
-          {/* ── 5. Source row — no label, inline ? button ───────────────────── */}
+          {/* ── 5b. Custom card chart (2026-09-27) — Avertable Deaths dot strip,
+                causes/cancer bar + pyramid charts. Same slot as the mini bar,
+                so custom cards get the same flyout layout as standard ones. */}
+          {!compactSpec && chart && (
+            <div className="min-w-0">{chart}</div>
+          )}
+
+          {/* ── 5c. Description inline when there's no map/insight — otherwise
+                a distribution card's flyout would be just a chart. ───────── */}
+          {!hasMap && description && (
+            <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
+          )}
+
+          {/* ── 6. Source row — no label, inline ? button ───────────────────── */}
           {sourceClean && (
             <div className="flex items-center gap-1.5 pt-1 border-t border-gray-100">
               <p className="text-xs text-gray-600 leading-snug">
@@ -250,7 +368,7 @@ export default function IndicatorFlyoutContent({
                 <button
                   onClick={() => setNotesOpen(true)}
                   aria-label="View source notes"
-                  className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shrink-0 text-xs font-semibold"
+                  className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shrink-0 text-xs font-semibold"
                 >
                   ?
                 </button>
@@ -291,7 +409,7 @@ export default function IndicatorFlyoutContent({
               <button
                 onClick={() => setNotesOpen(false)}
                 aria-label="Close notes"
-                className="text-gray-400 hover:text-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded ml-4"
+                className="text-gray-600 border border-transparent hover:text-brand hover:border-brand hover:bg-brand-tint transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded ml-4"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

@@ -140,6 +140,27 @@ export default function KeyboardShortcutsButton() {
     return () => document.removeEventListener('keydown', onKey);
   }, [isOpen, close]);
 
+  // A11Y (2026-09-28): move focus into the panel when it opens, so keyboard
+  // and screen reader users land on it (it's portaled to the end of <body>,
+  // so without this the next Tab never reached it). Tab / Shift+Tab from
+  // inside closes it and returns focus to the "?" button, so focus never
+  // gets stranded at the end of the document.
+  // Keyed on coords too: the portaled popover only mounts once its position
+  // has been measured, so focusing on isOpen alone ran before it existed.
+  useEffect(() => {
+    if (!isOpen || !coords) return;
+    const raf = requestAnimationFrame(() => popoverRef.current?.focus({ preventScroll: true }));
+    return () => cancelAnimationFrame(raf);
+  }, [isOpen, coords]);
+
+  function handlePopoverKeyDown(e) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      close();
+      btnRef.current?.focus();
+    }
+  }
+
   // Click outside closes. The popover is portaled to document.body, so it's
   // no longer a DOM descendant of containerRef — check both.
   useEffect(() => {
@@ -183,6 +204,8 @@ export default function KeyboardShortcutsButton() {
           ref={popoverRef}
           role="dialog"
           aria-label="Keyboard shortcuts"
+          tabIndex={-1}
+          onKeyDown={handlePopoverKeyDown}
           className="fixed w-56 bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden z-[10000]"
           style={{
             top:        coords.top,

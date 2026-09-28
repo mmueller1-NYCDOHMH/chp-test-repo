@@ -1,0 +1,21 @@
+{
+  "IndicatorKey": "hepc-reports",
+  "Title": "New Hepatitis C Reports",
+  "Label": "New Hepatitis C Reports",
+  "Subtitle": "Rate of new chronic hepatitis C reports per 100,000 people.",
+  "AgeAdjustment": "No",
+  "MethodsNote": "287 Hepatitis C cases were geocoded to Riker's Island and removed from the community district rates, but included in the borough and NYC data. Cases identified on Riker's Island were included in the Bronx borough rates. 997 cases were unable to be geocoded to a community district. 272 cases were unable to be assigned to a Borough but were included in the NYC rate. Data are restricted to NYC residents.",
+  "ReliabilityNote": "",
+  "Source": "NYC DOHMH, Communicable Disease Surveillance Registry",
+  "DenominatorSource": "NYC DOHMH interpolated intercensal Population Estimates, modified from US Census Bureau, file updated September 19, 2017",
+  "TimePeriod": "2023",
+  "Unit": "Rate per 100,000 people",
+  "Decimals": 1,
+  "Section": "health-conditions",
+  "Subsection": "infectious-disease",
+  "type": "Rate",
+  "of": "new chronic hepatitis C reports",
+  "detail": "",
+  "units": "per 100,000 people",
+  "indicatorDetail": ""
+}

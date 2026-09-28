@@ -31,10 +31,10 @@
  *   Escape  — clear query if non-empty; dismiss modal if query is empty
  *
  * HOVER SYNC:
- * hoveredId state is lifted here and passed to both the list (for highlight
- * styling) and ModalMap (for Leaflet layer style updates). Hovering either
- * side syncs the other. Arrow-key focus also syncs hoveredId so the map
- * highlights as you keyboard-navigate.
+ * hoveredId state is lifted in useNeighborhoodFilter and passed to both the
+ * list (for highlight styling) and ModalMap (for Leaflet layer style
+ * updates). Hovering either side syncs the other. Arrow-key focus also
+ * syncs hoveredId so the map highlights as you keyboard-navigate.
  *
  * PROPS:
  * - neighborhoods: Array<{ id, name, borough }> — passed from a server component
@@ -51,21 +51,26 @@
  *   input's resting border is border-gray-200, matching UnifiedSearch's
  *   identical "Find neighborhood" input in the sidebar — but its FOCUS ring
  *   is ring-brand, not ring-blue-500, because this input autofocuses ~60ms
- *   after the modal opens (see the inputRef.current?.focus() effect below).
+ *   after the modal opens (see useIntroModalLifecycle's focus effect).
  *   Since users see it focused far more often than resting, the focus color
  *   is what actually reads as "the search border" — it needed to be brand,
  *   even though that now differs from UnifiedSearch's blue-500 focus ring.
+ * - As of 2026-09-04, the open/close lifecycle (localStorage, external open
+ *   event, mount timing, focus trap, inert/aria-hidden) lives in
+ *   ./introModal/useIntroModalLifecycle.js, the neighborhood search/filter
+ *   state lives in ./introModal/useNeighborhoodFilter.js, and FeatureIcon
+ *   lives in ./introModal/FeatureIcon.jsx — this file owns layout and the
+ *   JSX tree.
  */
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import AddressSearch from '@/components/controls/AddressSearch';
-import { BOROUGH_ORDER } from '@/lib/utils/constants';
 import { highlight } from '@/lib/utils/highlight';
-
-// Everything outside the modal — id set on the app shell root in PageLayout.jsx
-const APP_SHELL_ID = 'chp-app-shell';
+import FeatureIcon from './introModal/FeatureIcon';
+import { useIntroModalLifecycle, STORAGE_KEY } from './introModal/useIntroModalLifecycle';
+import { useNeighborhoodFilter } from './introModal/useNeighborhoodFilter';
 
 // Dynamic import keeps Leaflet out of the SSR bundle
 const ModalMap = dynamic(
@@ -75,223 +80,52 @@ const ModalMap = dynamic(
 
 // UI copy — edit /content/site/introModal.json, no code changes needed
 import modalCopy from '../../../content/site/introModal.json';
-
-const STORAGE_KEY = 'chp_intro_seen';
-
-/** Small icon matched to each feature chip id */
-function FeatureIcon({ id }) {
-  const cls = 'w-3 h-3 shrink-0 text-gray-400';
-  if (id === 'compare') return (
-    <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-    </svg>
-  );
-  if (id === 'explore') return (
-    <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-    </svg>
-  );
-  if (id === 'keyboard') return (
-    <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <rect x="2" y="6" width="20" height="12" rx="2" strokeLinejoin="round" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" />
-    </svg>
-  );
-  return null;
-}
+import { handleTablistKeyDown } from '@/lib/utils/tablistKeyDown';
 
 export default function IntroModal({ neighborhoods = [] }) {
-  const [isOpen,        setIsOpen]        = useState(false);
-  const [isMounted,     setIsMounted]     = useState(false); // trails isOpen by CLOSE_DURATION ms
-  const [dialogVisible, setDialogVisible] = useState(false);
-  const [query,         setQuery]         = useState('');
-  const [hoveredId,     setHoveredId]     = useState(null);
-  const [focusedIndex,  setFocusedIndex]  = useState(-1);
-  const [searchTab,     setSearchTab]     = useState('neighborhood'); // 'neighborhood' | 'address'
-  // visitedIds: Set of neighborhood ids — when set, list shows only unvisited ones
-  const [visitedIds,    setVisitedIds]    = useState(null);
+  const [searchTab, setSearchTab] = useState('neighborhood'); // 'neighborhood' | 'address'
 
-  // How long the CSS close transition runs (keep in sync with transition durations below)
-  const CLOSE_DURATION = 250;
+  const router   = useRouter();
+  const inputRef = useRef(null);
 
-  const router     = useRouter();
-  const inputRef   = useRef(null);
-  const itemRefs   = useRef([]);
-  const listRef    = useRef(null);
-  const dialogRef  = useRef(null);
-  const triggerRef = useRef(null); // element that opened the modal — focus returns here on close
-
-  // Only open if the user hasn't visited before (auto-open has no trigger element)
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem(STORAGE_KEY)) setIsOpen(true);
-    } catch { /* localStorage may be unavailable; fail silently */ }
-  }, []);
-
-  // Listen for external open trigger. Payload may include visitedIds for the
-  // explorer badge — when present, the list pre-filters to unvisited CDs only.
-  useEffect(() => {
-    function handleExternalOpen(e) {
-      triggerRef.current = document.activeElement; // remember what opened us
-      setIsOpen(true);
-      if (e.detail?.visitedIds?.length) {
-        setVisitedIds(new Set(e.detail.visitedIds));
-      } else {
-        setVisitedIds(null);
-      }
-    }
-    window.addEventListener('chp:open-intro-modal', handleExternalOpen);
-    return () => window.removeEventListener('chp:open-intro-modal', handleExternalOpen);
-  }, []);
-
-  // Mount immediately on open; unmount only after the close animation finishes.
-  // dialogVisible drives the CSS transition — isMounted controls whether we render at all.
-  useEffect(() => {
-    if (isOpen) {
-      setIsMounted(true);
-      const raf = requestAnimationFrame(() => setDialogVisible(true));
-      return () => cancelAnimationFrame(raf);
-    } else {
-      setDialogVisible(false);
-      const timer = setTimeout(() => setIsMounted(false), CLOSE_DURATION);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const dismiss = useCallback(() => {
-    try { localStorage.setItem(STORAGE_KEY, '1'); } catch { /* ignore */ }
-    setIsOpen(false);
-    setVisitedIds(null);
-    // Return focus to the element that triggered the modal (e.g. explorer badge).
-    // RAF lets the modal unmount first so focus isn't clobbered by blur events.
-    requestAnimationFrame(() => triggerRef.current?.focus());
-  }, []);
-
-  // Move focus to search input when the modal opens + focus trap
-  useEffect(() => {
-    if (!isOpen) return;
-    const id = setTimeout(() => inputRef.current?.focus(), 60);
-
-    function onKey(e) {
-      if (e.key === 'Escape') { dismiss(); return; }
-      if (e.key === 'Tab' && dialogRef.current) {
-        const focusable = Array.from(
-          dialogRef.current.querySelectorAll(
-            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-          )
-        ).filter(el => !el.disabled);
-        if (!focusable.length) { e.preventDefault(); return; }
-        const first = focusable[0];
-        const last  = focusable[focusable.length - 1];
-        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-      }
-    }
-    document.addEventListener('keydown', onKey);
-    return () => { clearTimeout(id); document.removeEventListener('keydown', onKey); };
-  }, [isOpen, dismiss]);
-
-  // Hide the rest of the app from assistive tech while the modal is open.
-  // The modal is portaled to document.body (see the render below), so it sits
-  // outside this subtree and is unaffected by inert/aria-hidden here. Both
-  // attributes are set together: inert is what actually stops focus and AT
-  // exposure in modern browsers, aria-hidden is a fallback for anything that
-  // doesn't support inert yet. Without this, aria-modal="true" alone isn't
-  // reliably honored by every screen reader — the background stayed reachable
-  // via the virtual cursor.
-  useEffect(() => {
-    const appShell = document.getElementById(APP_SHELL_ID);
-    if (!appShell) return;
-    if (isOpen) {
-      appShell.setAttribute('inert', '');
-      appShell.setAttribute('aria-hidden', 'true');
-    } else {
-      appShell.removeAttribute('inert');
-      appShell.removeAttribute('aria-hidden');
-    }
-    return () => {
-      appShell.removeAttribute('inert');
-      appShell.removeAttribute('aria-hidden');
-    };
-  }, [isOpen]);
-
-  // Reset focused index when query changes
-  useEffect(() => { setFocusedIndex(-1); }, [query]);
-
-  // Scroll focused item into view
-  useEffect(() => {
-    if (focusedIndex >= 0 && itemRefs.current[focusedIndex]) {
-      itemRefs.current[focusedIndex].scrollIntoView({ block: 'nearest' });
-    }
-  }, [focusedIndex]);
+  const {
+    isOpen,
+    setIsOpen,
+    isMounted,
+    dialogVisible,
+    visitedIds,
+    dialogRef,
+    dismiss,
+  } = useIntroModalLifecycle({ inputRef });
 
   const handleSelect = useCallback((neighborhood) => {
     try { localStorage.setItem(STORAGE_KEY, '1'); } catch { /* ignore */ }
     setIsOpen(false);
     router.push(`/neighborhood/${neighborhood.id}`);
-  }, [router]);
+  }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Filter + group neighborhoods ──────────────────────────────────────────
-  const filtered = useMemo(() => {
-    let base = query
-      ? neighborhoods.filter(n =>
-          n.name.toLowerCase().includes(query.toLowerCase()) ||
-          n.borough.toLowerCase().includes(query.toLowerCase())
-        )
-      : neighborhoods;
-    // When opened from the explorer badge, only show unvisited CDs
-    if (visitedIds) base = base.filter(n => !visitedIds.has(n.id));
-    return base;
-  }, [query, neighborhoods, visitedIds]);
-
-  const grouped = useMemo(() =>
-    BOROUGH_ORDER.reduce((acc, borough) => {
-      const matches = filtered.filter(n => n.borough === borough);
-      if (matches.length > 0) acc[borough] = matches;
-      return acc;
-    }, {}),
-  [filtered]);
-
-  // Flat ordered list for index-based keyboard navigation
-  const flatFiltered = useMemo(() =>
-    Object.values(grouped).flat(),
-  [grouped]);
-
-  const hasResults = filtered.length > 0;
-
-  // ── Input keyboard handler ────────────────────────────────────────────────
-  function handleInputKeyDown(e) {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      const next = Math.min(focusedIndex + 1, flatFiltered.length - 1);
-      setFocusedIndex(next);
-      setHoveredId(flatFiltered[next]?.id ?? null);
-
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      const prev = focusedIndex <= 0 ? -1 : focusedIndex - 1;
-      setFocusedIndex(prev);
-      setHoveredId(prev >= 0 ? (flatFiltered[prev]?.id ?? null) : null);
-
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      const target = focusedIndex >= 0 ? flatFiltered[focusedIndex] : flatFiltered[0];
-      if (target) handleSelect(target);
-
-    } else if (e.key === 'Escape') {
-      if (query) {
-        setQuery('');
-      } else {
-        dismiss();
-      }
-    }
-  }
+  const {
+    query,
+    setQuery,
+    hoveredId,
+    setHoveredId,
+    focusedIndex,
+    setFocusedIndex,
+    itemRefs,
+    listRef,
+    grouped,
+    flatFiltered,
+    hasResults,
+    filtered,
+    handleInputKeyDown,
+  } = useNeighborhoodFilter({ neighborhoods, visitedIds, onSelect: handleSelect, onDismiss: dismiss });
 
   if (!isMounted) return null;
 
   // Portaled to document.body so it sits outside #chp-app-shell — required
-  // for the inert/aria-hidden effect above to hide the background without
-  // also hiding the modal itself (inert would otherwise cascade to children).
+  // for the inert/aria-hidden effect in useIntroModalLifecycle to hide the
+  // background without also hiding the modal itself (inert would otherwise
+  // cascade to children).
   return createPortal(
     <div
       role="dialog"
@@ -326,8 +160,8 @@ export default function IntroModal({ neighborhoods = [] }) {
           onClick={dismiss}
           aria-label="Close introduction"
           className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center
-                     rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100
-                     transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                     rounded-full text-gray-600 border border-transparent hover:text-brand hover:border-brand hover:bg-brand-tint
+                     transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -351,7 +185,7 @@ export default function IntroModal({ neighborhoods = [] }) {
           {/* ── About blurb ───────────────────────────────────────────────── */}
           {modalCopy.footer.aboutBlurb && (
             <div className="mt-2.5 flex flex-col gap-1">
-              <p className="text-sm text-gray-500 leading-snug">
+              <p className="text-sm text-gray-600 leading-snug">
                 {modalCopy.footer.aboutBlurb}
               </p>
               <a
@@ -365,12 +199,14 @@ export default function IntroModal({ neighborhoods = [] }) {
           )}
 
           {/* ── Feature discovery chips ────────────────────────────────────── */}
+          {/* Hidden on mobile — too much text for the smaller screen; kept on
+              desktop (md+) where there's room and it supports feature discovery. */}
           {modalCopy.features?.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3" aria-label="What you can do">
+            <div className="hidden md:flex md:flex-wrap gap-2 mt-3" aria-label="What you can do">
               {modalCopy.features.map((feature) => (
                 <div
                   key={feature.id}
-                  className="flex items-center gap-1 text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-full px-2.5 py-0.5 select-none"
+                  className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-full px-2.5 py-0.5 select-none"
                 >
                   <FeatureIcon id={feature.id} />
                   {feature.label}
@@ -387,7 +223,13 @@ export default function IntroModal({ neighborhoods = [] }) {
           <div className="w-full md:w-72 md:shrink-0 flex flex-col md:border-r border-gray-100 overflow-hidden">
 
             {/* Tab strip */}
-            <div role="tablist" aria-label="Search method" className="flex border-b border-gray-100 shrink-0">
+            <div
+              role="tablist"
+              aria-label="Search method"
+              className="flex border-b border-gray-100 shrink-0"
+              // A11Y (2026-09-26): arrow keys / Home / End between tabs
+              onKeyDown={(e) => handleTablistKeyDown(e, ['neighborhood', 'address'], searchTab, setSearchTab)}
+            >
               {[
                 { id: 'neighborhood', label: modalCopy.tabs.neighborhood },
                 { id: 'address',      label: modalCopy.tabs.address },
@@ -396,12 +238,13 @@ export default function IntroModal({ neighborhoods = [] }) {
                   key={tab.id}
                   role="tab"
                   aria-selected={searchTab === tab.id}
+                  tabIndex={searchTab === tab.id ? 0 : -1}
                   onClick={() => setSearchTab(tab.id)}
                   className={[
                     'flex-1 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500',
                     searchTab === tab.id
                       ? 'border-b-2 border-brand text-brand bg-brand-tint'
-                      : 'border-b-2 border-transparent text-gray-500 hover:text-brand hover:bg-brand-tint',
+                      : 'border-b-2 border-transparent text-gray-600 hover:text-brand hover:bg-brand-tint',
                   ].join(' ')}
                 >
                   {tab.label}
@@ -415,7 +258,7 @@ export default function IntroModal({ neighborhoods = [] }) {
                 <div className="px-5 pt-5 pb-3 shrink-0">
                   <div className="relative">
                     <svg
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none"
                       fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
                       aria-hidden="true"
                     >
@@ -441,7 +284,7 @@ export default function IntroModal({ neighborhoods = [] }) {
                       <button
                         onClick={() => { setQuery(''); inputRef.current?.focus(); }}
                         aria-label="Clear search"
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-500 transition-colors"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-600 transition-colors"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -472,9 +315,14 @@ export default function IntroModal({ neighborhoods = [] }) {
                     (() => {
                       let globalIdx = 0;
                       return Object.entries(grouped).map(([borough, nhoods]) => (
-                        <div key={borough} className="mb-3">
-                          <div className="text-sm font-semibold text-gray-600 uppercase tracking-widest
-                                          mb-1 px-2 sticky top-0 bg-white py-1">
+                        // Mobile styling matches the Sidebar's "Find neighborhood"
+                        // search (UnifiedSearch + NeighborhoodGroups, used in the
+                        // mobile bottom sheet): plain uppercase header, flat
+                        // blue-50/blue-700 highlight, no rounding. Desktop (md+)
+                        // keeps this modal's own sticky header + brand-tint pill.
+                        <div key={borough} className="md:mb-3">
+                          <div className="text-xs md:text-sm font-semibold text-gray-600 md:text-gray-600 uppercase tracking-widest
+                                          px-3 md:px-2 pt-2.5 md:pt-0 pb-1 md:mb-1 select-none md:sticky md:top-0 md:bg-white md:py-1">
                             {borough}
                           </div>
                           {nhoods.map(n => {
@@ -492,10 +340,10 @@ export default function IntroModal({ neighborhoods = [] }) {
                                 onMouseEnter={() => { setHoveredId(n.id); setFocusedIndex(idx); }}
                                 onMouseLeave={() => { setHoveredId(null); }}
                                 className={[
-                                  'w-full text-left text-sm px-3 py-1.5 rounded-lg transition-colors cursor-pointer',
+                                  'w-full text-left text-sm px-3 py-1.5 transition-colors cursor-pointer rounded-none md:rounded-lg',
                                   isFocused || isHovered
-                                    ? 'bg-brand-tint text-brand'
-                                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900',
+                                    ? 'bg-blue-50 text-blue-700 md:bg-brand-tint md:text-brand'
+                                    : 'text-gray-800 md:text-gray-700 hover:bg-gray-50 md:hover:text-gray-900',
                                 ].join(' ')}
                               >
                                 {highlight(n.name, query)}
@@ -535,7 +383,7 @@ export default function IntroModal({ neighborhoods = [] }) {
           <div className="hidden md:flex flex-1 relative bg-gray-50">
             {/* Instruction hint */}
             <div className="absolute top-3 right-3 z-[1000] bg-white/90 backdrop-blur-sm
-                            text-sm text-gray-500 px-2.5 py-1.5 rounded-md shadow-sm
+                            text-sm text-gray-600 px-2.5 py-1.5 rounded-md shadow-sm
                             pointer-events-none select-none">
               {modalCopy.map.hint}
             </div>
@@ -550,8 +398,13 @@ export default function IntroModal({ neighborhoods = [] }) {
         </div>
 
         {/* ── Footer (full-width) ──────────────────────────────────────────── */}
-        <div className="px-8 py-3.5 border-t border-gray-100 shrink-0 flex items-center justify-between gap-4">
-          <p className="text-sm text-gray-500 leading-snug">{modalCopy.footer.attribution}</p>
+        {/* Hidden on mobile — on small screens this bar covered the primary
+            action (searching/picking a neighborhood). DOHMH attribution is
+            already visible in the header, and dismissing the modal already
+            routes to a random neighborhood, so nothing is lost. Kept on
+            desktop (md+) where it doesn't overlap anything. */}
+        <div className="hidden md:flex px-8 py-3.5 border-t border-gray-100 shrink-0 items-center justify-between gap-4">
+          <p className="text-sm text-gray-600 leading-snug">{modalCopy.footer.attribution}</p>
           <button
             onClick={() => {
               const pick = neighborhoods[Math.floor(Math.random() * neighborhoods.length)];

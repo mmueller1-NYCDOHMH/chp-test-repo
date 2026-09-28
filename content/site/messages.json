@@ -1,0 +1,10 @@
+{
+  "_note": "Shared UI copy for empty/error states used across chart and map components (ExpandableChartCard, VegaLiteChart, IndicatorChart, ComparisonPyramidChart, ChoroplethMap, NeighborhoodMap). Edit here — no code changes needed. Previously each component hardcoded its own copy of these strings independently.",
+
+  "chartNoData": "No data available",
+  "chartLoadError": "This chart couldn't load. Try refreshing the page.",
+  "mapUnavailable": "Map unavailable",
+  "mapUnavailableDetail": "Could not load geographic data",
+  "mapLoadFailed": "Map failed to load",
+  "retry": "Retry"
+}

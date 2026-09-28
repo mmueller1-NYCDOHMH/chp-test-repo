@@ -1,0 +1,34 @@
+{
+  "_note": "Print-only settings for the printable Community Health Profile (/print/neighborhood/[id]). Structure, order, section titles and indicator labels all come from the copy deck (content/copy/measure-copy.csv) — this file only holds what's different on paper. `indicators`: per-key print options — contextOnly (row shows □ instead of a ▲▼● comparison; an editorial call from the print mockup, not computed from higherIsBetter), displayAs 'topSegments' (show the top 2 distribution segments), unit (print-only caption), group (which At a Glance sub-group the tile falls under). `atAGlance`: the category title and its sub-groups, in order; keys without a group go in the first one. `insertBefore`: extra print-only rows that aren't in the sheet, placed before the named key. Rows in the sheet with no Key (NOT IN SITE measures) print as em-dash placeholders automatically.",
+
+  "atAGlance": {
+    "title": "At a Glance",
+    "groups": [
+      { "id": "population",           "title": "Population" },
+      { "id": "immigration-language", "title": "Immigration & Language" }
+    ]
+  },
+
+  "insertBefore": {
+    "premature-mort-rate": ["premature-mort-count"]
+  },
+
+  "indicators": {
+    "overall-pop":              { "contextOnly": true },
+    "age-distribution":         { "contextOnly": true, "displayAs": "topSegments", "unit": "% of people" },
+    "race-ethnicity":           { "contextOnly": true, "displayAs": "topSegments", "unit": "% of people" },
+    "born-outside-us":          { "unit": "% of people", "group": "immigration-language" },
+    "ltd-eng-prof":             { "unit": "% of people", "group": "immigration-language" },
+    "jail-incarceration":       { "contextOnly": true },
+    "poverty":                  { "contextOnly": true },
+    "avertable-death":          { "contextOnly": true },
+    "air-pollution":            { "contextOnly": true },
+    "heat-vulnerability-index": { "contextOnly": true },
+    "farmers-markets":          { "contextOnly": true },
+    "hpv-vaccination-all":      { "contextOnly": true },
+    "child-asthma":             { "contextOnly": true },
+    "hiv-diagnosis":            { "contextOnly": true },
+    "hepc-reports":             { "contextOnly": true },
+    "premature-mort-count":     { "contextOnly": true }
+  }
+}

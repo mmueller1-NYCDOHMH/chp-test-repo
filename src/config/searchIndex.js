@@ -1,13 +1,12 @@
 /**
  * FILE: searchIndex.js
  *
- * Builds a flat, searchable list of all indicators from their meta.json files.
+ * Builds a flat, searchable list of all indicators from the copy deck
+ * (content/copy/indicatorCopy.json, via indicatorCopy.js).
  * Safe for client and server bundles — uses static JSON imports, no fs.
  *
- * To add a new indicator to search:
- *   1. Create /content/indicators/{key}.meta.json
- *   2. Add one import line to /src/config/indicatorMeta.js
- *   → Appears in search automatically. No changes needed here.
+ * To add an indicator to search: give it a Key in content/copy/measure-copy.csv.
+ * Nothing to change here.
  *
  * Shape of each entry:
  *   key              — indicator data file key
@@ -19,31 +18,64 @@
  *   subcategoryLabel — subcategory label
  */
 
-import { indicatorMeta } from './indicatorMeta';
+import { indicatorCopy, indicatorCopyUnmapped } from './indicatorCopy';
 import { siteNav }       from './nav/siteNav';
+import { NEIGHBORHOOD_OVERVIEW_ID } from './registries/sectionIds';
 
 // Build a flat lookup: sectionId → { categoryLabel, subcategoryLabel, anchor }
-const sectionMap = {};
+// At a glance isn't a nav category, so it's added by hand (first, to match
+// page order — search groups results in insertion order).
+const sectionMap = {
+  [NEIGHBORHOOD_OVERVIEW_ID]: {
+    categoryLabel:    'At a glance',
+    subcategoryLabel: 'At a glance',
+    anchor:           `#${NEIGHBORHOOD_OVERVIEW_ID}`,
+  },
+};
 siteNav.forEach(category => {
-  category.subcategories
-    .filter(sub => !sub.dummy)
-    .forEach(sub => {
-      sectionMap[sub.id] = {
-        categoryLabel:    category.label,
-        subcategoryLabel: sub.label,
-        anchor:           sub.anchor,
-      };
-    });
+  category.subcategories.forEach(sub => {
+    sectionMap[sub.id] = {
+      categoryLabel:    category.label,
+      subcategoryLabel: sub.label,
+      anchor:           sub.anchor,
+    };
+  });
 });
 
-export const searchIndex = Object.values(indicatorMeta)
-  .filter(ind => sectionMap[ind.topic])   // skip indicators not in a live section
-  .map(ind => ({
-    key:              ind.key,
-    title:            ind.title,
-    subtitle:         ind.subtitle ?? '',
-    indicatorAnchor:  `#indicator-${ind.key}`,
-    anchor:           sectionMap[ind.topic].anchor,
-    categoryLabel:    sectionMap[ind.topic].categoryLabel,
-    subcategoryLabel: sectionMap[ind.topic].subcategoryLabel,
-  }));
+// A copy-deck row → search entry. navSection (from build-copy) is the sheet
+// section; bespoke rows (e.g. avertable-death, topic 'avertable-deaths') are
+// folded into that section on the page, so it's also the right anchor.
+function toEntry(row, key) {
+  const sec = sectionMap[row.navSection ?? row.topic];
+  if (!sec) return null;                  // not in a live section
+  return {
+    key,
+    title:            row.measure,
+    subtitle:         row.context ?? '',
+    indicatorAnchor:  `#indicator-${key}`,
+    anchor:           sec.anchor,
+    categoryLabel:    sec.categoryLabel,
+    subcategoryLabel: sec.subcategoryLabel,
+  };
+}
+
+const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+// Keyless rows that ARE on the page via a bespoke block (e.g. "Top causes of
+// premature death" — FLAG "design in progress") are searchable too; rows the
+// sheet flags NOT IN SITE are not.
+// Their cards render with the data file's key as the card id (see
+// PrematureDeathOverviewSection.jsx), so map the sheet's Measure to it here;
+// an unmapped row still works, it just lands on its section.
+const BESPOKE_CARD_KEYS = {
+  'Top causes of premature death':               'premature-mort-cause-rate',
+  'Top causes of cancer-related premature death': 'cancer-rank-rate',
+};
+const liveUnkeyed = (indicatorCopyUnmapped ?? [])
+  .filter(row => row.measure && !/not in site/i.test(row.flag ?? ''))
+  .map(row => toEntry(row, BESPOKE_CARD_KEYS[row.measure] ?? `planned-${slug(row.measure)}`));
+
+export const searchIndex = [
+  ...Object.values(indicatorCopy).map(ind => toEntry(ind, ind.key)),
+  ...liveUnkeyed,
+].filter(Boolean);

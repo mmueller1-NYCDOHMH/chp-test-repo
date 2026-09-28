@@ -25,7 +25,7 @@
 export default function CategoryHeader({ title, intro }) {
   return (
     <div className="pb-2">
-      <h2 className="text-xs font-semibold text-blue-600 uppercase tracking-widest mb-2">
+      <h2 className="text-xl font-semibold text-gray-900 mb-2">
         {title}
       </h2>
       {intro && (

@@ -77,7 +77,7 @@ export default function ShortcutsToast() {
         <button
           onClick={dismiss}
           aria-label="Dismiss tip"
-          className="shrink-0 text-white/50 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded mt-px"
+          className="shrink-0 text-white/50 border border-transparent hover:text-white hover:bg-white/10 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded mt-px"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

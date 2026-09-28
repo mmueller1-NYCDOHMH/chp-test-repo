@@ -9,11 +9,14 @@
  * that stay reachable while scrolled instead of disappearing with the header.
  *
  * DESCRIPTION:
- *   Left  — a "browse map" icon (reopens the full neighborhood-picker map
- *           modal — see WHY THE MAP ICON below), the current subcategory
- *           breadcrumb (Category › Subcategory, updated by scroll-spy as
- *           sections enter the viewport), and a copy-link button.
- *   Right — About this tool and keyboard shortcuts.
+ *   Left  — on desktop (md+) only, a "browse map" icon (reopens the full
+ *           neighborhood-picker map modal — see MAP ICON note below); the
+ *           current subcategory breadcrumb (Category › Subcategory, updated
+ *           by scroll-spy as sections enter the viewport); and a copy-link
+ *           button.
+ *   Right — About this tool (label shortens to "About" below the sm
+ *           breakpoint, but stays visible at every width) and keyboard
+ *           shortcuts.
  *
  * LANGUAGE SELECTOR MOVED OUT:
  * LanguageToggle used to render here too, but this bar returns null when
@@ -29,13 +32,23 @@
  * before scrolling) — showing it a third time cost width without adding
  * meaning.
  *
- * WHY THE MAP ICON:
- * Clicking the neighborhood name used to reopen the full map-based picker
- * (IntroModal) — the only way back to it once you'd scrolled past the header
- * on mobile, since the mobile FAB's bottom sheet is search-only (no Leaflet
- * map, to avoid a double-init crash — see Sidebar.jsx). Removing the name
- * would have silently removed that entry point, so its onClick moved to a
- * dedicated icon instead of disappearing.
+ * MAP ICON — DESKTOP ONLY NOW (mobile-ux-review.md spotlight):
+ * This bar's icon-only "browse map" button (reopening IntroModal) used to
+ * render at every width, sitting directly beneath TopicNav's own icon-only
+ * "change neighborhood" button on mobile — same glyph, two different
+ * destinations, flagged as the single highest-severity mobile finding in
+ * mobile-ux-review.md ("Spotlight: neighborhood search discoverability").
+ * TopicNav's mobile row now carries ONE labeled neighborhood pill plus a
+ * labeled Compare pill (empty or active), both always visible via that
+ * sticky nav — so a second, ambiguous icon here was redundant on mobile.
+ * The button itself stays on desktop (md+): desktop's TopicNav has no such
+ * pill, and this bar is desktop's own always-visible way back into the map
+ * picker while scrolled, same as before. `hidden md:inline-flex` is what
+ * gates it off on mobile — nothing else about the button changed.
+ * On mobile, the map-based picker (IntroModal) is still reachable one tap
+ * deeper, via a text link inside the bottom sheet (see Sidebar.jsx). The
+ * mobile-only amber "Comparing: X" pill that used to live in this bar was
+ * also removed, superseded by TopicNav's Compare pill.
  *
  * UTILITY CONTROLS NOTE:
  * This bar returns null when there are no sections (see bottom), so it does
@@ -65,9 +78,23 @@
  */
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { siteNav } from '@/config/nav/siteNav';
-import { useComparison } from '@/lib/context/ComparisonContext';
 import KeyboardShortcutsButton from './KeyboardShortcutsButton';
+
+// Matches the neighborhood id out of the current pathname (/neighborhood/{id}
+// or /neighborhood/{id}/...) so the "Print this report" link below can point
+// at /print/neighborhood/{id}. Added 2026-09-09 alongside the printable
+// report (src/app/print/neighborhood/[id]/page.js).
+//
+// usePathname() rather than threading a neighborhoodId prop down from
+// PageLayout: PageLayout.jsx doesn't currently receive the per-page route
+// param at all (see its own layout.js's "known gap" note about pageLabel —
+// same underlying gap, tracked for a future Phase A context/slot fix) — so
+// reading it back out of the URL here is the smallest change that doesn't
+// require threading a new prop through PageLayout -> StickyContextBar for a
+// single link, or waiting on that larger refactor.
+const NEIGHBORHOOD_ID_PATTERN = /^\/neighborhood\/([^/]+)/;
 
 const FALLBACK_NAV_HEIGHT = 56;
 
@@ -81,12 +108,13 @@ function resolveBreadcrumb(sectionId) {
 }
 
 export default function StickyContextBar({ sections = [] }) {
-  const { comparisonNeighborhood, setComparisonNeighborhood } = useComparison();
-
   const [activeSectionId, setActiveSectionId] = useState(null);
   const [topOffset, setTopOffset]             = useState(FALLBACK_NAV_HEIGHT);
   const [scrollProgress, setScrollProgress]   = useState(0);
   const [copied, setCopied]                   = useState(false);
+
+  const pathname       = usePathname();
+  const neighborhoodId = pathname?.match(NEIGHBORHOOD_ID_PATTERN)?.[1] ?? null;
 
   const handleShare = useCallback(() => {
     navigator.clipboard.writeText(window.location.href).then(() => {
@@ -95,9 +123,11 @@ export default function StickyContextBar({ sections = [] }) {
     });
   }, []);
 
+  // Desktop-only — see MAP ICON note above. Reopens the full map picker.
   const handleOpenPicker = useCallback(() => {
     window.dispatchEvent(new CustomEvent('chp:open-intro-modal'));
   }, []);
+
   const intersectingRef                        = useRef(new Set());
   const manualScrollRef                        = useRef(false);
   const manualTimerRef                         = useRef(null);
@@ -197,8 +227,13 @@ export default function StickyContextBar({ sections = [] }) {
 
   const breadcrumb = activeSectionId ? resolveBreadcrumb(activeSectionId) : null;
 
+  // A11Y (2026-09-27): <nav> landmark (was a plain <div>) so the breadcrumb,
+  // copy link, Print and About controls sit inside a named region — axe
+  // "region" flagged them as content outside any landmark, and screen reader
+  // users can now jump here with landmark navigation (NVDA D / VoiceOver rotor).
   return (
-    <div
+    <nav
+      aria-label="Page tools"
       data-sticky-context-bar
       className="sticky z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100 relative"
       style={{ top: topOffset }}
@@ -216,14 +251,21 @@ export default function StickyContextBar({ sections = [] }) {
 
       <div className="max-w-5xl w-full mx-auto px-4 md:px-8 flex items-center justify-between h-9 gap-3">
 
-        {/* Left — browse-map icon, active section breadcrumb, copy link */}
-        <div className="flex items-center gap-2 min-w-0 overflow-hidden">
-          {/* Reopens the full map picker — see WHY THE MAP ICON above */}
+        {/* Left — desktop-only map icon, active section breadcrumb, copy link.
+            See the file-level MAP ICON note above for why the icon is
+            hidden on mobile but kept here on desktop (md+).
+            No overflow-hidden here: the breadcrumb text truncates on its
+            own (min-w-0 + truncate on the spans below), and clipping the
+            row was cutting off the right edge of the copy-link button —
+            its p-1 -m-1 hit-target trick renders a few px past the flex
+            layout's reserved space, which this container's overflow-hidden
+            was slicing off. */}
+        <div className="flex items-center gap-2 min-w-0">
           <button
             onClick={handleOpenPicker}
             aria-label="Browse map — change neighborhood"
             title="Change neighborhood"
-            className="shrink-0 p-1 -m-1 text-gray-400 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+            className="hidden md:inline-flex shrink-0 p-1 -m-1 text-gray-600 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -231,68 +273,87 @@ export default function StickyContextBar({ sections = [] }) {
             </svg>
           </button>
 
-          {breadcrumb ? (
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-xs text-gray-600 truncate">{breadcrumb.catLabel}</span>
-              <span className="text-xs text-gray-400 shrink-0">›</span>
-              <span className="text-xs text-brand font-medium truncate">{breadcrumb.subLabel}</span>
-            </div>
-          ) : (
-            <span className="text-xs text-gray-600 truncate">Community Health Profiles</span>
-          )}
+          {/* A11Y (2026-09-27): no aria-live here any more. The breadcrumb
+              changes continuously with scroll-spy, so as a live region it
+              announced on every scroll — constant chatter for screen reader
+              users (WCAG 4.1.3 says status messages shouldn't over-announce).
+              Section changes the user actually requests are covered by
+              scrollToSection moving focus to the section heading. */}
+          <div className="min-w-0">
+            {breadcrumb ? (
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-xs text-gray-600 truncate">{breadcrumb.catLabel}</span>
+                <span className="text-xs text-gray-600 shrink-0">›</span>
+                <span className="text-xs text-brand font-medium truncate">{breadcrumb.subLabel}</span>
+              </div>
+            ) : (
+              <span className="text-xs text-gray-600 truncate">At a Glance</span>
+            )}
+          </div>
 
-          {/* Copy link */}
+          {/* Copy link — icon-only crossfade (link → check) instead of a
+              text swap. The text swap used to change the button's width
+              (a short SVG vs. the word "Copied!"), which nudged the
+              breadcrumb next to it. An sr-only status region keeps the
+              same accessible announcement the visible text used to give. */}
           <button
             onClick={handleShare}
             aria-label="Copy link to this section"
             title="Copy link"
-            className="shrink-0 p-1 -m-1 text-gray-400 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+            className="shrink-0 relative w-3.5 h-3.5 p-1 -m-1 text-gray-600 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
           >
-            {copied ? (
-              <span className="text-xs font-medium text-brand">Copied!</span>
-            ) : (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
-            )}
+            <svg
+              aria-hidden="true"
+              className={`absolute inset-0 w-3.5 h-3.5 transition-all duration-150 ease-out ${copied ? 'opacity-0 scale-50' : 'opacity-100 scale-100'}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+            <svg
+              aria-hidden="true"
+              className={`absolute inset-0 w-3.5 h-3.5 text-brand transition-all duration-150 ease-out ${copied ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+            <span role="status" aria-live="polite" className="sr-only">{copied ? 'Link copied to clipboard' : ''}</span>
           </button>
         </div>
 
-        {/* Centre — comparison pill: only on mobile (md+ has sidebar which already shows it) */}
-        {comparisonNeighborhood && (
-          <div className="md:hidden flex items-center gap-1.5 shrink-0 mx-3">
-            <span className="flex items-center gap-1.5 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-full pl-2.5 pr-1 py-0.5">
-              <span
-                className="w-2 h-2 rounded-full bg-amber-400 shrink-0"
-                aria-hidden="true"
-              />
-              <span className="hidden sm:inline">Comparing:</span>
-              <span className="truncate max-w-[120px]">{comparisonNeighborhood.name}</span>
-              <button
-                onClick={() => setComparisonNeighborhood(null)}
-                aria-label={`Remove comparison with ${comparisonNeighborhood.name}`}
-                className="ml-0.5 shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-amber-600 hover:text-amber-900 hover:bg-amber-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
-              >
-                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </span>
-          </div>
-        )}
-
-        {/* Right — utility controls (About/shortcuts only — language lives in PageHeader) */}
+        {/* Right — utility controls (About/shortcuts only — language lives in PageHeader).
+            About this tool used to be "hidden sm:inline" — invisible below the
+            640px breakpoint, i.e. on true mobile widths, despite this file's own
+            header comment claiming it's reachable here on every screen size.
+            Shortened label on mobile instead of hiding it outright, matching the
+            same abbreviate-don't-hide pattern used elsewhere in this bar. */}
         <div className="flex items-center gap-3 shrink-0 ml-auto">
+          {/* Print/download link — only renders once we can resolve a
+              neighborhood id out of the URL (see NEIGHBORHOOD_ID_PATTERN
+              above); opens in a new tab so the interactive profile stays
+              where the user left it. */}
+          {neighborhoodId && (
+            <Link
+              href={`/print/neighborhood/${neighborhoodId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:inline text-xs font-medium text-gray-600 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded whitespace-nowrap"
+            >
+              Print this report
+              {/* A11Y (2026-09-26): warn before a new tab opens */}
+              <span className="sr-only"> (opens in new tab)</span>
+            </Link>
+          )}
           <Link
             href="/about"
-            className="hidden sm:inline text-xs font-medium text-gray-600 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+            className="text-xs font-medium text-gray-600 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded whitespace-nowrap"
           >
-            About this tool
+            <span className="sm:hidden">About</span>
+            <span className="hidden sm:inline">About this tool</span>
           </Link>
           <KeyboardShortcutsButton />
         </div>
 
       </div>
-    </div>
+    </nav>
   );
 }

@@ -1,0 +1,21 @@
+{
+  "IndicatorKey": "child-obesity",
+  "Title": "Child Obesity",
+  "Label": "Childhood Obesity",
+  "Subtitle": "Percentage of public school children in grades K to 8 who have obesity (age- and gender-specific Body Mass Index greater than or equal to the 95th percentile, based on CDC's 2000 growth charts).",
+  "AgeAdjustment": "No",
+  "MethodsNote": "Public school students' BMI data was constructed from height and weight measurements collected annually for NYC FITNESSGRAM assessments. Age- and gender-specific BMI percentiles were calculated according to the CDC's 2000 growth charts where obesity is defined as having a Body Mass Index >= the 95th percentile. Data are based on the child's address of residence. Some students were excluded from the community district analysis as they had no valid address available.",
+  "ReliabilityNote": "",
+  "Source": "NYC Public Schools, FITNESSGRAM",
+  "DenominatorSource": "N/A",
+  "TimePeriod": "2022-2023",
+  "Unit": "%",
+  "Decimals": 0,
+  "Section": "family-child-health",
+  "Subsection": "infant-child",
+  "type": "Percent",
+  "of": "public school chlidren (grade K through 8)",
+  "detail": "with obesity",
+  "units": "",
+  "indicatorDetail": "Age- and gender-specific Body Mass Index greater than or equal to the 95th percentile, based on CDC's 2000 growth charts."
+}
