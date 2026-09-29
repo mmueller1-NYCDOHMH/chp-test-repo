@@ -202,7 +202,7 @@ export default function IndicatorComparisonChart({
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-0.5">
-          <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wider">
+          <h2 className="text-base font-semibold text-gray-600">
             How every community district compares
           </h2>
           <p className="text-xs text-gray-600">
@@ -229,7 +229,7 @@ export default function IndicatorComparisonChart({
       </div>
 
       <div className="flex flex-col gap-1.5 max-w-xs">
-        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+        <p className="text-sm font-semibold text-gray-600">
           Compare to another neighborhood
         </p>
         <ComparisonNeighborhoodSelector neighborhoods={neighborhoods} />

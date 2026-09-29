@@ -21,7 +21,7 @@ export default function NeighborhoodNotFound() {
 
       {/* Slim header */}
       <div className="bg-blue-700 px-10 py-3">
-        <p className="text-sm font-medium text-blue-200 uppercase tracking-wide">
+        <p className="text-base font-medium text-blue-200">
           Community Health Profiles
         </p>
       </div>

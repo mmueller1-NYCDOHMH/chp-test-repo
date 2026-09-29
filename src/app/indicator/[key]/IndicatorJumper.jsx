@@ -36,7 +36,7 @@ export default function IndicatorJumper({ groups = [], currentKey, geoId = '' })
 
   return (
     <div className="flex flex-col gap-1 min-w-0 flex-1">
-      <label htmlFor="indicator-jumper" className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+      <label htmlFor="indicator-jumper" className="text-sm font-semibold text-gray-600">
         Indicator
       </label>
       <select

@@ -37,7 +37,7 @@ export default function NeighborhoodJumper({ neighborhoods = [], indicatorKey, c
 
   return (
     <div className="flex flex-col gap-1 min-w-0 flex-1">
-      <label htmlFor="indicator-neighborhood-jumper" className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+      <label htmlFor="indicator-neighborhood-jumper" className="text-sm font-semibold text-gray-600">
         Neighborhood
       </label>
       <select

@@ -12,3 +12,4 @@
 export const NEIGHBORHOOD_OVERVIEW_ID   = 'neighborhood-overview';
 export const AVERTABLE_DEATHS_ID        = 'avertable-deaths';
 export const HEALTH_OUTCOMES_ID         = 'health-outcomes';
+export const EDUCATION_LEVEL_ID         = 'education-level';

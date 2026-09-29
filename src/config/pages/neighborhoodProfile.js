@@ -29,6 +29,7 @@ import sectionTitles            from '../content/sectionTitles.json';
 import { neighborhoodOverview } from '../sections/neighborhoodOverview';
 import { avertableDeaths } from '../sections/avertableDeaths';
 import { healthOutcomes } from '../sections/healthOutcomes';
+import { educationLevel } from '../sections/educationLevel';
 
 /**
  * Builds the category header block (title + intro) for a top-level nav category.
@@ -94,6 +95,7 @@ function buildStandardSection(id) {
 const CUSTOM_SECTIONS = {
   'health-outcomes':         healthOutcomes,
   'avertable-deaths':        avertableDeaths,
+  'education-level':         educationLevel,
 };
 
 const renderSection = (id) => CUSTOM_SECTIONS[id] ?? buildStandardSection(id);

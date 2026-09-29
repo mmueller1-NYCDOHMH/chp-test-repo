@@ -23,6 +23,7 @@ import IndicatorChartGrid from '@/components/data-display/IndicatorChartGrid';
 import NeighborhoodOverviewHero from '@/components/data-display/NeighborhoodOverviewHero';
 import PrematureDeathOverviewSection from '@/components/data-display/PrematureDeathOverviewSection';
 import AvertableDeathsSection from '@/components/data-display/AvertableDeathsSection';
+import EducationLevelSection from '@/components/data-display/EducationLevelSection';
 
 export const BlockRegistry = {
   categoryHeader: CategoryHeader,
@@ -31,4 +32,5 @@ export const BlockRegistry = {
   indicatorChartGrid: IndicatorChartGrid,
   prematureDeathOverviewSection: PrematureDeathOverviewSection,
   avertableDeathsSection: AvertableDeathsSection,
+  educationLevelSection: EducationLevelSection,
 };

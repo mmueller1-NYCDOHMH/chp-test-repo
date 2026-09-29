@@ -59,9 +59,20 @@ const RACE_ETHNICITY_FILES = {
   other:    'race-other',
 };
 
+// Education level (2026-09-29): the three attainment files together form one
+// distribution (they sum to 100% per geography) for the Education split bar
+// chart — see EducationLevelSection.jsx. Segment key = the indicator key, so
+// copy (Measure) and metadata resolve per segment with no extra mapping.
+const EDUCATION_LEVEL_FILES = {
+  'edu-did-not-complete-hs':       'edu-did-not-complete-hs',
+  'edu-hsgrad-some-college':       'edu-hsgrad-some-college',
+  'edu-college-degree-and-higher': 'edu-college-degree-and-higher',
+};
+
 const DISTRIBUTION_FILE_MAPS = {
   'age-distribution': AGE_DISTRIBUTION_FILES,
   'race-ethnicity':   RACE_ETHNICITY_FILES,
+  'education-level':  EDUCATION_LEVEL_FILES,
 };
 
 export const loadIndicatorData = cache(function loadIndicatorData(indicatorKey) {

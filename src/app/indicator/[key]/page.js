@@ -269,7 +269,7 @@ export default async function IndicatorPage({ params, searchParams }) {
         {/* Header */}
         <div className="flex flex-col gap-2">
           {neighborhood && (
-            <p className="text-sm font-semibold text-blue-600 uppercase tracking-widest">
+            <p className="text-base font-semibold text-blue-600">
               {neighborhood.name} · {neighborhood.borough}
             </p>
           )}
@@ -364,11 +364,11 @@ export default async function IndicatorPage({ params, searchParams }) {
         {/* ── Methodology ──────────────────────────────────────────────────── */}
         {(source || meta?.methodsNote || meta?.denominatorSource || meta?.ageAdjustment || timePeriod) && (
           <div className="flex flex-col gap-5 border-t border-gray-100 pt-8">
-            <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wider">Methodology</h2>
+            <h2 className="text-base font-semibold text-gray-600">Methodology</h2>
 
             {source && (
               <div className="flex flex-col gap-1.5">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Data source</p>
+                <p className="text-sm font-semibold text-gray-600">Data source</p>
                 <p className="text-sm text-gray-700 leading-relaxed">{source}</p>
                 {meta?.sourceUrl && (
                   <a
@@ -388,28 +388,28 @@ export default async function IndicatorPage({ params, searchParams }) {
 
             {timePeriod && (
               <div className="flex flex-col gap-1.5">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Time period</p>
+                <p className="text-sm font-semibold text-gray-600">Time period</p>
                 <p className="text-sm text-gray-700 leading-relaxed">{timePeriod}</p>
               </div>
             )}
 
             {meta?.methodsNote && (
               <div className="flex flex-col gap-1.5">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">About this indicator</p>
+                <p className="text-sm font-semibold text-gray-600">About this indicator</p>
                 <p className="text-sm text-gray-700 leading-relaxed">{meta.methodsNote}</p>
               </div>
             )}
 
             {meta?.denominatorSource && (
               <div className="flex flex-col gap-1.5">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Denominator source</p>
+                <p className="text-sm font-semibold text-gray-600">Denominator source</p>
                 <p className="text-sm text-gray-700 leading-relaxed">{meta.denominatorSource}</p>
               </div>
             )}
 
             {meta?.ageAdjustment && (
               <div className="flex flex-col gap-1.5">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Age adjustment</p>
+                <p className="text-sm font-semibold text-gray-600">Age adjustment</p>
                 <p className="text-sm text-gray-700 leading-relaxed">{meta.ageAdjustment}</p>
               </div>
             )}
@@ -418,7 +418,7 @@ export default async function IndicatorPage({ params, searchParams }) {
 
         {/* CTA — back to neighborhood profile */}
         <div className="flex flex-col gap-3 border-t border-gray-100 pt-8">
-          <p className="text-sm font-semibold text-gray-600 uppercase tracking-wider">Explore in context</p>
+          <p className="text-base font-semibold text-gray-600">Explore in context</p>
           {neighborhood ? (
             <Link
               href={`/neighborhood/${neighborhood.id}`}

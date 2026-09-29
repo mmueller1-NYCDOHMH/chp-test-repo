@@ -45,6 +45,13 @@ siteNav.forEach(category => {
 // A copy-deck row → search entry. navSection (from build-copy) is the sheet
 // section; bespoke rows (e.g. avertable-death, topic 'avertable-deaths') are
 // folded into that section on the page, so it's also the right anchor.
+// Keys drawn inside another key's card (no card id of their own) → the card
+// id to scroll to. Education levels share one split bar chart (2026-09-29).
+const ANCHOR_ALIASES = {
+  'edu-did-not-complete-hs': 'edu-college-degree-and-higher',
+  'edu-hsgrad-some-college': 'edu-college-degree-and-higher',
+};
+
 function toEntry(row, key) {
   const sec = sectionMap[row.navSection ?? row.topic];
   if (!sec) return null;                  // not in a live section
@@ -52,7 +59,7 @@ function toEntry(row, key) {
     key,
     title:            row.measure,
     subtitle:         row.context ?? '',
-    indicatorAnchor:  `#indicator-${key}`,
+    indicatorAnchor:  `#indicator-${ANCHOR_ALIASES[key] ?? key}`,
     anchor:           sec.anchor,
     categoryLabel:    sec.categoryLabel,
     subcategoryLabel: sec.subcategoryLabel,

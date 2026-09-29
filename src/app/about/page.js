@@ -115,7 +115,7 @@ export default async function AboutPage() {
 
         {/* ── Page header ────────────────────────────────────────────── */}
         <div className="mb-10 pb-10 border-b border-gray-100">
-          <p className="text-xs font-semibold text-blue-600 uppercase tracking-widest mb-3">
+          <p className="text-sm font-semibold text-blue-600 mb-3">
             {copy.deptLabel}
           </p>
           <h1 className="text-3xl font-bold text-gray-900 leading-tight mb-4">
@@ -242,7 +242,7 @@ export default async function AboutPage() {
           <aside className="hidden lg:block">
             <div className="sticky top-32">
               <div className="bg-gray-50 border border-gray-200 rounded-xl px-5 py-4">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
+                <p className="text-sm font-semibold text-gray-600 mb-3">
                   Keyboard shortcuts
                 </p>
                 <ShortcutRow keys={['/']}   description="Search neighborhoods" />
