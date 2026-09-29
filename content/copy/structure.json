@@ -86,7 +86,12 @@
               "key": "edu-college-degree-and-higher"
             }
           ],
-          "bespokeSections": []
+          "bespokeSections": [
+            {
+              "id": "education-level",
+              "label": "Highest level of education"
+            }
+          ]
         }
       ]
     },

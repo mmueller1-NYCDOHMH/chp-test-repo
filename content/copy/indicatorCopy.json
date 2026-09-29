@@ -241,7 +241,7 @@
   },
   "edu-did-not-complete-hs": {
     "key": "edu-did-not-complete-hs",
-    "topic": "education",
+    "topic": "education-level",
     "navSection": "education",
     "flag": "design in progress",
     "section": "Social",
@@ -257,7 +257,7 @@
   },
   "edu-hsgrad-some-college": {
     "key": "edu-hsgrad-some-college",
-    "topic": "education",
+    "topic": "education-level",
     "navSection": "education",
     "flag": "design in progress",
     "section": "Social",
@@ -273,7 +273,7 @@
   },
   "edu-college-degree-and-higher": {
     "key": "edu-college-degree-and-higher",
-    "topic": "education",
+    "topic": "education-level",
     "navSection": "education",
     "flag": "design in progress",
     "section": "Social",
