@@ -399,7 +399,7 @@ export default function IndicatorFlyoutContent({
             <div className="px-6 py-5 flex flex-col gap-4 overflow-y-auto">
               {sourceClean && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">Data source</p>
+                  <p className="text-sm font-semibold text-gray-600 mb-1.5">Data source</p>
                   <p className="text-sm text-gray-700 leading-relaxed">{sourceClean}</p>
                   {sourceUrl && (
                     <a
@@ -418,7 +418,7 @@ export default function IndicatorFlyoutContent({
               )}
               {description && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">Notes</p>
+                  <p className="text-sm font-semibold text-gray-600 mb-1.5">Notes</p>
                   <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
                 </div>
               )}

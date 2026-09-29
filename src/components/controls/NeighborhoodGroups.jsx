@@ -81,7 +81,7 @@ export default function NeighborhoodGroups({
 
   return grouped.map(([borough, ns]) => (
     <li key={borough} role="none">
-      <p className={`text-xs font-semibold text-gray-600 uppercase tracking-widest px-3 ${ptHeader} pb-1 select-none`}>
+      <p className={`text-sm font-semibold text-gray-600 px-3 ${ptHeader} pb-1 select-none`}>
         {borough}
       </p>
       <ul role="group" aria-label={borough}>
@@ -109,8 +109,8 @@ export default function NeighborhoodGroups({
                 {highlight(n.name, query.trim(), scheme.mark)}
               </span>
               {isActive && (
-                <span className={`text-xs ${scheme.badgeText} font-semibold uppercase tracking-wide ml-2 shrink-0`}>
-                  current
+                <span className={`text-xs ${scheme.badgeText} font-semibold ml-2 shrink-0`}>
+                  Current
                 </span>
               )}
             </li>

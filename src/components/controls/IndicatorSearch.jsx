@@ -320,7 +320,7 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
             let globalIdx = 0;
             return Object.entries(grouped).map(([subcat, inds]) => (
               <div key={subcat} role="group" aria-label={subcat}>
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1.5 px-1" aria-hidden="true">
+                <p className="text-sm font-semibold text-gray-600 mb-1.5 px-1" aria-hidden="true">
                   {subcat}
                 </p>
                 <div className="flex flex-col gap-0.5">

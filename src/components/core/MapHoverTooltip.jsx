@@ -98,7 +98,7 @@ export default function MapHoverTooltip({ indicatorSummaries = {}, selectedNeigh
         aria-hidden={!showHoverLayer}
       >
         <div className="px-4 py-3 border-b border-blue-100 bg-blue-50">
-          <p className="text-xs font-semibold text-blue-500 uppercase tracking-widest mb-0.5">
+          <p className="text-xs font-semibold text-blue-500 mb-0.5">
             Map Preview
           </p>
           <p className="text-sm font-semibold text-gray-900 leading-snug h-5">
@@ -119,7 +119,7 @@ export default function MapHoverTooltip({ indicatorSummaries = {}, selectedNeigh
         {selectedNeighborhood && selectedRows.length > 0 ? (
           <>
             <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-0.5">
+              <p className="text-xs font-semibold text-gray-600 mb-0.5">
                 At a Glance
               </p>
               <p className="text-sm font-semibold text-gray-900 leading-snug">
@@ -136,7 +136,7 @@ export default function MapHoverTooltip({ indicatorSummaries = {}, selectedNeigh
         ) : (
           /* No neighborhood selected — placeholder keeps the panel present */
           <div className="px-4 py-5 bg-gray-50">
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1.5">
+            <p className="text-xs font-semibold text-gray-600 mb-1.5">
               At a Glance
             </p>
             <p className="text-xs text-gray-600 leading-relaxed">

@@ -170,7 +170,7 @@ export default function IntroModal({ neighborhoods = [] }) {
 
         {/* ── Header (full-width) ──────────────────────────────────────────── */}
         <div className="px-5 pt-5 pb-4 md:px-8 md:pt-7 md:pb-5 border-b border-gray-100 shrink-0">
-          <p className="text-sm font-semibold text-brand uppercase tracking-widest mb-1.5">
+          <p className="text-base font-semibold text-brand mb-1.5">
             {modalCopy.deptLabel}
           </p>
           {/* h2, not h1 — the page underneath (PageHeader) owns the page's h1.
@@ -317,11 +317,11 @@ export default function IntroModal({ neighborhoods = [] }) {
                       return Object.entries(grouped).map(([borough, nhoods]) => (
                         // Mobile styling matches the Sidebar's "Find neighborhood"
                         // search (UnifiedSearch + NeighborhoodGroups, used in the
-                        // mobile bottom sheet): plain uppercase header, flat
+                        // mobile bottom sheet): plain header, flat
                         // blue-50/blue-700 highlight, no rounding. Desktop (md+)
                         // keeps this modal's own sticky header + brand-tint pill.
                         <div key={borough} className="md:mb-3">
-                          <div className="text-xs md:text-sm font-semibold text-gray-600 md:text-gray-600 uppercase tracking-widest
+                          <div className="text-sm md:text-base font-semibold text-gray-600 md:text-gray-600
                                           px-3 md:px-2 pt-2.5 md:pt-0 pb-1 md:mb-1 select-none md:sticky md:top-0 md:bg-white md:py-1">
                             {borough}
                           </div>

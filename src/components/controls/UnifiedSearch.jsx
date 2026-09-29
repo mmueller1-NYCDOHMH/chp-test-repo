@@ -281,7 +281,7 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
                       {flatNeighborhoods.length > 0 && (
                         <div className="border-t border-gray-100 mx-2 mt-1" />
                       )}
-                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest px-3 pt-2.5 pb-1 select-none">
+                      <p className="text-sm font-semibold text-gray-600 px-3 pt-2.5 pb-1 select-none">
                         Addresses
                       </p>
                       <p className="text-xs text-gray-600 px-3 pb-2">Searching…</p>
@@ -293,7 +293,7 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
                       {flatNeighborhoods.length > 0 && (
                         <div className="border-t border-gray-100 mx-2 mt-1" />
                       )}
-                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest px-3 pt-2.5 pb-1 select-none">
+                      <p className="text-sm font-semibold text-gray-600 px-3 pt-2.5 pb-1 select-none">
                         Addresses
                       </p>
                       <p className="text-xs text-gray-600 px-3 pb-2">Try a more complete address, e.g. 123 Main St Brooklyn</p>
@@ -305,7 +305,7 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
                       {flatNeighborhoods.length > 0 && (
                         <div className="border-t border-gray-100 mx-2 mt-1" />
                       )}
-                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest px-3 pt-2.5 pb-1 select-none">
+                      <p className="text-sm font-semibold text-gray-600 px-3 pt-2.5 pb-1 select-none">
                         Addresses
                       </p>
                       <ul role="group" aria-label="Address results">
