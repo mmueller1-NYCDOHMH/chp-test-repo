@@ -61,6 +61,11 @@
  *   focus-trap/scroll-lock/'i'-shortcut effects live in dedicated hooks
  *   under ./flyoutShell/ — this file owns the context, open/close/copy-link
  *   state, and the JSX tree.
+ * - Export tray (2026-09-29): an "Export" toggle next to "Copy link" opens a
+ *   row under the header with the expanded chart modal's Copy / PNG / CSV /
+ *   Embed actions — see ./flyoutShell/FlyoutExportTray.jsx. Standard cards
+ *   pass `expandedSpecOptions` (so the PNG matches the expanded modal's);
+ *   custom cards may pass `csvRows` for the CSV button.
  */
 import { createContext, useCallback, useContext, useMemo, useRef, useState, lazy, Suspense } from 'react';
 import { useParams } from 'next/navigation';
@@ -69,6 +74,7 @@ import { useIsMobileViewport } from './flyoutShell/useIsMobileViewport';
 import { useMobileDragSheet } from './flyoutShell/useMobileDragSheet';
 import { useFlyoutHistoryBack } from './flyoutShell/useFlyoutHistoryBack';
 import { useFlyoutA11yEffects } from './flyoutShell/useFlyoutA11yEffects';
+import FlyoutExportTray, { flyoutHasExports } from './flyoutShell/FlyoutExportTray';
 
 // Lazy-load so Leaflet bundle only loads when an indicator flyout opens
 const IndicatorFlyoutContent = lazy(() =>
@@ -101,12 +107,18 @@ export default function FlyoutShell({ children }) {
   // Track mobile breakpoint so animation direction can change
   const isMobile = useIsMobileViewport();
 
+  // Export tray (2026-09-29) — collapsed again whenever the flyout opens or
+  // closes, so it never carries over from one indicator to the next.
+  const [trayOpen, setTrayOpen] = useState(false);
+
   const open = useCallback((payload) => {
     triggerRef.current = document.activeElement;
+    setTrayOpen(false);
     setFlyout(payload);
   }, []);
 
   const close = useCallback(() => {
+    setTrayOpen(false);
     setFlyout(null);
     // Return focus to the element that triggered the flyout
     requestAnimationFrame(() => triggerRef.current?.focus());
@@ -296,6 +308,32 @@ export default function FlyoutShell({ children }) {
               </button>
             )}
 
+            {/* Export — toggles the tray below the header, which holds the same
+                Copy / PNG / CSV / Embed actions as the expanded chart modal.
+                See ./flyoutShell/FlyoutExportTray.jsx (2026-09-29). */}
+            {isIndicator && flyoutHasExports(flyout) && (
+              <button
+                type="button"
+                onClick={() => setTrayOpen(o => !o)}
+                aria-expanded={trayOpen}
+                aria-controls="flyout-export-tray"
+                title="Download or embed"
+                className={`inline-flex items-center gap-1 h-7 px-2 rounded border text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap ${
+                  trayOpen
+                    ? 'text-brand border-brand bg-brand-tint'
+                    : 'text-gray-600 border-gray-200 hover:text-brand hover:border-brand hover:bg-brand-tint'
+                }`}
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Export
+                <svg className={`w-3 h-3 transition-transform duration-200 ${trayOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={close}
@@ -308,6 +346,16 @@ export default function FlyoutShell({ children }) {
             </button>
           </div>
         </div>
+
+        {/* ── Export tray (indicator flyouts) ──────────────────── */}
+        {isIndicator && flyoutHasExports(flyout) && (
+          <FlyoutExportTray
+            id="flyout-export-tray"
+            open={trayOpen}
+            flyout={flyout}
+            panelRef={panelRef}
+          />
+        )}
 
         {/* ── Panel body — switches on kind ─────────────────────── */}
         {isIndicator ? (

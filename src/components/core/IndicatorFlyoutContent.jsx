@@ -329,7 +329,7 @@ export default function IndicatorFlyoutContent({
                 causes/cancer bar + pyramid charts. Same slot as the mini bar,
                 so custom cards get the same flyout layout as standard ones. */}
           {!compactSpec && chart && (
-            <div className="min-w-0">{chart}</div>
+            <div className="min-w-0" data-flyout-chart>{chart}</div>
           )}
 
           {/* ── 5c. Description inline when there's no map/insight — otherwise

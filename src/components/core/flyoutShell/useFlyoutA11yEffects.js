@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { areShortcutsEnabled } from '@/lib/utils/shortcutsPreference';
 
 /**
  * FILE: useFlyoutA11yEffects.js
@@ -24,6 +25,11 @@ export function useFlyoutA11yEffects({ isOpen, isMobile, close, panelRef }) {
     firstFocusable?.focus();
 
     function onKey(e) {
+      // A dialog opened from inside the flyout but portaled outside it (e.g.
+      // the export tray's EmbedModal) owns Escape/Tab while focus is in it —
+      // otherwise Escape would close that dialog AND the flyout (2026-09-29).
+      if (panelRef.current && !panelRef.current.contains(document.activeElement) &&
+          document.activeElement !== document.body) return;
       if (e.key === 'Escape') { close(); return; }
 
       if (e.key === 'Tab' && panelRef.current) {
@@ -99,6 +105,7 @@ export function useFlyoutA11yEffects({ isOpen, isMobile, close, panelRef }) {
   useEffect(() => {
     function onKey(e) {
       if (e.key !== 'i') return;
+      if (!areShortcutsEnabled()) return; // WCAG 2.1.4 — user can turn these off
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const tag = document.activeElement?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) return;
