@@ -35,8 +35,17 @@
  * downward and to the left instead, which always stays on-screen regardless
  * of how close to the edge the button sits.
  *
+ * ON/OFF SWITCH (2026-09-29, WCAG 2.1.4 Character Key Shortcuts):
+ * The popover has a "Keyboard shortcuts On/Off" switch at the top. When off,
+ * every single-character shortcut (/ f m e i and ? itself) is ignored; the
+ * `?` button still opens this popover so the user can turn them back on.
+ * The preference lives in lib/utils/shortcutsPreference.js — any new
+ * character-key shortcut must check areShortcutsEnabled() before acting.
+ *
  * BEHAVIOR:
  * - Click `?` or press `?` anywhere (outside inputs) to toggle.
+ * - Tab from the panel moves to the switch; Tab again (or Shift+Tab) closes
+ *   the panel and returns focus to the `?` button.
  * - Press Escape or click outside to close.
  * - Not a modal — no focus trap.
  *
@@ -47,6 +56,11 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import {
+  areShortcutsEnabled,
+  setShortcutsEnabled,
+  useShortcutsEnabled,
+} from '@/lib/utils/shortcutsPreference';
 
 // Exported so other entry points (e.g. HeaderHelpMenu) can list the same
 // shortcuts without duplicating this array.
@@ -54,8 +68,6 @@ export const SHORTCUTS = [
   { keys: ['/'],   description: 'Search neighborhoods'                         },
   { keys: ['f'],   description: 'Search indicators'                            },
   { keys: ['m'],   description: 'Open neighborhood picker'                     },
-  { keys: ['j'],   description: 'Next section'                                 },
-  { keys: ['k'],   description: 'Previous section'                             },
   { keys: ['e'],   description: 'Expand chart (while hovering or focusing it)' },
   { keys: ['i'],   description: 'Open indicator details (hover or focus card)' },
   { keys: ['Esc'], description: 'Close panel / clear search'                   },
@@ -69,6 +81,8 @@ export default function KeyboardShortcutsButton() {
   const containerRef          = useRef(null);
   const btnRef                = useRef(null);
   const popoverRef            = useRef(null);
+  const switchRef             = useRef(null);
+  const shortcutsOn           = useShortcutsEnabled();
 
   // Animate open/close
   useEffect(() => {
@@ -120,6 +134,7 @@ export default function KeyboardShortcutsButton() {
   useEffect(() => {
     function onKey(e) {
       if (e.key !== '?') return;
+      if (!areShortcutsEnabled()) return; // WCAG 2.1.4 — user turned shortcuts off
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const tag = document.activeElement?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) return;
@@ -154,11 +169,16 @@ export default function KeyboardShortcutsButton() {
   }, [isOpen, coords]);
 
   function handlePopoverKeyDown(e) {
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      close();
-      btnRef.current?.focus();
+    if (e.key !== 'Tab') return;
+    e.preventDefault();
+    // Forward Tab from the panel itself lands on the on/off switch — the only
+    // interactive control inside. Any other Tab / Shift+Tab closes the panel.
+    if (!e.shiftKey && e.target !== switchRef.current && switchRef.current) {
+      switchRef.current.focus();
+      return;
     }
+    close();
+    btnRef.current?.focus();
   }
 
   // Click outside closes. The popover is portaled to document.body, so it's
@@ -183,7 +203,7 @@ export default function KeyboardShortcutsButton() {
         aria-label="Keyboard shortcuts"
         aria-expanded={isOpen}
         aria-haspopup="dialog"
-        title="Keyboard shortcuts (?)"
+        title={shortcutsOn ? 'Keyboard shortcuts (?)' : 'Keyboard shortcuts (off)'}
         className={[
           'w-6 h-6 rounded-full border text-xs font-medium flex items-center justify-center shrink-0',
           'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
@@ -215,11 +235,45 @@ export default function KeyboardShortcutsButton() {
             transition: 'opacity 150ms ease-out, transform 150ms ease-out',
           }}
         >
-          <p className="text-sm font-semibold text-gray-600 px-3 py-2.5 border-b border-gray-100">
-            Keyboard shortcuts
-          </p>
+          <div className="flex items-center justify-between gap-3 px-3 py-2.5 border-b border-gray-100">
+            <span id="chp-shortcuts-switch-label" className="text-sm font-semibold text-gray-600">
+              Keyboard shortcuts
+            </span>
+            {/* WCAG 2.1.4 — lets users turn off single-character shortcuts */}
+            <button
+              ref={switchRef}
+              type="button"
+              role="switch"
+              aria-checked={shortcutsOn}
+              aria-labelledby="chp-shortcuts-switch-label"
+              onClick={() => setShortcutsEnabled(!shortcutsOn)}
+              className="flex items-center gap-1.5 shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+            >
+              <span className="text-xs text-gray-600 w-6 text-right" aria-hidden="true">
+                {shortcutsOn ? 'On' : 'Off'}
+              </span>
+              <span
+                aria-hidden="true"
+                className={[
+                  'relative inline-flex w-8 h-[18px] rounded-full border transition-colors duration-150',
+                  shortcutsOn ? 'bg-brand border-brand' : 'bg-gray-200 border-gray-400',
+                ].join(' ')}
+              >
+                <span
+                  className="absolute top-[2px] left-[2px] w-3 h-3 rounded-full bg-white shadow transition-transform duration-150"
+                  style={{ transform: shortcutsOn ? 'translateX(14px)' : 'translateX(0)' }}
+                />
+              </span>
+            </button>
+          </div>
 
-          <ul className="py-1">
+          {!shortcutsOn && (
+            <p className="text-xs text-gray-600 px-3 pt-2.5 leading-snug">
+              Shortcuts are off. Esc still closes panels.
+            </p>
+          )}
+
+          <ul className={['py-1 transition-opacity', shortcutsOn ? '' : 'opacity-50'].join(' ')}>
             {SHORTCUTS.map(({ keys, description }) => (
               <li
                 key={keys.join('+')}

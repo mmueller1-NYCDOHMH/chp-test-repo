@@ -62,6 +62,39 @@ const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onView
   const enteredRef    = useRef(false); // mirrors hasEntered — readable in async callbacks
   const [hasEntered, setHasEntered] = useState(false);
   const [embedError, setEmbedError] = useState(false);
+  const outerRef = useRef(null);
+  // PERF (2026-09-29): don't compile/render the Vega view until the chart is
+  // near the viewport. A neighborhood page has ~50 charts; embedding them all
+  // on mount (each one a Vega-Lite compile + SVG render) blocked the main
+  // thread for seconds on load, mostly for charts far below the fold. The
+  // 800px margin starts rendering well before the chart scrolls into view,
+  // so it's normally ready by the time it's seen. Charts in modals/flyouts
+  // are already on screen, so they render right away. Hidden charts
+  // (display:none — e.g. mobile category pages) render when first shown.
+  const [nearView, setNearView] = useState(false);
+
+  useEffect(() => {
+    const el = outerRef.current;
+    if (!el || nearView) return;
+    if (typeof IntersectionObserver === 'undefined') { setNearView(true); return; }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          observer.disconnect();
+          setNearView(true);
+        }
+      },
+      { rootMargin: '800px 0px' }
+    );
+    observer.observe(el);
+    // Printing the page directly should still include every chart.
+    const onBeforePrint = () => setNearView(true);
+    window.addEventListener('beforeprint', onBeforePrint);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('beforeprint', onBeforePrint);
+    };
+  }, [nearView]);
 
   // ── Entrance animation ────────────────────────────────────────────────────
   // Gate on BOTH the element being in view AND Vega having finished rendering.
@@ -132,7 +165,7 @@ const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onView
   }, []); // viewRef.current is always current; no deps needed
 
   useEffect(() => {
-    if (!containerRef.current || !spec) return;
+    if (!containerRef.current || !spec || !nearView) return;
 
     setEmbedError(false);
     let cancelled = false;
@@ -192,7 +225,7 @@ const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onView
         viewRef.current = null;
       }
     };
-  }, [spec]);
+  }, [spec, nearView]);
 
   if (embedError) {
     return (
@@ -210,7 +243,7 @@ const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onView
   }
 
   return (
-    <div className="relative min-w-0" style={{ minHeight: '175px' }}>
+    <div ref={outerRef} className="relative min-w-0" style={{ minHeight: '175px' }}>
       {/* Skeleton — visible while vega-embed loads and animates in.
           Sits behind the chart wrapper so the fade-in transition plays
           over it rather than over blank white space. */}

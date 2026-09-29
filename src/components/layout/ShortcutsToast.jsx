@@ -17,6 +17,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { areShortcutsEnabled } from '@/lib/utils/shortcutsPreference';
 
 const STORAGE_KEY  = 'chp_shortcuts_hint_seen';
 const AUTO_DISMISS = 4000; // ms
@@ -30,6 +31,7 @@ export default function ShortcutsToast() {
   useEffect(() => {
     try {
       if (localStorage.getItem(STORAGE_KEY)) return;
+      if (!areShortcutsEnabled()) return; // user already turned shortcuts off
     } catch { return; }
 
     // Short delay so the page settles before the toast appears
@@ -71,7 +73,7 @@ export default function ShortcutsToast() {
             search neighborhoods
             <span className="text-white/40 mx-1.5">·</span>
             <kbd className="inline-flex items-center justify-center w-4 h-4 bg-white/20 rounded text-[10px] font-mono mr-1">?</kbd>
-            all shortcuts
+            all shortcuts or turn them off
           </p>
         </div>
         <button

@@ -24,7 +24,9 @@
  * BCP-47 tag that Google Translate recognises (e.g. 'fr', 'ht', 'ko').
  *
  * NOTES:
- * - The Google Translate script is loaded in layout.js via next/script.
+ * - The Google Translate script is loaded by GoogleTranslateLoader.jsx (mounted
+ *   in layout.js), and only when the googtrans cookie selects a non-English
+ *   language — English visitors never download it.
  * - RTL languages (Arabic, Urdu, Yiddish) set dir="rtl" on the label span
  *   only, so the text shapes correctly but stays left-aligned with the rest
  *   of the list (dir on the whole row flipped the flex layout).

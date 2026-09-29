@@ -23,6 +23,14 @@
  * - Stronger focus ring (blue-600, 2px) and underline (gray-500) — both
  *   were ~2.5:1 before, below the 3:1 non-text contrast minimum.
  *
+ * PORTAL (2026-09-29):
+ * - The tooltip renders into document.body via a portal with fixed
+ *   positioning, measured from the term on open (and on scroll/resize).
+ *   Before, it was an absolute child of the term, so any ancestor with
+ *   overflow:hidden clipped it — e.g. CardReadMore's 2-line clamp, which
+ *   hid every on-card subtitle tooltip. Flips below the term when there's
+ *   no room above, and is clamped to the viewport horizontally.
+ *
  * USAGE:
  * Typically rendered by parseGlossaryTerms() + a loop in the parent:
  *
@@ -42,14 +50,22 @@
  * NOTES:
  * - Client component (uses useState for hover/focus)
  * - Tooltip is positioned above the term; flips automatically via CSS if
- *   near the viewport edge would clip it
+ *   near the viewport edge would clip it (now JS-measured; see PORTAL)
  * - Accessible: uses role="tooltip", aria-describedby, and responds to focus
  */
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+
+const TIP_W = 224;   // w-56
+const GAP = 6;       // mb-1.5
+const EDGE = 8;      // min distance from viewport edge
 
 export default function GlossaryTerm({ term, definition }) {
   const id = useId();
   const wrapRef   = useRef(null);
+  const tipRef    = useRef(null);
+  const [mounted, setMounted] = useState(false);
+  const [pos, setPos] = useState(null); // { top, left, below }
   const closeTimer = useRef(null);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -82,7 +98,9 @@ export default function GlossaryTerm({ term, definition }) {
       if (e.key === 'Escape') closeAll(); // no preventDefault / focus change
     }
     function onDocPointer(e) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
+      const inWrap = wrapRef.current && wrapRef.current.contains(e.target);
+      const inTip  = tipRef.current && tipRef.current.contains(e.target);
+      if (!inWrap && !inTip) {
         setPinned(false);
         setHovered(false);
       }
@@ -96,6 +114,37 @@ export default function GlossaryTerm({ term, definition }) {
   }, [open, closeAll]);
 
   useEffect(() => () => cancelClose(), []);
+  useEffect(() => { setMounted(true); }, []);
+
+  // Measure the term and place the fixed-position tooltip above it (or
+  // below, if there isn't room), clamped inside the viewport.
+  const place = useCallback(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const tipH = tipRef.current ? tipRef.current.offsetHeight : 60;
+    const below = r.top - GAP - tipH < EDGE;
+    const half = TIP_W / 2;
+    const vw = window.innerWidth;
+    const center = Math.min(Math.max(r.left + r.width / 2, EDGE + half), vw - EDGE - half);
+    setPos({
+      top: below ? r.bottom + GAP : r.top - GAP,
+      left: center,
+      below,
+      arrowLeft: r.left + r.width / 2 - (center - half), // px from tooltip's left edge
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    place();
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    return () => {
+      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('resize', place);
+    };
+  }, [open, place]);
 
   return (
     <span
@@ -116,21 +165,36 @@ export default function GlossaryTerm({ term, definition }) {
         {term}
       </button>
 
-      {/* Tooltip — hoverable (pointer events on while open), no auto-hide */}
-      <span
-        id={id}
-        role="tooltip"
-        className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-56 rounded-lg bg-gray-900 px-3 py-2 text-xs text-white leading-snug shadow-lg transition-opacity duration-150 motion-reduce:transition-none"
-        style={{
-          opacity:       open ? 1 : 0,
-          visibility:    open ? 'visible' : 'hidden',
-          pointerEvents: open ? 'auto' : 'none',
-        }}
-      >
-        {definition}
-        {/* Arrow */}
-        <span aria-hidden="true" className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
-      </span>
+      {/* Tooltip — portaled to <body> so overflow:hidden ancestors (e.g. the
+          card's 2-line clamp) can't clip it. Hoverable, no auto-hide. Always
+          mounted (once on the client) so aria-describedby resolves. */}
+      {mounted && createPortal(
+        <span
+          ref={tipRef}
+          id={id}
+          role="tooltip"
+          onMouseEnter={onPointerEnter}
+          onMouseLeave={onPointerLeave}
+          className="fixed z-[3000] w-56 rounded-lg bg-gray-900 px-3 py-2 text-xs text-white leading-snug shadow-lg transition-opacity duration-150 motion-reduce:transition-none"
+          style={{
+            top:           pos ? pos.top : -9999,
+            left:          pos ? pos.left : -9999,
+            transform:     `translate(-50%, ${pos && pos.below ? '0' : '-100%'})`,
+            opacity:       open && pos ? 1 : 0,
+            visibility:    open && pos ? 'visible' : 'hidden',
+            pointerEvents: open ? 'auto' : 'none',
+          }}
+        >
+          {definition}
+          {/* Arrow — points at the term even when the tooltip is edge-clamped */}
+          <span
+            aria-hidden="true"
+            className={`absolute -translate-x-1/2 border-4 border-transparent ${pos && pos.below ? 'bottom-full border-b-gray-900' : 'top-full border-t-gray-900'}`}
+            style={{ left: pos ? pos.arrowLeft : '50%' }}
+          />
+        </span>,
+        document.body
+      )}
     </span>
   );
 }

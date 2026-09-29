@@ -22,6 +22,7 @@ import ExpandedChartLegend from './ExpandedChartLegend';
 import SubtitleWithGlossary from './SubtitleWithGlossary';
 import { buildLegendItems } from './chartCardUtils';
 import { downloadCsv, hasCsvData } from './downloadCsv';
+import { composeExportCanvas, loadImage, downloadCanvas, copyCanvas } from './chartExport';
 
 export default function ExpandedChartModal({
   open,
@@ -55,100 +56,23 @@ export default function ExpandedChartModal({
     expandedViewRef.current = view;
   }, []);
 
-  // ── Chart export helpers ──────────────────────────────────────────────────
+  // ── Chart export ──────────────────────────────────────────────────────────
   // The Vega spec has no title (to avoid doubling the HTML modal header).
   // For export we composite: title → subtitle → legend column → chart image.
+  // Compositing lives in chartExport.js (2026-09-29), shared with the Details
+  // flyout's export tray so both produce the identical PNG.
   async function buildExportCanvas(view) {
-    const scale    = 2;
-    const chartUrl = await view.toImageURL('png', scale);
-
-    const img = new Image();
-    img.src   = chartUrl;
-    await new Promise(resolve => { img.onload = resolve; });
-
-    const FONT        = `-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
-    const PADDING     = 28 * scale;
-    const TITLE_SIZE  = 15 * scale;
-    const SUB_SIZE    = 12 * scale;
-    const LINE_GAP    = 6  * scale;
-    const BLOCK_GAP   = 16 * scale;
-    const LEG_SIZE    = 11 * scale;   // legend text size
-    const LEG_ROW     = 20 * scale;   // row height per legend item
-    const DOT_R       = 5  * scale;   // circle radius
-
-    const headerH = title
-      ? PADDING + TITLE_SIZE + (subtitle ? LINE_GAP + SUB_SIZE : 0) + BLOCK_GAP
-      : 0;
-
+    const scale = 2;
+    const chart = await loadImage(await view.toImageURL('png', scale));
     const legendItems = buildLegendItems(indicatorData, geoId, comparisonNeighborhood);
-    const legendH     = legendItems.length ? legendItems.length * LEG_ROW + BLOCK_GAP : 0;
-
-    const canvas  = document.createElement('canvas');
-    canvas.width  = img.width;
-    canvas.height = img.height + headerH + legendH;
-
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // ── Title + subtitle ───────────────────────────────────────────────────
-    if (headerH > 0) {
-      let y = PADDING + TITLE_SIZE;
-      if (title) {
-        ctx.fillStyle = '#111827';
-        ctx.font      = `bold ${TITLE_SIZE}px ${FONT}`;
-        ctx.fillText(title, PADDING, y);
-        y += TITLE_SIZE;
-      }
-      if (subtitle) {
-        y += LINE_GAP;
-        ctx.fillStyle = '#6B7280';
-        ctx.font      = `${SUB_SIZE}px ${FONT}`;
-        ctx.fillText(subtitle, PADDING, y);
-      }
-    }
-
-    // ── Legend — column of colored circles ────────────────────────────────
-    if (legendItems.length) {
-      ctx.font = `${LEG_SIZE}px ${FONT}`;
-      legendItems.forEach((item, i) => {
-        const cy = headerH + DOT_R + i * LEG_ROW + (LEG_ROW - DOT_R * 2) / 2;
-        const tx = PADDING + DOT_R * 2 + 8 * scale;
-        const ty = cy + LEG_SIZE * 0.36; // canvas text baseline offset
-
-        // Circle
-        ctx.beginPath();
-        ctx.arc(PADDING + DOT_R, cy, DOT_R, 0, Math.PI * 2);
-        ctx.fillStyle = item.color;
-        ctx.fill();
-
-        // Label
-        ctx.fillStyle = '#374151';
-        ctx.fillText(item.label, tx, ty);
-
-        // Value (gray suffix)
-        if (item.value) {
-          const labelW = ctx.measureText(item.label).width;
-          ctx.fillStyle = '#4B5563';
-          ctx.fillText(` · ${item.value}`, tx + labelW, ty);
-        }
-      });
-    }
-
-    ctx.drawImage(img, 0, headerH + legendH);
-    return canvas;
+    return composeExportCanvas({ chart, title, subtitle, legendItems, scale });
   }
 
-  // ── Chart export actions ───────────────────────────────────────────────────
   async function handleDownloadImage() {
     const view = expandedViewRef.current;
     if (!view) return;
     try {
-      const canvas = await buildExportCanvas(view);
-      const a      = document.createElement('a');
-      a.href        = canvas.toDataURL('image/png');
-      a.download    = `${indicatorKey ?? title ?? 'chart'}.png`;
-      a.click();
+      downloadCanvas(await buildExportCanvas(view), `${indicatorKey ?? title ?? 'chart'}.png`);
     } catch (err) {
       console.error('[ExpandableChartCard] download error:', err);
     }
@@ -159,23 +83,13 @@ export default function ExpandedChartModal({
     if (!view) return;
     setCopyState('copying');
     try {
-      const canvas = await buildExportCanvas(view);
-      canvas.toBlob(async blob => {
-        try {
-          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-          setCopyState('copied');
-          setTimeout(() => setCopyState('idle'), 2000);
-        } catch (err) {
-          console.error('[ExpandableChartCard] copy error:', err);
-          setCopyState('error');
-          setTimeout(() => setCopyState('idle'), 2000);
-        }
-      }, 'image/png');
+      await copyCanvas(await buildExportCanvas(view));
+      setCopyState('copied');
     } catch (err) {
       console.error('[ExpandableChartCard] copy error:', err);
       setCopyState('error');
-      setTimeout(() => setCopyState('idle'), 2000);
     }
+    setTimeout(() => setCopyState('idle'), 2000);
   }
 
   if (!open) return null;

@@ -47,8 +47,10 @@
  * that decide which dialog (if any) is open.
  *
  * PROPS:
- * - compactSpec        Vega-Lite spec for the card chart
- * - expandedSpec       Vega-Lite spec for the expanded modal chart
+ * - compactSpecOptions  buildBarChartSpec options for the card chart
+ * - expandedSpecOptions buildBarChartSpec options for the expanded modal chart
+ *                       (both specs are built client-side from indicatorData;
+ *                       the expanded one only while its modal is open)
  * - title              Indicator name
  * - subtitle           Description shown full-width under the title, above
  *                       the chart (clamped to 2 lines with a fade if it
@@ -75,8 +77,9 @@
  *                       good/bad rather than raw up/down direction
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import VegaLiteChart from '@/components/charts/VegaLiteChart';
+import { buildBarChartSpec } from '@/lib/charts/buildBarChartSpec';
 import { useFlyout } from '@/components/core/FlyoutShell';
 import messages from '../../../content/site/messages.json';
 import { cleanSource } from './expandableChartCard/chartCardUtils';
@@ -85,11 +88,12 @@ import DetailsButton from './expandableChartCard/DetailsButton';
 import NotesModal from './expandableChartCard/NotesModal';
 import ExpandedChartModal from './expandableChartCard/ExpandedChartModal';
 import EmbedModal from './expandableChartCard/EmbedModal';
+import { areShortcutsEnabled } from '@/lib/utils/shortcutsPreference';
 
 export default function ExpandableChartCard({
   indicatorKey,
-  compactSpec,
-  expandedSpec,
+  compactSpecOptions,  // buildBarChartSpec options for the card chart
+  expandedSpecOptions, // buildBarChartSpec options for the expand modal (built lazily — see below)
   title,
   subtitle,
   metadataOf,
@@ -114,6 +118,26 @@ export default function ExpandableChartCard({
   const [notesOpen,  setNotesOpen]  = useState(false);
   const [embedOpen,  setEmbedOpen]  = useState(false);
 
+  // PERF (2026-09-29): chart specs are built here, on the client, from the
+  // indicator rows this card already receives — they used to be prebuilt on
+  // the server and shipped alongside those same rows (see the PERF note in
+  // IndicatorChartGrid.jsx). The expanded spec is only built while its modal
+  // is open (the modal renders nothing when closed). useMemo keeps the
+  // compact spec's identity stable, which VegaLiteChart (memo'd, re-embeds on
+  // spec change) relies on.
+  const compactSpec = useMemo(
+    () => (compactSpecOptions
+      ? buildBarChartSpec({ ...compactSpecOptions, data: indicatorData ?? [], geoId })
+      : null),
+    [compactSpecOptions, indicatorData, geoId],
+  );
+  const expandedSpec = useMemo(
+    () => (isExpanded && expandedSpecOptions
+      ? buildBarChartSpec({ ...expandedSpecOptions, data: indicatorData ?? [], geoId, expanded: true })
+      : null),
+    [isExpanded, expandedSpecOptions, indicatorData, geoId],
+  );
+
   const { open: openFlyout } = useFlyout();
   const expandBtnRef    = useRef(null); // also restores focus when ExpandedChartModal closes
   const embedBtnRef     = useRef(null); // "Embed" button lives inside ExpandedChartModal; also restores focus when EmbedModal closes
@@ -134,6 +158,9 @@ export default function ExpandableChartCard({
       // through so the flyout's mini bar is pixel-identical to the card,
       // not a re-derived lookalike. See IndicatorFlyoutContent.jsx.
       compactSpec,
+      // Export tray (2026-09-29): the flyout builds the expanded spec from
+      // these on demand, so its PNG matches the expanded modal's.
+      expandedSpecOptions,
     });
   }
 
@@ -176,6 +203,7 @@ export default function ExpandableChartCard({
   // Press `e` while hovering OR focusing a card to expand it
   useEffect(() => {
     function onKey(e) {
+      if (!areShortcutsEnabled()) return; // WCAG 2.1.4 — user can turn these off
       if ((e.key === 'e' || e.key === 'E') && !e.ctrlKey && !e.metaKey && !e.altKey) {
         const tag = document.activeElement?.tagName?.toLowerCase();
         if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) return;

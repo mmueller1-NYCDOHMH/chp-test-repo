@@ -9,15 +9,18 @@
  * Server component that:
  * 1. Iterates over the `charts` config array
  * 2. Reads each indicator's JSON data file from /data/indicators/
- * 3. Builds two Vega-Lite specs per chart: compact (card) + expanded (modal)
+ * 3. Collects the options for the card's two Vega-Lite specs — compact (card)
+ *    + expanded (modal). The specs themselves are built client-side in
+ *    ExpandableChartCard from indicatorData (PERF 2026-09-29, see below)
  * 4. Resolves narrative "measure copy" (the copy deck — content/copy/indicatorCopy.json) into
  *    the card's on-card subtitle, when a `status: "ready"` template exists
  *    for that indicator — falling back to the existing static subtitle
  *    otherwise
- * 5. Passes both specs and the resolved subtitle to ExpandableChartCard
+ * 5. Passes the data, spec options and the resolved subtitle to
+ *    ExpandableChartCard
  *
- * This keeps all data loading and spec construction server-side; only
- * the interactive card shell (expand toggle) crosses to the client.
+ * Data loading and copy resolution stay server-side; the card shell and its
+ * (cheap, pure) chart-spec construction run on the client.
  *
  * INPUTS (props):
  * @prop {Array}  charts  - Array of chart config objects:
@@ -64,7 +67,6 @@
  */
 
 import { loadIndicatorData } from '@/lib/data/loadIndicatorData';
-import { buildBarChartSpec } from '@/lib/charts/buildBarChartSpec';
 import { getIndicatorMeta } from '@/lib/data/getIndicatorMeta';
 import { getReadyNarrativeTemplate, getReadyNarrativeTemplates } from '@/lib/copy/getNarrativeCopy';
 import { resolveNarrative, resolveNarrativeParts, narrativePartsToString } from '@/lib/copy/resolveNarrative';
@@ -193,6 +195,20 @@ export default function IndicatorChartGrid({ charts = [], context, sectionLabel,
     // Narrative "measure copy" — see file header. Only replaces what's shown
     // on the card and in its aria description; the chart spec below keeps
     // using base.subtitle (the short line) for its tooltip label.
+    // Options shared by the card's compact + expanded chart specs (built
+    // client-side in ExpandableChartCard — see PERF note below). Note the
+    // SHORT base.subtitle, not the narrative displaySubtitle: it's the
+    // tooltip field label inside the spec.
+    const specOptions = {
+      title:          base.title,
+      subtitle:       base.subtitle ?? null,
+      metadataType:   meta?.type   ?? null,
+      metadataOf:     meta?.of     ?? null,
+      metadataDetail: meta?.detail ?? null,
+      metadataUnits:  meta?.units  ?? null,
+      isCount,
+    };
+
     const displaySubtitle = resolveDisplaySubtitle({
       indicatorKey:     chart.indicatorKey,
       fallbackSubtitle: base.subtitle,
@@ -238,8 +254,15 @@ export default function IndicatorChartGrid({ charts = [], context, sectionLabel,
       indicatorData:   data,
       geoId,
       ariaDescription: buildAriaDescription({ ...base, subtitle: displaySubtitle }),
-      compactSpec:     buildBarChartSpec({ data, geoId, title: base.title, subtitle: base.subtitle, metadataType: meta?.type, metadataOf: meta?.of, metadataDetail: meta?.detail, metadataUnits: meta?.units, width: COMPACT_WIDTH,  height: COMPACT_HEIGHT, isCount }),
-      expandedSpec:    buildBarChartSpec({ data, geoId, title: base.title, subtitle: base.subtitle, metadataType: meta?.type, metadataOf: meta?.of, metadataDetail: meta?.detail, metadataUnits: meta?.units, width: EXPANDED_WIDTH, height: EXPANDED_HEIGHT, expanded: true, isCount }),
+      // PERF (2026-09-29): Vega specs are no longer built here. They're derived
+      // entirely from `indicatorData` (already sent to the client for the
+      // flyout + CSV download) plus these few options, so shipping them too
+      // sent every card's data three times — ~2/3 of each neighborhood
+      // page's payload. ExpandableChartCard now builds the compact spec on
+      // the client (same function, same arguments, ~0.1 ms each) and the
+      // expanded spec only when its modal is opened.
+      compactSpecOptions:  { ...specOptions, width: COMPACT_WIDTH,  height: COMPACT_HEIGHT },
+      expandedSpecOptions: { ...specOptions, width: EXPANDED_WIDTH, height: EXPANDED_HEIGHT },
     };
   });
 
@@ -255,8 +278,8 @@ export default function IndicatorChartGrid({ charts = [], context, sectionLabel,
         <ExpandableChartCard
           key={chart.key}
           indicatorKey={chart.key}
-          compactSpec={chart.compactSpec}
-          expandedSpec={chart.expandedSpec}
+          compactSpecOptions={chart.compactSpecOptions}
+          expandedSpecOptions={chart.expandedSpecOptions}
           title={chart.title}
           subtitle={chart.subtitle}
           metadataOf={chart.metadataOf}

@@ -85,6 +85,7 @@ export default function PrematureMortCauseCard({
       description: insightText,
       geoId,
       chart: <ComparisonBarChartClient {...chartProps} compact />,
+      csvRows: rawData, // flyout export tray's CSV button (2026-09-29)
     });
   }
   const shortcutProps = useCardDetailsShortcut(handleDetails);

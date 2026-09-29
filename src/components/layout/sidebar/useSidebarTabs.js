@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { resolveCategoryLabel } from './resolveCategoryLabel';
+import { areShortcutsEnabled } from '@/lib/utils/shortcutsPreference';
 
 /**
  * FILE: useSidebarTabs.js
@@ -48,6 +49,7 @@ export function useSidebarTabs() {
   //   m  — open the intro / neighborhood picker modal
   useEffect(() => {
     function handleKeyDown(e) {
+      if (!areShortcutsEnabled()) return; // WCAG 2.1.4 — user can turn these off
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const tag = document.activeElement?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) return;

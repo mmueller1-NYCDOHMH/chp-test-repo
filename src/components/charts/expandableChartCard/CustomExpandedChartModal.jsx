@@ -30,6 +30,7 @@ import { useModalFocusTrap } from './useModalFocusTrap';
 import SubtitleWithGlossary from './SubtitleWithGlossary';
 import { domToCanvas } from './domToCanvas';
 import { downloadCsv, hasCsvData } from './downloadCsv';
+import { composeExportCanvas } from './chartExport';
 
 const BTN =
   'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-gray-200 text-xs font-medium text-gray-600 hover:text-brand hover:border-brand hover:bg-brand-tint transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap';
@@ -67,40 +68,9 @@ export default function CustomExpandedChartModal({
     const scale = 2;
     const chartCanvas = await domToCanvas(node, { pixelRatio: scale, backgroundColor: '#ffffff' });
 
-    const FONT       = `-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
-    const PADDING    = 28 * scale;
-    const TITLE_SIZE = 15 * scale;
-    const SUB_SIZE   = 12 * scale;
-    const LINE_GAP   = 6  * scale;
-    const BLOCK_GAP  = 16 * scale;
-
-    const headerH = title
-      ? PADDING + TITLE_SIZE + (subtitle ? LINE_GAP + SUB_SIZE : 0) + BLOCK_GAP
-      : 0;
-
-    const canvas  = document.createElement('canvas');
-    canvas.width  = chartCanvas.width + PADDING * 2;
-    canvas.height = chartCanvas.height + headerH + PADDING;
-
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    if (headerH > 0) {
-      let y = PADDING + TITLE_SIZE;
-      ctx.fillStyle = '#111827';
-      ctx.font      = `bold ${TITLE_SIZE}px ${FONT}`;
-      ctx.fillText(title, PADDING, y);
-      if (subtitle) {
-        y += LINE_GAP + SUB_SIZE;
-        ctx.fillStyle = '#6B7280';
-        ctx.font      = `${SUB_SIZE}px ${FONT}`;
-        ctx.fillText(subtitle, PADDING, y);
-      }
-    }
-
-    ctx.drawImage(chartCanvas, PADDING, headerH || PADDING);
-    return canvas;
+    // Shared with the standard modal + flyout tray; wraps long title/subtitle
+    // text instead of cropping it (2026-09-29).
+    return composeExportCanvas({ chart: chartCanvas, title, subtitle, scale, chartInset: true });
   }
 
   async function handleDownloadImage() {
