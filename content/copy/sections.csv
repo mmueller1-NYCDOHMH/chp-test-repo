@@ -24,4 +24,4 @@ section,Health conditions,Chronic conditions,chronic-conditions,,
 section,Health conditions,Infectious disease,infectious-disease,,
 section,Health conditions,Health outcomes,health-outcomes,,
 custom,,,avertable-deaths,Avertable Deaths,avertable-death
-custom,,,education-level,Highest level of education,edu-did-not-complete-hs;edu-hsgrad-some-college;edu-college-degree-and-higher
+custom,,,education-level,Highest level of education achieved,edu-did-not-complete-hs;edu-hsgrad-some-college;edu-college-degree-and-higher

@@ -89,7 +89,7 @@
           "bespokeSections": [
             {
               "id": "education-level",
-              "label": "Highest level of education"
+              "label": "Highest level of education achieved"
             }
           ]
         }
