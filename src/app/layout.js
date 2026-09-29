@@ -3,15 +3,21 @@ import Script from 'next/script';
 import 'leaflet/dist/leaflet.css';
 import "./globals.css";
 import RouteAnnouncer from "@/components/layout/RouteAnnouncer";
+import GoogleTranslateLoader from "@/components/layout/GoogleTranslateLoader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
+// preload: false (PERF 2026-09-29) — the mono face is only used for small
+// <kbd> shortcut hints, so it shouldn't compete with the body font and page
+// data as a high-priority preload on every page. It still loads (swap) the
+// first time a <kbd> renders.
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 export const metadata = {
@@ -67,10 +73,9 @@ export default function RootLayout({ children }) {
             }, 'google_translate_element');
           }
         `}</Script>
-        <Script
-          src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
-          strategy="afterInteractive"
-        />
+        {/* Loaded only when a non-English language is active (googtrans
+            cookie) — see GoogleTranslateLoader.jsx. */}
+        <GoogleTranslateLoader />
       </body>
     </html>
   );

@@ -231,7 +231,22 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
   const TEXT_Y      = BAND - 6;   // pixel y of the label's bottom line
   const LEADER_TOP  = BAND - 3;   // pixel y where leader lines end
 
-  const sorted = chartData.map(r => ({ ...r })).sort((a, b) => (a.Value ?? 0) - (b.Value ?? 0));
+  // PERF (2026-09-29): copy only the fields this spec actually reads
+  // (encodings, tooltips, expressions below) instead of the whole row. The
+  // raw rows also carry LCLValue/UCLValue/NYCPValue/ValueType/NYCComparison…,
+  // none of which the chart uses, and every spec is serialized into the page
+  // payload — ~50 cards per neighborhood page. The full rows still reach the
+  // client separately via `indicatorData` (CSV download, flyout). If you add
+  // a `datum.X` / `field: 'X'` reference to this spec, add X here too.
+  const sorted = chartData
+    .map(r => ({
+      GeoType:      r.GeoType,
+      GeoID:        r.GeoID,
+      Geography:    r.Geography,
+      Value:        r.Value,
+      DisplayValue: r.DisplayValue,
+    }))
+    .sort((a, b) => (a.Value ?? 0) - (b.Value ?? 0));
 
   sorted.forEach((r, i) => {
     // Fixed rank for the x sort. Needed because the Citywide row is filtered
@@ -300,6 +315,9 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
     { name: 'lbSL',  expr: 'lbHasO ? (lbSFirst ? lbAL : lbBL) : clamp(lbSX - lbSW / 2, 0, max(0, lbW - lbSW))' },
     { name: 'lbOL',  expr: 'lbSFirst ? lbBL : lbAL' },
   ] : [];
+  // _nameLabel was only needed to build the label arrays above — drop it so
+  // it isn't carried in the spec's data rows (PERF 2026-09-29).
+  sorted.forEach(r => { delete r._nameLabel; });
 
   // Vertical leader: bar top → label strip (per-row data, conditional color)
   const leaderLayer = (test, color, dash) => ({

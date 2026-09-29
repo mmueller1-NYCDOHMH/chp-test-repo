@@ -248,12 +248,13 @@ export default async function AboutPage() {
                 <ShortcutRow keys={['/']}   description="Search neighborhoods" />
                 <ShortcutRow keys={['f']}   description="Search indicators" />
                 <ShortcutRow keys={['m']}   description="Open neighborhood picker" />
-                <ShortcutRow keys={['j']}   description="Next section" />
-                <ShortcutRow keys={['k']}   description="Previous section" />
                 <ShortcutRow keys={['i']}   description="Open indicator details" />
                 <ShortcutRow keys={['e']}   description="Expand chart" />
                 <ShortcutRow keys={['Esc']} description="Close panel / clear search" />
                 <ShortcutRow keys={['?']}   description="Show shortcuts menu" />
+                <p className="text-xs text-gray-600 leading-snug mt-3">
+                  You can turn these shortcuts off from the ? menu at the top of any profile page.
+                </p>
               </div>
             </div>
           </aside>
