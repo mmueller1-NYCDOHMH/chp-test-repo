@@ -54,7 +54,7 @@ export default function StatTileSplit({ label, unit, displayValue, delta, compVa
       {/* ── BEGIN: citywide reference — TO REVERT: delete this block ── */}
       {nycValue && (
         <div className="mt-auto pt-2 border-t border-gray-100 flex items-center gap-1">
-          <span className="text-xs font-semibold tracking-wider uppercase text-gray-600 leading-none">Citywide</span>
+          <span className="text-xs font-semibold text-gray-600 leading-none">Citywide</span>
           <span className="text-xs text-gray-600 leading-none">{nycValue}</span>
         </div>
       )}

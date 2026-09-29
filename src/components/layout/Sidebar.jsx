@@ -291,7 +291,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
             >
               {/* Search — scrolls away as user scrolls down */}
               <div className="px-6 pt-4 pb-3 shrink-0">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-2">
+                <p className="text-sm font-semibold text-gray-600 mb-2">
                   Find neighborhood
                 </p>
                 <UnifiedSearch neighborhoods={neighborhoods} />
@@ -303,7 +303,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                   "Comparing: X" pill all have working mobile layouts). */}
               {neighborhood && (
                 <div className="px-6 pb-3 shrink-0">
-                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-2">
+                  <p className="text-sm font-semibold text-gray-600 mb-2">
                     Compare to
                   </p>
                   <ComparisonNeighborhoodSelector neighborhoods={neighborhoods} />
@@ -338,7 +338,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                   in place of the section nav that appears on neighborhood profiles */}
               {pageNav?.length > 0 && (
                 <nav aria-label="On this page" className="px-6 pt-4 pb-2">
-                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-2">
+                  <p className="text-sm font-semibold text-gray-600 mb-2">
                     On this page
                   </p>
                   {pageNav.map(({ href, label }) => (
@@ -470,7 +470,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                   className="flex flex-col flex-1 min-h-0 focus:outline-none"
                 >
                   <div className="px-6 pt-4 pb-3 shrink-0">
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-2">
+                    <p className="text-sm font-semibold text-gray-600 mb-2">
                       Find neighborhood
                     </p>
                     <UnifiedSearch neighborhoods={neighborhoods} />
@@ -502,7 +502,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                       mobile — not just a secondary option like on desktop. */}
                   {neighborhood && (
                     <div className="px-6 pb-3 shrink-0">
-                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-2">
+                      <p className="text-sm font-semibold text-gray-600 mb-2">
                         Compare to
                       </p>
                       <ComparisonNeighborhoodSelector neighborhoods={neighborhoods} />

@@ -35,13 +35,16 @@ export default function StatTileSingle({ label, unit, displayValue, delta, rows,
           now the visible content itself (value, label, unit, delta), with
           the neighborhood name and "View details" added as sr-only text. */}
       {neighborhoodLabel && <span className="sr-only">{`${neighborhoodLabel}: `}</span>}
-      <div className="text-2xl font-semibold text-gray-900 leading-none">
+      {/* <span className="block"> rather than <div>: a <button> may only
+          contain phrasing content, and this button's content IS its
+          accessible name (see A11Y note above). */}
+      <span className="block text-2xl font-semibold text-gray-900 leading-none">
         <AnimatedValue key={displayValue} value={displayValue ?? '—'} delay={0} />
-      </div>
-      <div className="text-xs font-semibold text-gray-700 leading-snug">{label}</div>
-      {unit && <div className="text-xs text-gray-600 leading-snug">{unit}</div>}
+      </span>
+      <span className="block text-xs font-semibold text-gray-700 leading-snug">{label}</span>
+      {unit && <span className="block text-xs text-gray-600 leading-snug">{unit}</span>}
       {delta && (
-        <span className="mt-1 self-start text-xs font-medium px-1.5 py-0.5 rounded-full leading-snug" style={deltaStyle ?? {}}>
+        <span className="mt-1 self-start text-xs font-medium px-1.5 py-0.5 rounded-full leading-snug" style={deltaStyle}>
           {delta.text}
         </span>
       )}

@@ -117,8 +117,8 @@ export default function MicroStrip({ rows = [], geoId }) {
       <div className="hidden md:block relative mt-auto pt-3" style={{ height: 66 }}>
         {/* Low / High range labels */}
         <div className="absolute inset-x-0 top-0 flex justify-between">
-          <span className="text-xs font-medium text-gray-600 uppercase tracking-wide leading-none">Low</span>
-          <span className="text-xs font-medium text-gray-600 uppercase tracking-wide leading-none">High</span>
+          <span className="text-xs font-medium text-gray-600 leading-none">Low</span>
+          <span className="text-xs font-medium text-gray-600 leading-none">High</span>
         </div>
 
         {/* Track */}
@@ -179,7 +179,7 @@ export default function MicroStrip({ rows = [], geoId }) {
                   whiteSpace: 'nowrap',
                 }}
               >
-                <span className="text-xs font-semibold uppercase tracking-wide leading-none" style={{ color: CITYWIDE }}>Citywide</span>
+                <span className="text-xs font-semibold leading-none" style={{ color: CITYWIDE }}>Citywide</span>
                 <span className="text-[10px] leading-none mt-0.5" style={{ color: CITYWIDE }}>{citywide.DisplayValue ?? citywide.Value}</span>
               </span>
             </>

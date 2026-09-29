@@ -135,10 +135,10 @@ export default function ComparisonPyramidChart({
           names) — truncate with ellipsis instead of wrapping/colliding with
           the other side at narrow widths. */}
       <div className="flex justify-between gap-2">
-        <span className="min-w-0 truncate text-xs font-semibold tracking-wider uppercase leading-tight" style={{ color: SELECTED }}>
+        <span className="min-w-0 truncate text-xs font-semibold leading-tight" style={{ color: SELECTED }}>
           {neighborhoodLabel}
         </span>
-        <span className="min-w-0 truncate text-right text-xs font-semibold tracking-wider uppercase leading-tight" style={{ color: rightColor }}>
+        <span className="min-w-0 truncate text-right text-xs font-semibold leading-tight" style={{ color: rightColor }}>
           {rightLabel}
         </span>
       </div>

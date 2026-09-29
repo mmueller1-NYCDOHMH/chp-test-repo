@@ -215,7 +215,7 @@ export default function KeyboardShortcutsButton() {
             transition: 'opacity 150ms ease-out, transform 150ms ease-out',
           }}
         >
-          <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest px-3 py-2.5 border-b border-gray-100">
+          <p className="text-sm font-semibold text-gray-600 px-3 py-2.5 border-b border-gray-100">
             Keyboard shortcuts
           </p>
 

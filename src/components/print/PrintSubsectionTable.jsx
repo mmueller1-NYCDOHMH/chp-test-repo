@@ -70,7 +70,7 @@ export default function PrintSubsectionTable({ subsection, geoId }) {
         <col className="w-[19%]" />
         <col className="w-[6%]" />
       </colgroup>
-      <caption className="bg-gray-100 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-700 py-1 px-2 caption-top">
+      <caption className="bg-gray-100 text-left text-[10px] font-semibold text-gray-700 py-1 px-2 caption-top">
         {subsection.title}
       </caption>
       <thead>

@@ -44,7 +44,7 @@ export default function PrintCategoryBlock({ category, geoId }) {
     <section aria-labelledby={`cat-${category.id}-heading`} className="mb-4">
       <h2
         id={`cat-${category.id}-heading`}
-        className="break-after-avoid bg-black text-white text-[11px] font-semibold uppercase tracking-wide py-1 px-2 mb-2"
+        className="break-after-avoid bg-black text-white text-[11px] font-semibold py-1 px-2 mb-2"
       >
         {category.title}
       </h2>
