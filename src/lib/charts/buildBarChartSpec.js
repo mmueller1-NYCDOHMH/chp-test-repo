@@ -274,6 +274,26 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
   });
   const maxValue = Math.max(0, ...sorted.map(r => r.Value ?? 0));
 
+  // ── Percent y-axis (2026-10-01) ────────────────────────────────────────────
+  // When the chart's values are shown as percents (DisplayValue carries "%"),
+  // the y-axis ticks carry "%" too — card, flyout mini bar and expanded modal
+  // all use this spec. Percent indicators ship Value as a 0–1 fraction
+  // (0.2 → "20%"), so ticks are scaled ×100 in that case; detected by
+  // checking which reading of Value matches the row's own DisplayValue.
+  const pctRow = sorted.find(r =>
+    r.Value != null && r.Value !== 0 && /\d\s*%/.test(String(r.DisplayValue ?? '')));
+  const isPercentAxis = !!pctRow;
+  const pctShown = pctRow ? parseFloat(String(pctRow.DisplayValue).replace(/[^0-9.\-]/g, '')) : NaN;
+  const pctIsFraction = isPercentAxis && Number.isFinite(pctShown)
+    ? Math.abs(pctRow.Value * 100 - pctShown) < Math.abs(pctRow.Value - pctShown)
+    : isPercentAxis && maxValue <= 1;
+  const tickV = '(isObject(datum) ? datum.value : datum)';
+  const tickLabel = !isPercentAxis
+    ? tickV
+    : pctIsFraction
+      ? `format(${tickV} * 100, '.3~r') + '%'`
+      : `${tickV} + '%'`;
+
   // Vega expression tests
   const compTest = 'comparisonGeoId !== null && datum.GeoID === comparisonGeoId';
   const nycTest  = "datum.GeoType === 'Citywide'";
@@ -559,8 +579,7 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
           // no empty gridline floats in the label strip.
           ...(BAND > 0 && maxValue > 0 ? { values: niceTicks(maxValue, 3) } : {}),
           // Suppress zero tick label to reduce clutter
-          labelExpr:
-            "(isObject(datum) ? datum.value : datum) === 0 ? '' : (isObject(datum) ? datum.value : datum)",
+          labelExpr: `${tickV} === 0 ? '' : ${tickLabel}`,
         },
       },
     },
