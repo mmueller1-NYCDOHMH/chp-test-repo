@@ -7,8 +7,10 @@
  * Body content for the indicator "Details" flyout panel.
  *
  * LAYOUT (top to bottom):
- *   1. Indicator name + context sentence          ← above the map
- *      (copy deck Context, resolved; falls back to the plain subtitle)
+ *   1. Indicator name, metadata subtitle, context sentence  ← above the map
+ *      (metadata line = same "Percent of adults… (units)" line the card
+ *      shows under its title, 2026-09-29; context = copy deck Context,
+ *      resolved, falling back to the plain subtitle)
  *   2. Choropleth map with color legend overlaid  ← legend floats bottom-left of map
  *   3. Indicator-specific comparison sentence (copy deck Comparison,
  *      2026-09-28) — values rendered as badges: neighborhood value in the
@@ -35,6 +37,7 @@
  *   7. Source row — inline text + ? notes modal   ← no "Data Source" label
  */
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { getSuppressionNote } from '@/lib/utils/suppression';
 import dynamic from 'next/dynamic';
 import {
   getFlaggedEstimateFootnote,
@@ -116,6 +119,7 @@ function cleanSource(source) {
 export default function IndicatorFlyoutContent({
   title,
   subtitle,
+  metadataLine,     // card's metadata subtitle (formatMetadataLine) — between title and context
   source,
   sourceUrl,
   description,
@@ -129,6 +133,8 @@ export default function IndicatorFlyoutContent({
   comparisonParts,  // copy-deck Comparison sentence as segments — shown below the map
   compactSpec,
   chart,        // custom cards: their own chart element, shown in the mini-bar slot
+  hideSuppressionNote = false, // e.g. Avertable Deaths, whose "suppressed" rows aren't privacy suppression
+  suppressionNote: suppressionNoteOverride, // custom distribution cards pass their own (string or null); undefined = derive from indicatorData
 }) {
   const { comparisonNeighborhood } = useComparison();
 
@@ -141,6 +147,13 @@ export default function IndicatorFlyoutContent({
   const flaggedFootnote = selectedRow?.ValueStatus === 'flagged'
     ? getFlaggedEstimateFootnote(dataSource, isPercent)
     : null;
+  // Full suppression note (2026-09-30) — any suppressed value in this indicator.
+  const suppressionNote = useMemo(
+    () => (hideSuppressionNote ? null
+      : suppressionNoteOverride !== undefined ? suppressionNoteOverride
+      : getSuppressionNote(indicatorData)),
+    [indicatorData, hideSuppressionNote, suppressionNoteOverride],
+  );
 
   // ── CD rank + inline dot-distribution marker ────────────────────────────────
   // One sort (ascending, low → high — the same order buildBarChartSpec.js
@@ -218,7 +231,7 @@ export default function IndicatorFlyoutContent({
   }, [notesOpen]);
 
   const sourceClean = cleanSource(source);
-  const hasNotes    = !!(description || sourceUrl);
+  const hasNotes    = !!(description || sourceUrl || suppressionNote);
 
   return (
     <>
@@ -228,15 +241,21 @@ export default function IndicatorFlyoutContent({
         {/* Context only — the comparison half of the copy lives below the map
             (section 3). Plain subtitle when the indicator has no copy-deck
             context (held rows, unsupported tokens, custom cards). */}
-        {(title || contextText || subtitle) && (
+        {(title || metadataLine || contextText || subtitle) && (
           <div className="px-5 pt-3 pb-2 flex flex-col gap-0.5">
             {title && (
               <h2 className="text-sm font-semibold text-gray-900 leading-snug truncate min-w-0">
                 {title}
               </h2>
             )}
-            {(contextText || subtitle) && (
-              <p className="text-xs text-gray-600 leading-snug">{contextText || subtitle}</p>
+            {metadataLine && (
+              <p className="text-xs text-gray-600 leading-snug">{metadataLine}</p>
+            )}
+            {/* Context sentence (copy deck), falling back to the plain
+                subtitle. Skipped when it's the same text as the metadata line
+                (custom cards with no narrative pass their subtitle as both). */}
+            {(contextText || subtitle) && (contextText || subtitle) !== metadataLine && (
+              <p className={`text-xs text-gray-600 leading-snug ${metadataLine ? 'mt-2' : ''}`}>{contextText || subtitle}</p>
             )}
           </div>
         )}
@@ -332,6 +351,11 @@ export default function IndicatorFlyoutContent({
             <div className="min-w-0" data-flyout-chart>{chart}</div>
           )}
 
+          {/* ── 5a. Suppression note (2026-09-30) — when any value is suppressed. */}
+          {suppressionNote && (compactSpec || chart) && (
+            <p className="text-xs text-gray-600 italic leading-snug -mt-2">{suppressionNote}</p>
+          )}
+
           {/* ── 5c. Description inline when there's no map/insight — otherwise
                 a distribution card's flyout would be just a chart. ───────── */}
           {!hasMap && description && (
@@ -416,10 +440,11 @@ export default function IndicatorFlyoutContent({
                   )}
                 </div>
               )}
-              {description && (
+              {(description || suppressionNote) && (
                 <div>
                   <p className="text-sm font-semibold text-gray-600 mb-1.5">Notes</p>
-                  <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
+                  {suppressionNote && <p className={`text-sm text-gray-700 leading-relaxed ${description ? 'mb-2' : ''}`}>{suppressionNote}</p>}
+                  {description && <p className="text-sm text-gray-600 leading-relaxed">{description}</p>}
                 </div>
               )}
             </div>

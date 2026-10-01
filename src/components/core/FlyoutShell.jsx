@@ -16,7 +16,7 @@
  *     — Renders "About [title]" header + MarkdownRenderer for content
  *
  *   kind: 'indicator'
- *     { title, subtitle, source, sourceUrl, description, dataSource, isPercent, higherIsBetter, compactSpec }
+ *     { title, subtitle, metadataLine, source, sourceUrl, description, dataSource, isPercent, higherIsBetter, compactSpec }
  *     — Renders a Leaflet map (zoomed to active neighborhood) + indicator
  *       metadata (title, subtitle, about text, source with optional link).
  *       dataSource/isPercent pick the small-sample-size caveat wording for
@@ -363,6 +363,7 @@ export default function FlyoutShell({ children }) {
             <IndicatorFlyoutContent
               title={flyout?.title}
               subtitle={flyout?.subtitle}
+              metadataLine={flyout?.metadataLine}
               source={flyout?.source}
               sourceUrl={flyout?.sourceUrl}
               description={flyout?.description}
@@ -376,6 +377,8 @@ export default function FlyoutShell({ children }) {
               comparisonParts={flyout?.flyoutComparison}
               compactSpec={flyout?.compactSpec}
               chart={flyout?.chart}
+              hideSuppressionNote={flyout?.hideSuppressionNote}
+              suppressionNote={flyout?.suppressionNote}
             />
           </Suspense>
         ) : (
