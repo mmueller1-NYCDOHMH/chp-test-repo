@@ -17,7 +17,11 @@ import { useModalVisibility } from './useModalVisibility';
 import { useModalFocusTrap } from './useModalFocusTrap';
 import { useOverflowClamp } from './useOverflowClamp';
 
-export default function NotesModal({ open, title, indicatorDetail, sourceClean, sourceUrl, description, onClose }) {
+// `note` (2026-09-30): short chart note from content/site/chartNotes.json,
+// shown above the description in the Notes block.
+export default function NotesModal({ open, title, indicatorDetail, sourceClean, sourceUrl, description, note = null, onClose }) {
+  // `note` may be one string or several (e.g. chart note + suppression note).
+  const notes = (Array.isArray(note) ? note : [note]).filter(Boolean);
   const dialogRef = useRef(null);
   const textRef   = useRef(null);
   const [notesExpanded, setNotesExpanded] = useState(false);
@@ -103,9 +107,13 @@ export default function NotesModal({ open, title, indicatorDetail, sourceClean, 
               )}
             </div>
           )}
-          {description && (
+          {(notes.length > 0 || description) && (
             <div>
               <p className="text-xs font-semibold text-gray-900 tracking-wider mb-1.5">Notes</p>
+              {notes.map((n, i) => (
+                <p key={i} className={`text-sm text-gray-700 leading-relaxed ${description || i < notes.length - 1 ? 'mb-2' : ''}`}>{n}</p>
+              ))}
+              {description && (
               <p
                 ref={textRef}
                 className="text-sm text-gray-600 leading-relaxed"
@@ -118,7 +126,8 @@ export default function NotesModal({ open, title, indicatorDetail, sourceClean, 
               >
                 {description}
               </p>
-              {notesClamped && (
+              )}
+              {description && notesClamped && (
                 <button
                   type="button"
                   onClick={() => setNotesExpanded(v => !v)}

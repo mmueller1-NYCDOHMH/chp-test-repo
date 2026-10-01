@@ -45,9 +45,7 @@ import { searchIndex }            from '@/config/searchIndex';
 import { scrollToSection }        from '@/lib/utils/scrollToSection';
 import { DEFAULT_NEIGHBORHOOD_ID } from '@/lib/utils/constants';
 import { highlight }              from '@/lib/utils/highlight';
-
-// ── Example query suggestions for the empty state ──────────────────────────
-const SUGGESTIONS = ['asthma', 'poverty', 'obesity', 'infant', 'safety'];
+import { getSearchSuggestions, matchesQuery } from '@/lib/utils/searchSuggestions';
 
 // Matches the Tailwind `md` breakpoint used everywhere else in the app for
 // the mobile/desktop split (Sidebar's aside vs. bottom sheet), and the same
@@ -73,14 +71,27 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
 
     const q = query.trim().toLowerCase();
     if (!q) return base;
-    return base.filter(
-      ind =>
-        ind.title.toLowerCase().includes(q) ||
-        ind.subtitle.toLowerCase().includes(q) ||
-        ind.subcategoryLabel.toLowerCase().includes(q) ||
-        ind.categoryLabel.toLowerCase().includes(q)
-    );
+    return base.filter(ind => matchesQuery(ind, q));
   }, [query, categoryFilter]);
+
+  // ── Empty-state help (only computed when there are no results) ───────────
+  // Suggestions come from the indicators currently in scope (respecting the
+  // category filter), so every chip is guaranteed to return results.
+  // outsideFilterCount: matches that exist but are hidden by the category
+  // filter — offered as a one-click "search all categories".
+  const emptyHelp = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q || results.length > 0) return null;
+    const base = categoryFilter
+      ? searchIndex.filter(ind => ind.categoryLabel === categoryFilter)
+      : searchIndex;
+    return {
+      ...getSearchSuggestions(q, base),
+      outsideFilterCount: categoryFilter
+        ? searchIndex.filter(ind => matchesQuery(ind, q)).length
+        : 0,
+    };
+  }, [query, categoryFilter, results.length]);
 
   // ── Grouped results for rendering ────────────────────────────────────────
   const grouped = useMemo(() => {
@@ -300,20 +311,37 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
             </svg>
             <div>
-              <p className="text-sm font-medium text-gray-600">No indicators found</p>
-              <p className="text-xs text-gray-600 mt-1">Try a different search term</p>
+              <p className="text-sm font-medium text-gray-600">
+                {query.trim()
+                  ? <>No indicators match “{query.trim()}”</>
+                  : 'No indicators found'}
+              </p>
+              <p className="text-xs text-gray-600 mt-1">
+                {emptyHelp?.kind === 'close' ? 'Did you mean:' : 'Try searching for:'}
+              </p>
             </div>
-            <div className="flex flex-wrap gap-1.5 justify-center mt-1">
-              {SUGGESTIONS.map(s => (
-                <button
-                  key={s}
-                  onClick={() => { setQuery(s); inputRef.current?.focus(); }}
-                  className="text-xs text-brand border border-brand bg-brand-tint rounded-full px-2.5 py-0.5 hover:bg-brand hover:text-white transition-colors"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            {emptyHelp?.terms.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 justify-center mt-1">
+                {emptyHelp.terms.map(s => (
+                  <button
+                    key={s}
+                    onClick={() => { setQuery(s); inputRef.current?.focus(); }}
+                    aria-label={`Search for ${s}`}
+                    className="text-xs text-brand border border-brand bg-brand-tint rounded-full px-2.5 py-0.5 hover:bg-brand hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+            {emptyHelp?.outsideFilterCount > 0 && (
+              <button
+                onClick={() => { onClearFilter?.(); inputRef.current?.focus(); }}
+                className="text-xs text-brand underline underline-offset-2 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+              >
+                {emptyHelp.outsideFilterCount} {emptyHelp.outsideFilterCount === 1 ? 'match' : 'matches'} outside {categoryFilter} — search all categories
+              </button>
+            )}
           </div>
         ) : (
           (() => {

@@ -31,6 +31,8 @@
  */
 
 import { useRef, useState } from 'react';
+import { useComparison } from '@/lib/context/ComparisonContext';
+import { getDistributionSuppressionNote } from '@/lib/utils/suppression';
 import ComparisonBarChartClient from './ComparisonBarChartClient';
 import NotesModal from '@/components/charts/expandableChartCard/NotesModal';
 import CustomExpandedChartModal from '@/components/charts/expandableChartCard/CustomExpandedChartModal';
@@ -40,6 +42,8 @@ import DetailsButton from '@/components/charts/expandableChartCard/DetailsButton
 import { useCardDetailsShortcut } from '@/components/charts/expandableChartCard/useCardDetailsShortcut';
 import { useFlyout } from '@/components/core/FlyoutShell';
 
+
+const CITYWIDE_GEOID = 0;
 
 export default function PrematureMortCauseCard({
   title = 'Top Causes of Premature Death',
@@ -70,6 +74,17 @@ export default function PrematureMortCauseCard({
   // all three follow the one shared "Compare to city" toggle.
   const chartProps = { primaryLabel, segments, rawData, segmentCfg, geoId, valueSuffix, title, compareToCity };
 
+  // Suppression note (2026-10-01) — any suppressed value among the causes +
+  // geographies drawn (selected + comparison, or selected + Citywide —
+  // mirrors ComparisonBarChartClient) → (?) dialog, expanded view, flyout.
+  const { comparisonNeighborhood } = useComparison();
+  const showingCitywide = !comparisonNeighborhood || !!compareToCity;
+  const suppressionNote = getDistributionSuppressionNote(
+    rawData,
+    [geoId, showingCitywide ? CITYWIDE_GEOID : comparisonNeighborhood.geoId],
+    segmentCfg?.map(s => s.key),
+  );
+
   // Details flyout (2026-09-27) — standard indicator flyout layout. This is a
   // multi-cause distribution (no single value per CD), so no indicatorData is
   // passed: the flyout skips the map/insight and shows the chart + the
@@ -80,12 +95,17 @@ export default function PrematureMortCauseCard({
       indicatorKey,
       title,
       subtitle: narrative || subtitle,
+      // 2026-09-30: flyout header shows both — subtitle line under the
+      // title (metadataLine) and the narrative context sentence below it.
+      metadataLine: subtitle,
+      flyoutContext: narrative || null,
       source,
       sourceUrl: null,
       description: insightText,
       geoId,
       chart: <ComparisonBarChartClient {...chartProps} compact />,
       csvRows: rawData, // flyout export tray's CSV button (2026-09-29)
+      suppressionNote,
     });
   }
   const shortcutProps = useCardDetailsShortcut(handleDetails);
@@ -130,7 +150,7 @@ export default function PrematureMortCauseCard({
           )}
 
           <div className="flex items-center gap-1.5 shrink-0">
-            {(insightText || sourceClean) && (
+            {(insightText || sourceClean || suppressionNote) && (
               <button
                 type="button"
                 onClick={() => setNotesOpen(true)}
@@ -164,6 +184,7 @@ export default function PrematureMortCauseCard({
         sourceClean={sourceClean}
         sourceUrl={null}
         description={insightText}
+        note={suppressionNote}
         onClose={() => setNotesOpen(false)}
       />
 
@@ -180,6 +201,7 @@ export default function PrematureMortCauseCard({
         embedBtnRef={embedBtnRef}
         onOpenEmbed={() => setEmbedOpen(true)}
         csvRows={rawData}
+        suppressionNote={suppressionNote}
       >
         <ComparisonBarChartClient {...chartProps} />
       </CustomExpandedChartModal>

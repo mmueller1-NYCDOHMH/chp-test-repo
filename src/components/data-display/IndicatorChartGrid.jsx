@@ -55,8 +55,9 @@
  *   is determined, and buildBarChartSpec.js's isCount param for where the
  *   distinction is actually applied to the chart.
  * - Narrative copy (2026-09-03): the visible on-card subtitle prefers a
- *   resolved narrative sentence (the copy deck — content/copy/indicatorCopy.json, via
- *   getReadyNarrativeTemplate() + resolveNarrative()) over the plain
+ *   resolved narrative sentence — the deck's Context only since 2026-09-30;
+ *   Comparison is flyout-only (the copy deck — content/copy/indicatorCopy.json, via
+ *   getReadyNarrativeTemplates().context + resolveNarrative()) over the plain
  *   `chart.subtitle` passed in from config/metadata. Only status:"ready"
  *   rows are used — everything else (needs-copy/needs-review/blocked-on-data)
  *   falls back to the existing subtitle untouched, so unreviewed copy never
@@ -68,7 +69,7 @@
 
 import { loadIndicatorData } from '@/lib/data/loadIndicatorData';
 import { getIndicatorMeta } from '@/lib/data/getIndicatorMeta';
-import { getReadyNarrativeTemplate, getReadyNarrativeTemplates } from '@/lib/copy/getNarrativeCopy';
+import { getReadyNarrativeTemplates } from '@/lib/copy/getNarrativeCopy';
 import { resolveNarrative, resolveNarrativeParts, narrativePartsToString } from '@/lib/copy/resolveNarrative';
 import ExpandableChartCard from '@/components/charts/ExpandableChartCard';
 
@@ -102,14 +103,18 @@ export function isCountDatatype(unit, data) {
 }
 
 /**
- * Resolve the on-card subtitle for one indicator: a "ready" narrative-copy
- * template (resolved for this neighborhood) when one exists, otherwise the
+ * Resolve the on-card subtitle for one indicator: the copy deck's Context
+ * sentence (resolved for this neighborhood) when one exists, otherwise the
  * plain subtitle passed in via chart config. Never throws — a template that
  * fails to resolve (missing rows, missing geoId, unsupported token) falls
  * back to the plain subtitle too, same as having no template at all.
+ *
+ * 2026-09-30: Context ONLY. The Comparison sentence is flyout-only (shown
+ * below the map with value badges — see resolveFlyoutCopy) and is no longer
+ * appended to the card subtitle.
  */
 function resolveDisplaySubtitle({ indicatorKey, fallbackSubtitle, data, geoId, neighborhoodName, title }) {
-  const template = getReadyNarrativeTemplate(indicatorKey);
+  const template = getReadyNarrativeTemplates(indicatorKey)?.context;
   if (!template) return fallbackSubtitle;
 
   const resolved = resolveNarrative(template, { rows: data, geoId, neighborhoodName, title });

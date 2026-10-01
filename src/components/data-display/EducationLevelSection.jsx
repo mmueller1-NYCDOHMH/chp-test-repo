@@ -33,8 +33,8 @@
 import EducationSplitBarChart from '@/components/data-display/EducationSplitBarChart';
 import { loadIndicatorData } from '@/lib/data/loadIndicatorData';
 import { getIndicatorMeta } from '@/lib/data/getIndicatorMeta';
-import { getReadyNarrativeTemplate } from '@/lib/copy/getNarrativeCopy';
-import { resolveNarrative } from '@/lib/copy/resolveNarrative';
+import { getReadyNarrativeTemplate, getReadyNarrativeTemplates } from '@/lib/copy/getNarrativeCopy';
+import { resolveNarrative, resolveNarrativeParts, narrativePartsToString } from '@/lib/copy/resolveNarrative';
 
 const DISTRIBUTION_KEY = 'education-level';
 const LEVEL_KEYS = [
@@ -78,6 +78,15 @@ export default function EducationLevelSection({ context, title }) {
       title: cardTitle,
     })) || primaryMeta?.context || null;
 
+  // Details flyout (2026-09-30): Context and Comparison resolved separately,
+  // same as IndicatorChartGrid's resolveFlyoutCopy — context above the map,
+  // comparison (badge-styled parts) below it.
+  const flyoutTemplates = getReadyNarrativeTemplates(PRIMARY_KEY);
+  const narrativeOpts = { rows: primaryRows, geoId, neighborhoodName, title: cardTitle };
+  const flyoutContextParts = flyoutTemplates?.context ? resolveNarrativeParts(flyoutTemplates.context, narrativeOpts) : null;
+  const flyoutContext = (flyoutContextParts && narrativePartsToString(flyoutContextParts)) || primaryMeta?.context || null;
+  const flyoutComparison = flyoutTemplates?.comparison ? resolveNarrativeParts(flyoutTemplates.comparison, narrativeOpts) : null;
+
   const periods = [...new Set(metas.map(m => m?.timePeriod).filter(Boolean))];
   const sourceName = primaryMeta?.sourceName ?? null;
   const source = sourceName
@@ -89,6 +98,8 @@ export default function EducationLevelSection({ context, title }) {
       title={cardTitle}
       subtitle={FALLBACK_SUBTITLE}
       narrative={narrative}
+      flyoutContext={flyoutContext}
+      flyoutComparison={flyoutComparison}
       source={source}
       sourceUrl={primaryMeta?.sourceUrl ?? null}
       description={primaryMeta?.methodsNote ?? null}

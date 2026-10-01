@@ -10,11 +10,8 @@
  */
 import AnimatedValue from '@/components/data-display/AnimatedValue';
 import { SELECTED, COMPARISON } from '@/lib/charts/chartColors';
-import { DELTA_STYLES } from './insightHelpers';
 
 export default function StatTileSplit({ label, unit, displayValue, delta, compValue, compLabel, nycValue, onOpen, neighborhoodLabel }) {
-  const deltaStyle = delta ? DELTA_STYLES[delta.direction] : '';
-
   return (
     <button
       type="button"
@@ -41,15 +38,9 @@ export default function StatTileSplit({ label, unit, displayValue, delta, compVa
       </div>
 
       {/* Shared label + unit */}
-      <div className="text-xs font-semibold text-gray-700 leading-snug">{label}</div>
+      {/* 2026-09-29: unit above label; delta pill removed (per Morgan). */}
       {unit && <div className="text-xs text-gray-600 leading-snug">{unit}</div>}
-
-      {delta && (
-        <span className="self-start text-xs font-medium px-1.5 py-0.5 rounded-full leading-snug"
-          style={{ color: 'var(--color-primary, #1d4ed8)', background: '#eff6ff' }}>
-          {delta.text}
-        </span>
-      )}
+      <div className="text-xs font-semibold text-gray-700 leading-snug">{label}</div>
 
       {/* ── BEGIN: citywide reference — TO REVERT: delete this block ── */}
       {nycValue && (

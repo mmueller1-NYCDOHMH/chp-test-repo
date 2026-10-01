@@ -48,6 +48,20 @@ function buildNarrative(selectedRow, neighborhoodName, fallback) {
   );
 }
 
+// Details flyout (2026-09-30): the data sentence as structured parts, so the
+// flyout can render it below the map with the neighborhood value badge-styled
+// like the standard cards' copy-deck comparison sentence.
+function buildFlyoutComparison(selectedRow, neighborhoodName, fallback) {
+  if (fallback?.suppressed) return [{ kind: 'text', text: fallback.message }];
+  if (typeof selectedRow?.Value !== 'number') return null;
+  const pct = selectedRow.DisplayValue ?? `${Math.round(selectedRow.Value * 100)}%`;
+  return [
+    { kind: 'text',  text: `In ${neighborhoodName}, ` },
+    { kind: 'value', text: pct },
+    { kind: 'text',  text: ' of deaths could have been averted if the neighborhood had the same death rate as the 5 wealthiest neighborhoods.' },
+  ];
+}
+
 export default function AvertableDeathsSection({ context }) {
   const { geoId, neighborhood } = context ?? {};
   if (!geoId) return null;
@@ -65,6 +79,8 @@ export default function AvertableDeathsSection({ context }) {
       title={meta?.title ?? 'Avertable Deaths'}
       subtitle={meta?.subtitle || FALLBACK_SUBTITLE}
       narrative={buildNarrative(selectedRow, neighborhoodName, selectedFallback)}
+      flyoutContext={NARRATIVE_LEAD}
+      flyoutComparison={buildFlyoutComparison(selectedRow, neighborhoodName, selectedFallback)}
       source={meta?.source}
       sourceUrl={meta?.sourceUrl}
       description={meta?.methodsNote}

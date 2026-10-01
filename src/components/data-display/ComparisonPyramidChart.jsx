@@ -50,6 +50,7 @@
 import AnimatedBar from './AnimatedBar';
 import CardReadMore from '@/components/charts/expandableChartCard/CardReadMore';
 import DetailsButton from '@/components/charts/expandableChartCard/DetailsButton';
+import ChartNoteButton from '@/components/charts/expandableChartCard/ChartNoteButton';
 import { SELECTED, COMPARISON, CITYWIDE } from '@/lib/charts/chartColors';
 import messages from '../../../content/site/messages.json';
 
@@ -69,6 +70,7 @@ export default function ComparisonPyramidChart({
   bare = false,     // chart only — no card chrome/title (used inside the Details flyout)
   cardProps = {},   // extra props for the card root (e.g. `i` shortcut handlers)
   source = null,    // shown in the footer beside the time period (fill mode)
+  note = null,      // chart note (content/site/chartNotes.json) → "?" button in the footer (2026-09-30)
 }) {
   const rightColor = comparisonMode ? COMPARISON : CITYWIDE;
   // "Fill" mode (2026-09-28): a card stretched to match a taller neighbor
@@ -80,6 +82,7 @@ export default function ComparisonPyramidChart({
   const valueText = fill ? 'text-sm font-medium text-gray-800' : 'text-xs text-gray-600';
   const labelText = fill ? 'text-sm text-gray-700' : 'text-xs text-gray-600';
   const sourceClean = source ? String(source).replace(/^source:\s*/i, '') : '';
+  const showNote = !!note && !bare;
 
   if (!segments.length) {
     return (
@@ -229,14 +232,22 @@ export default function ComparisonPyramidChart({
       </table>
 
       {/* ── Time period footnote ─────────────────────────────── */}
-      {fill && (sourceClean || timePeriod) ? (
-        <div className="text-xs text-gray-600 leading-snug border-t border-gray-100 pt-3 mt-auto">
-          {sourceClean ? (
-            <><span className="font-semibold text-gray-800">Source:</span> {sourceClean}{timePeriod && !sourceClean.includes(timePeriod) ? ` (${timePeriod})` : ''}</>
-          ) : timePeriod}
+      {/* "?" chart note (2026-09-30) sits right of the footnote; not shown
+          in the bare (flyout) variant. */}
+      {fill && (sourceClean || timePeriod || showNote) ? (
+        <div className="flex items-start justify-between gap-3 text-xs text-gray-600 leading-snug border-t border-gray-100 pt-3 mt-auto">
+          <div className="min-w-0">
+            {sourceClean ? (
+              <><span className="font-semibold text-gray-800">Source:</span> {sourceClean}{timePeriod && !sourceClean.includes(timePeriod) ? ` (${timePeriod})` : ''}</>
+            ) : timePeriod}
+          </div>
+          {showNote && <ChartNoteButton title={title} note={note} sourceClean={sourceClean} />}
         </div>
-      ) : timePeriod && (
-        <div className={`text-xs text-gray-600 border-t border-gray-100 pt-2.5 ${fillHeight && !bare ? 'mt-auto' : ''}`}>{timePeriod}</div>
+      ) : (timePeriod || showNote) && (
+        <div className={`flex items-center justify-between gap-3 text-xs text-gray-600 border-t border-gray-100 pt-2.5 ${fillHeight && !bare ? 'mt-auto' : ''}`}>
+          <span className="min-w-0">{timePeriod}</span>
+          {showNote && <ChartNoteButton title={title} note={note} sourceClean={sourceClean} />}
+        </div>
       )}
 
     </div>

@@ -9,20 +9,8 @@
  */
 import AnimatedValue from '@/components/data-display/AnimatedValue';
 import MicroStrip from './MicroStrip';
-import { DELTA_STYLES } from './insightHelpers';
 
-export default function StatTileSingle({ label, unit, displayValue, delta, rows, geoId, onOpen, neighborhoodLabel }) {
-  // Always neutral gray — matches every other tile in this row (StatTileSplit,
-  // the comparison-mode variant below, already ignores direction and always
-  // renders a fixed color too). Was DELTA_STYLES[delta.direction] briefly
-  // when self-rep-health (higherIsBetter: true) was added, which made its
-  // pill the only colored one in the row — reverted per Morgan: don't
-  // color-code delta pills green/red here, follow the other tiles' neutral
-  // style. computeDelta() still computes a real direction under the hood
-  // (used elsewhere — e.g. the AGG(NYC comparison)
-  // narrative token) — this is a display-only choice for this component.
-  const deltaStyle = delta ? DELTA_STYLES.neutral : '';
-
+export default function StatTileSingle({ label, unit, displayValue, rows, geoId, onOpen, neighborhoodLabel }) {
   return (
     <button
       type="button"
@@ -38,16 +26,14 @@ export default function StatTileSingle({ label, unit, displayValue, delta, rows,
       {/* <span className="block"> rather than <div>: a <button> may only
           contain phrasing content, and this button's content IS its
           accessible name (see A11Y note above). */}
+      <span className="block text-xs font-semibold text-gray-700 leading-snug">{label}</span>
+
       <span className="block text-2xl font-semibold text-gray-900 leading-none">
         <AnimatedValue key={displayValue} value={displayValue ?? '—'} delay={0} />
+        {unit && <span className="block mt-1 text-xs text-gray-600 font-normal leading-snug">{unit}</span>}
       </span>
-      <span className="block text-xs font-semibold text-gray-700 leading-snug">{label}</span>
-      {unit && <span className="block text-xs text-gray-600 leading-snug">{unit}</span>}
-      {delta && (
-        <span className="mt-1 self-start text-xs font-medium px-1.5 py-0.5 rounded-full leading-snug" style={deltaStyle}>
-          {delta.text}
-        </span>
-      )}
+
+      {/* 2026-09-30 (per Morgan): "X pts compared to NYC" delta pill removed. */}
 
       {/* ── BEGIN: micro distribution strip — TO REVERT: delete this block ── */}
       {/* mt-auto (inside MicroStrip) pins the strip to the bottom of

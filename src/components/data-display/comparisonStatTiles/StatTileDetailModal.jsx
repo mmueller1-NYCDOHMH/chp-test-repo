@@ -11,7 +11,8 @@
  * Deliberately NOT the full indicator "Details" flyout content (no map, no
  * choropleth legend) — per Morgan, just the distribution plot (the same
  * DistributionStrip used inside that flyout) plus the text that explains
- * it: subtitle, a plain-language insight sentence, CD rank, and source.
+ * it: subtitle, a plain-language insight sentence, and source. (CD rank
+ * line removed 2026-09-30 per Morgan.)
  * TO REVERT to the richer map-inclusive view: swap this component's body
  * for a lazy-loaded <IndicatorFlyoutContent /> (see git history / the
  * 2026-09-03 flyout-based pass of ComparisonStatTilesClient.jsx for the
@@ -93,18 +94,6 @@ export default function StatTileDetailModal({ tile, geoId, onClose }) {
     ? getFlaggedEstimateFootnote(tile.dataSource, tile.isPercent)
     : null;
 
-  // CD rank among all 59 — same calc IndicatorFlyoutContent uses. Sorted
-  // descending by value so rank 1 = highest; directionality (higher/lower
-  // is "better") isn't baked in here, the insight badge already covers that.
-  const cdRank = (() => {
-    if (!rows.length || geoId == null) return null;
-    const cdRows = rows
-      .filter(r => r.GeoType === 'CD' && r.Value != null && !isNaN(Number(r.Value)))
-      .sort((a, b) => Number(b.Value) - Number(a.Value));
-    const pos = cdRows.findIndex(r => r.GeoID === geoId);
-    return pos === -1 ? null : { rank: pos + 1, total: cdRows.length };
-  })();
-
   return createPortal(
     <div
       role="presentation"
@@ -145,7 +134,7 @@ export default function StatTileDetailModal({ tile, geoId, onClose }) {
           </button>
         </div>
 
-        {/* ── Body — subtitle, insight text, distribution plot, CD rank, source ── */}
+        {/* ── Body — subtitle, insight text, distribution plot, source ── */}
         <div className="overflow-y-auto flex-1 min-h-0 overscroll-contain px-6 py-5 flex flex-col gap-4">
 
           {tile.subtitle && (
@@ -190,14 +179,6 @@ export default function StatTileDetailModal({ tile, geoId, onClose }) {
                 comparisonGeoId={comparisonNeighborhood?.geoId ?? null}
               />
             </div>
-          )}
-
-          {cdRank && (
-            <p className="text-xs text-gray-600 leading-snug">
-              Ranked{' '}
-              <span className="font-semibold text-gray-700">{cdRank.rank} of {cdRank.total}</span>{' '}
-              community districts by value
-            </p>
           )}
 
           {sourceClean && (

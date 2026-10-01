@@ -28,9 +28,10 @@
  * (DetailsButton, CardReadMore) and the card opens the standard indicator
  * Details flyout, with this card's legend + dot strip as the flyout chart.
  *
- * Suppression: a selected CD with no score (baseline / <0% / no value) keeps
- * the dimmed chart with the explanatory overlay; a comparison CD with no
- * score gets the legend treatment only.
+ * Suppression: a selected CD with no score (baseline / <0% / no value) gets
+ * the legend "(Not calculated)" treatment + the fallback message in the
+ * narrative. The white overlay over the chart was removed 2026-09-30 per
+ * Morgan; the reference-line caption above the axis stays.
  *
  * PROPS:
  *   title, subtitle, source, sourceUrl, description — from getIndicatorMeta()
@@ -66,6 +67,8 @@ export default function AvertableDeathsChart({
   title,
   subtitle,
   narrative,
+  flyoutContext = null,    // Details flyout: context sentence (above the map)
+  flyoutComparison = null, // Details flyout: comparison sentence as parts (below the map, badge-styled)
   source,
   sourceUrl,
   description,
@@ -91,6 +94,10 @@ export default function AvertableDeathsChart({
     : null;
 
   const sourceClean = source ? source.replace(/^source:\s*/i, '') : '';
+  // No privacy-suppression notes here (2026-09-30, per Morgan): this file's
+  // "suppressed" rows are baseline / negative / not-calculated CDs, not
+  // privacy suppression — the legend's "(Not calculated)" treatment
+  // (getAvertableDeathsFallback) covers them. See lib/utils/suppression.js.
   const hasNotes = !!(description || sourceUrl);
   const legend = (
     <Legend
@@ -118,10 +125,16 @@ export default function AvertableDeathsChart({
       indicatorKey,
       title,
       subtitle: narrative || subtitle,
+      // 2026-09-30: flyout header shows both — subtitle line under the
+      // title (metadataLine) and the narrative context sentence below it.
+      metadataLine: subtitle,
+      flyoutContext: flyoutContext ?? narrative ?? null,
+      flyoutComparison,
       source,
       sourceUrl,
       description,
       indicatorData: rows,
+      hideSuppressionNote: true, // "suppressed" here ≠ privacy — see hasNotes note
       geoId,
       isPercent: true,
       higherIsBetter: false,
@@ -130,11 +143,6 @@ export default function AvertableDeathsChart({
           {legend}
           <div className="relative">
             <AvertableDotStrip {...chartProps} plotHeight={120} idSuffix="flyout" />
-            {selectedFallback?.suppressed && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-white/85 px-6 text-center">
-                <p className="text-sm font-medium text-gray-700">{selectedFallback.message}</p>
-              </div>
-            )}
           </div>
         </div>
       ),
@@ -179,11 +187,6 @@ export default function AvertableDeathsChart({
           ) : (
             <>
               <AvertableDotStrip {...chartProps} plotHeight={120} />
-              {selectedFallback?.suppressed && (
-                <div className="absolute inset-x-4 sm:inset-x-5 top-4 bottom-5 flex items-center justify-center rounded-lg bg-white/85 backdrop-blur-[1px] px-6 text-center">
-                  <p className="text-sm font-medium text-gray-700">{selectedFallback.message}</p>
-                </div>
-              )}
             </>
           )}
         </div>
@@ -253,11 +256,6 @@ export default function AvertableDeathsChart({
         <div className="mb-5">{legend}</div>
         <div className="relative">
           <AvertableDotStrip {...chartProps} plotHeight={280} idSuffix="expanded" />
-          {selectedFallback?.suppressed && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-white/85 px-6 text-center">
-              <p className="text-sm font-medium text-gray-700">{selectedFallback.message}</p>
-            </div>
-          )}
         </div>
       </CustomExpandedChartModal>
 

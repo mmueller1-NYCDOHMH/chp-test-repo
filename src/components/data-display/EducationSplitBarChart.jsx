@@ -34,6 +34,8 @@ import { useRef, useState } from 'react';
 import { useComparison } from '@/lib/context/ComparisonContext';
 import { SELECTED, COMPARISON, CITYWIDE } from '@/lib/charts/chartColors';
 import NotesModal from '@/components/charts/expandableChartCard/NotesModal';
+import { getChartNote } from '@/config/chartNotes';
+import { isSuppressedRow, getDistributionSuppressionNote } from '@/lib/utils/suppression';
 import CustomExpandedChartModal from '@/components/charts/expandableChartCard/CustomExpandedChartModal';
 import EmbedModal from '@/components/charts/expandableChartCard/EmbedModal';
 import CardReadMore from '@/components/charts/expandableChartCard/CardReadMore';
@@ -57,7 +59,7 @@ function cellsFor(row, levels) {
     return {
       key,
       value,
-      text: value != null ? (s.displayValue ?? fmtPct(value)) : (s?.displayValue === 'suppressed' ? '^' : '—'),
+      text: value != null ? (s.displayValue ?? fmtPct(value)) : (isSuppressedRow(s) ? '^' : '—'),
     };
   });
 }
@@ -66,6 +68,8 @@ export default function EducationSplitBarChart({
   title,
   subtitle,
   narrative,
+  flyoutContext = null,    // Details flyout: context sentence (above the map)
+  flyoutComparison = null, // Details flyout: comparison sentence as parts (below the map, badge-styled)
   source,
   sourceUrl,
   description,
@@ -97,7 +101,15 @@ export default function EducationSplitBarChart({
   ].filter(Boolean);
 
   const sourceClean = source ? String(source).replace(/^source:\s*/i, '') : '';
-  const hasNotes = !!(description || sourceUrl);
+  const chartNote = getChartNote(indicatorKey);
+  // Suppression note (2026-10-01) — any suppressed value among the rows +
+  // levels drawn on this chart → (?) dialog, expanded view and flyout.
+  const suppressionNote = getDistributionSuppressionNote(
+    rawData,
+    series.length ? [selectedRow?.GeoID, comparisonRow?.GeoID, cityRow?.GeoID] : [],
+    levels.map(l => l.key),
+  );
+  const hasNotes = !!(description || sourceUrl || chartNote || suppressionNote);
   const hasData = series.length > 0 && levels.length > 0;
 
   // Flat rows for the expanded view's CSV download.
@@ -116,10 +128,16 @@ export default function EducationSplitBarChart({
       indicatorKey,
       title,
       subtitle: narrative || subtitle,
+      // 2026-09-30: flyout header shows both — subtitle line under the
+      // title (metadataLine) and the narrative context sentence below it.
+      metadataLine: subtitle,
+      flyoutContext: flyoutContext ?? narrative ?? null,
+      flyoutComparison,
       source,
       sourceUrl,
       description,
       indicatorData,
+      suppressionNote, // this chart's own (all levels), not just indicatorData's
       geoId,
       isPercent: true,
       higherIsBetter: true,
@@ -206,6 +224,7 @@ export default function EducationSplitBarChart({
         sourceClean={sourceClean}
         sourceUrl={sourceUrl}
         description={description}
+        note={[chartNote, suppressionNote]}
         onClose={() => setNotesOpen(false)}
       />
 
@@ -220,6 +239,7 @@ export default function EducationSplitBarChart({
         embedBtnRef={embedBtnRef}
         onOpenEmbed={() => setEmbedOpen(true)}
         csvRows={csvRows}
+        suppressionNote={suppressionNote}
       >
         <SplitBars levels={levels} series={series} title={title} large />
       </CustomExpandedChartModal>

@@ -82,10 +82,15 @@ import VegaLiteChart from '@/components/charts/VegaLiteChart';
 import { buildBarChartSpec } from '@/lib/charts/buildBarChartSpec';
 import { useFlyout } from '@/components/core/FlyoutShell';
 import messages from '../../../content/site/messages.json';
-import { cleanSource } from './expandableChartCard/chartCardUtils';
+import { cleanSource, formatMetadataLine } from './expandableChartCard/chartCardUtils';
 import CardReadMore from './expandableChartCard/CardReadMore';
 import DetailsButton from './expandableChartCard/DetailsButton';
 import NotesModal from './expandableChartCard/NotesModal';
+import { getChartNote } from '@/config/chartNotes';
+import { getSuppressionNote, isSuppressedRow } from '@/lib/utils/suppression';
+import { useComparison } from '@/lib/context/ComparisonContext';
+import { SELECTED, COMPARISON } from '@/lib/charts/chartColors';
+import { stripCdCode } from './expandableChartCard/chartCardUtils';
 import ExpandedChartModal from './expandableChartCard/ExpandedChartModal';
 import EmbedModal from './expandableChartCard/EmbedModal';
 import { areShortcutsEnabled } from '@/lib/utils/shortcutsPreference';
@@ -125,6 +130,28 @@ export default function ExpandableChartCard({
   // is open (the modal renders nothing when closed). useMemo keeps the
   // compact spec's identity stable, which VegaLiteChart (memo'd, re-embeds on
   // spec change) relies on.
+  // Suppression (2026-09-30): any suppressed value → full note in the ?
+  // dialog, expanded view and flyout. A suppressed selected CD is shown only
+  // by its own chart label ("<Name> · suppressed") — the extra on-chart note
+  // was removed per Morgan.
+  const suppressionNote = useMemo(() => getSuppressionNote(indicatorData), [indicatorData]);
+
+  // Suppressed Selected / Comparison CDs (2026-10-01, per Morgan): no bar and
+  // no in-chart label (see buildBarChartSpec) — listed instead in a stacked
+  // legend above the chart, styled like Avertable Deaths' "(Not calculated)".
+  const { comparisonNeighborhood } = useComparison();
+  const compGeoId = comparisonNeighborhood?.geoId ?? null;
+  const suppressedItems = useMemo(() => {
+    const rows = indicatorData ?? [];
+    const find = (id) => (id == null ? null : rows.find(r => r.GeoID === id && r.GeoType !== 'Citywide' && r.GeoType !== 'Borough'));
+    const sel  = find(geoId);
+    const comp = compGeoId !== geoId ? find(compGeoId) : null;
+    return [
+      sel  && isSuppressedRow(sel)  && { key: 'sel',  color: SELECTED,   label: stripCdCode(sel.Geography) },
+      comp && isSuppressedRow(comp) && { key: 'comp', color: COMPARISON, label: stripCdCode(comp.Geography) },
+    ].filter(Boolean);
+  }, [indicatorData, geoId, compGeoId]);
+
   const compactSpec = useMemo(
     () => (compactSpecOptions
       ? buildBarChartSpec({ ...compactSpecOptions, data: indicatorData ?? [], geoId })
@@ -144,13 +171,15 @@ export default function ExpandableChartCard({
   const isHovered       = useRef(false);
   const isFocused       = useRef(false); // keyboard focus is inside this card
 
+  const metadataLine = formatMetadataLine({ metadataOf, metadataDetail, metadataUnits });
+
   const descId = title ? `chart-desc-${title.replace(/\s+/g, '-').toLowerCase()}` : undefined;
 
   function handleDetails() {
     openFlyout({
       kind: 'indicator',
       indicatorKey,
-      title, subtitle, source, sourceUrl, description,
+      title, subtitle, metadataLine, source, sourceUrl, description,
       indicatorData, geoId, sectionLabel,
       dataSource, isPercent, higherIsBetter,
       flyoutContext, flyoutComparison,
@@ -217,7 +246,8 @@ export default function ExpandableChartCard({
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sourceClean = cleanSource(source);
-  const hasNotes    = !!(description || sourceUrl);
+  const chartNote   = getChartNote(indicatorKey);
+  const hasNotes    = !!(description || sourceUrl || chartNote || suppressionNote);
 
   return (
     <>
@@ -246,10 +276,9 @@ export default function ExpandableChartCard({
             <h4 className="text-sm font-semibold text-gray-900 leading-snug">
               {title}
             </h4>
-            <p className="text-xs text-gray-600">
-              {[metadataOf ? `${metadataOf.charAt(0).toUpperCase()}${metadataOf.slice(1)}` : null, metadataDetail].filter(Boolean).join(' ')}
-              {metadataUnits ? ` (${metadataUnits})` : ''}
-            </p>
+            {metadataLine && (
+              <p className="text-xs text-gray-600">{metadataLine}</p>
+            )}
           </div>
 
           {/* Details button — opens flyout */}
@@ -274,7 +303,22 @@ export default function ExpandableChartCard({
               <p className="text-sm text-gray-600">{messages.chartNoData}</p>
             </div>
           ) : (
-            <VegaLiteChart spec={compactSpec} />
+            <>
+              {suppressedItems.length > 0 && (
+                <ul className="flex flex-col gap-1.5 mb-2 text-xs" aria-label="Suppressed values">
+                  {suppressedItems.map(item => (
+                    <li key={item.key} className="flex items-start gap-2 min-w-0">
+                      <span className="mt-[3px] h-2.5 w-2.5 rounded-full shrink-0" style={{ background: item.color }} aria-hidden="true" />
+                      <p className="leading-snug min-w-0">
+                        <span className="font-semibold" style={{ color: item.color }}>{item.label}</span>
+                        <span className="ml-1.5 font-semibold text-gray-900">(Suppressed)</span>
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <VegaLiteChart spec={compactSpec} />
+            </>
           )}
         </div>
 
@@ -330,6 +374,7 @@ export default function ExpandableChartCard({
         sourceClean={sourceClean}
         sourceUrl={sourceUrl}
         description={description}
+        note={[chartNote, suppressionNote]}
         onClose={() => setNotesOpen(false)}
       />
 
@@ -338,10 +383,12 @@ export default function ExpandableChartCard({
         indicatorKey={indicatorKey}
         expandedSpec={expandedSpec}
         title={title}
+        metadataLine={metadataLine}
         subtitle={subtitle}
         sourceClean={sourceClean}
         indicatorData={indicatorData}
         geoId={geoId}
+        suppressionNote={suppressionNote}
         onClose={() => setIsExpanded(false)}
         restoreFocusRef={expandBtnRef}
         embedBtnRef={embedBtnRef}

@@ -25,12 +25,21 @@ export default function ExpandedChartLegend({ indicatorData, geoId, comparisonNe
             style={{ background: item.color }}
             aria-hidden="true"
           />
-          <span className="text-xs text-gray-700 whitespace-nowrap">
-            {item.label}
-            {item.value && (
-              <span className="text-gray-600 ml-1">· {item.value}</span>
-            )}
-          </span>
+          {item.suppressed ? (
+            /* Suppressed (2026-10-01) — same treatment as the card's legend
+               above the chart: colored name + "(Suppressed)". */
+            <span className="text-xs whitespace-nowrap">
+              <span className="font-semibold" style={{ color: item.color }}>{item.label}</span>
+              <span className="ml-1.5 font-semibold text-gray-900">(Suppressed)</span>
+            </span>
+          ) : (
+            <span className="text-xs text-gray-700 whitespace-nowrap">
+              {item.label}
+              {item.value && (
+                <span className="text-gray-600 ml-1">· {item.value}</span>
+              )}
+            </span>
+          )}
         </div>
       ))}
     </div>

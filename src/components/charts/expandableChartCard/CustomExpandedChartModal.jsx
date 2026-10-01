@@ -36,6 +36,7 @@ const BTN =
   'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-gray-200 text-xs font-medium text-gray-600 hover:text-brand hover:border-brand hover:bg-brand-tint transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap';
 
 export default function CustomExpandedChartModal({
+  suppressionNote = null, // 2026-09-30: shown under the chart when any value is suppressed
   open,
   indicatorKey,
   title,
@@ -215,6 +216,10 @@ export default function CustomExpandedChartModal({
               {children}
             </div>
           </div>
+
+          {suppressionNote && (
+            <p className="px-7 -mt-3 pb-5 text-xs text-gray-600 italic leading-snug">{suppressionNote}</p>
+          )}
 
           {/* ── Source citation ─────────────────────────────────── */}
           {sourceClean && (

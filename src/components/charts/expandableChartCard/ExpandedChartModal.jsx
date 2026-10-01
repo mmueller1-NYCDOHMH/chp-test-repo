@@ -25,10 +25,12 @@ import { downloadCsv, hasCsvData } from './downloadCsv';
 import { composeExportCanvas, loadImage, downloadCanvas, copyCanvas } from './chartExport';
 
 export default function ExpandedChartModal({
+  suppressionNote = null, // 2026-09-30: shown under the chart when any value is suppressed
   open,
   indicatorKey,
   expandedSpec,
   title,
+  metadataLine,   // card's metadata line ("Percent of adults… (units)") — under the title
   subtitle,
   sourceClean,
   indicatorData,
@@ -118,8 +120,15 @@ export default function ExpandedChartModal({
         onClick={e => e.stopPropagation()}
       >
         {/* ── Modal header ─────────────────────────────────── */}
-        <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 shrink-0 rounded-t-xl bg-white gap-4">
-          <h3 className="text-base font-semibold text-gray-900 min-w-0">{title}</h3>
+        <div className="flex items-start justify-between px-7 py-5 border-b border-gray-100 shrink-0 rounded-t-xl bg-white gap-4">
+          {/* 2026-09-30 (per Morgan): metadata subtitle under the indicator
+              name, same as the card header; context sentence stays below. */}
+          <div className="min-w-0">
+            <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+            {metadataLine && (
+              <p className="text-sm text-gray-600 leading-snug mt-0.5">{metadataLine}</p>
+            )}
+          </div>
 
           {/* Export actions + close — grouped: [Copy PNG CSV] | [Embed] | [Close] */}
           <div className="flex items-center gap-1.5 shrink-0">
@@ -238,6 +247,10 @@ export default function ExpandedChartModal({
             <VegaLiteChart spec={expandedSpec} onViewReady={handleExpandedViewReady} />
           )}
         </div>
+
+        {suppressionNote && (
+          <p className="px-7 -mt-3 pb-5 text-xs text-gray-600 italic leading-snug">{suppressionNote}</p>
+        )}
 
         {/* ── Source citation ─────────────────────────────────── */}
         {sourceClean && (

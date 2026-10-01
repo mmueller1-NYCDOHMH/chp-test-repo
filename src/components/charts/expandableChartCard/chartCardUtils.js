@@ -7,11 +7,24 @@
 
 import { deriveBoroughRow } from '@/lib/charts/buildBarChartSpec';
 import { SELECTED, COMPARISON, CITYWIDE, BOROUGH } from '@/lib/charts/chartColors';
+import { isSuppressedRow } from '@/lib/utils/suppression';
 
 // Strip leading "Source: " prefix if already present so we can control formatting
 export function cleanSource(source) {
   if (!source) return '';
   return source.replace(/^source:\s*/i, '');
+}
+
+// Metadata subtitle line under an indicator title, e.g.
+// "Percent of adults, age-adjusted (percent)". Shared by the card header and
+// the Details flyout (2026-09-29) so both read identically. Returns '' when
+// there's nothing to show.
+export function formatMetadataLine({ metadataOf, metadataDetail, metadataUnits } = {}) {
+  const base = [
+    metadataOf ? `${metadataOf.charAt(0).toUpperCase()}${metadataOf.slice(1)}` : null,
+    metadataDetail,
+  ].filter(Boolean).join(' ');
+  return `${base}${metadataUnits ? ` (${metadataUnits})` : ''}`.trim();
 }
 
 // Strip trailing borough code from Geography strings, e.g. "Greenwich Village & Soho (MN2)" → "Greenwich Village & Soho"
@@ -32,10 +45,17 @@ export function buildLegendItems(indicatorData, geoId, comparisonNeighborhood) {
   const compRow = comparisonNeighborhood?.geoId != null
     ? indicatorData.find(r => r.GeoID === comparisonNeighborhood.geoId)
     : null;
+  // Suppressed rows (2026-10-01): `suppressed: true` + value 'Suppressed' —
+  // ExpandedChartLegend renders "<Name> (Suppressed)" like the card's legend;
+  // the canvas export reads "<Name> · Suppressed".
+  const item = (row, color, label) => {
+    const suppressed = isSuppressedRow(row);
+    return { color, label, value: suppressed ? 'Suppressed' : row.DisplayValue, suppressed };
+  };
   return [
-    nycRow  && { color: CITYWIDE,   label: 'Citywide',                     value: nycRow.DisplayValue  },
-    borRow  && { color: BOROUGH,    label: borRow.Geography,               value: borRow.DisplayValue  },
-    cdRow   && { color: SELECTED,   label: stripCdCode(cdRow.Geography),   value: cdRow.DisplayValue   },
-    compRow && { color: COMPARISON, label: stripCdCode(compRow.Geography), value: compRow.DisplayValue },
+    nycRow  && item(nycRow,  CITYWIDE,   'Citywide'),
+    borRow  && item(borRow,  BOROUGH,    borRow.Geography),
+    cdRow   && item(cdRow,   SELECTED,   stripCdCode(cdRow.Geography)),
+    compRow && item(compRow, COMPARISON, stripCdCode(compRow.Geography)),
   ].filter(Boolean);
 }

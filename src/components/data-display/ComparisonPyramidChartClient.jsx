@@ -29,6 +29,10 @@ import { useOptionalFlyout }  from '@/components/core/FlyoutShell';
 import { useCardDetailsShortcut } from '@/components/charts/expandableChartCard/useCardDetailsShortcut';
 import ComparisonPyramidChart from '@/components/data-display/ComparisonPyramidChart';
 import { pairDistributionSegments } from '@/lib/utils/distributionSegments';
+import { getChartNote } from '@/config/chartNotes';
+import { getDistributionSuppressionNote } from '@/lib/utils/suppression';
+
+const CITYWIDE_GEOID = 0;
 
 // Row lookup (by two different GeoIDs out of one rawData array) is specific
 // to this component; the actual key→value pairing is shared — see
@@ -83,6 +87,16 @@ export default function ComparisonPyramidChartClient({
   const activeSegments   = comparisonSegments ?? segments;
   const activeRightLabel = showingCitywide ? 'Citywide' : comparisonNeighborhood.name;
 
+  // Suppression note (2026-10-01) — any suppressed value among the segments +
+  // geographies drawn → "?" dialog and Details flyout (pyramids have no
+  // expanded view).
+  const suppressionNote = getDistributionSuppressionNote(
+    rawData,
+    [geoId, showingCitywide ? CITYWIDE_GEOID : comparisonNeighborhood.geoId],
+    segmentCfg?.map(s => s.key),
+  );
+  const notes = [getChartNote(indicatorKey), suppressionNote].filter(Boolean);
+
   const chartProps = {
     title,
     neighborhoodLabel,
@@ -100,10 +114,15 @@ export default function ComparisonPyramidChartClient({
     indicatorKey,
     title,
     subtitle: narrative || subtitle,
+    // 2026-09-30: flyout header shows both — subtitle line under the
+    // title (metadataLine) and the narrative context sentence below it.
+    metadataLine: subtitle,
+    flyoutContext: narrative || null,
     source,
     sourceUrl,
     description,
     geoId,
+    suppressionNote,
     chart: <ComparisonPyramidChart {...chartProps} bare />,
   }) : null;
   const shortcutProps = useCardDetailsShortcut(handleDetails);
@@ -118,6 +137,7 @@ export default function ComparisonPyramidChartClient({
       narrative={narrative}
       cardProps={handleDetails ? shortcutProps : {}}
       source={source}
+      note={notes.length ? notes : null}
     />
   );
 }
