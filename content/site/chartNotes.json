@@ -1,0 +1,15 @@
+{
+  "_note": "Chart notes shown in the (?) notes dialog. `indicators` maps an indicator Key (as in content/copy/measure-copy.csv) to a note shown on that chart. `general` holds site-wide caveats: `suppressed` is shown in the (?) dialog, expanded view and Details flyout of any chart with a suppressed value; Edit here — no code changes needed.",
+
+  "general": {
+    "unreliable": "Estimate may be unreliable because of small counts or sample size, so interpret with caution.",
+    "suppressed": "To protect privacy, some very small values are suppressed (reported as 0)."
+  },
+
+  "indicators": {
+    "age-distribution": "NYC DOHMH population estimates, modified from US Census Bureau interpolated intercensal population estimates, 2000-2020. Updated September 2021.",
+    "race-ethnicity": "White, Black, Asian and Other exclude Latino ethnicity. Latino is Hispanic or Latino of any race.",
+    "uninsured": "Percentages may not sum to 100% due to rounding.",
+    "edu-college-degree-and-higher": "Percentages may not sum to 100% due to rounding."
+  }
+}
