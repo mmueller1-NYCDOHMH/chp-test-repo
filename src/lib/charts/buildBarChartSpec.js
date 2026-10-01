@@ -98,6 +98,16 @@ import {
   BAR_INVALID,
   CHOROPLETH_STOPS,
 } from './chartColors';
+import { generalNotes } from '@/config/chartNotes';
+// Shared suppressed-row check (DisplayValue or ValueStatus, either spelling)
+// so the bar labels agree with the card's "(Suppressed)" legend.
+import { isSuppressedRow } from '@/lib/utils/suppression';
+
+// Tooltip line appended to any value whose DisplayValue carries "*" (flagged
+// estimate). JSON.stringify makes it a safe Vega expression string literal.
+const UNRELIABLE_TOOLTIP_EXPR = generalNotes.unreliable
+  ? JSON.stringify(`\n*${generalNotes.unreliable}`)
+  : "''";
 
 // NYC community district GeoIDs follow a borough-prefix pattern:
 //   1xx = Manhattan · 2xx = Bronx · 3xx = Brooklyn · 4xx = Queens · 5xx = Staten Island
@@ -184,8 +194,8 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
     geoId != null ? `datum.GeoID === ${geoId}` : 'false';
 
   const subtitleText = subtitle || '';
-  const metadataOfText = metadataOf
-    ? `${metadataOf.charAt(0).toUpperCase()}${metadataOf.slice(1)}`
+  const metadataTypeText = metadataType
+  ? `${metadataType.charAt(0).toUpperCase()}${metadataType.slice(1)}`
     : '';
   const valueWithUnitsCalc = metadataUnits
     ? `datum.DisplayValue + ' ' + ${JSON.stringify(metadataUnits)}`
@@ -255,7 +265,12 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
     r._rank = i;
     r._pos  = i / Math.max(sorted.length - 1, 1);
     // Full name + value label, pre-wrapped to ≤ MAX_LINES lines ('\n'-joined)
-    r._nameLabel = wrapLabel(r.Geography, 20, MAX_LINES, `· ${r.DisplayValue ?? ''}`);
+    // Suppressed rows (2026-10-01, per Morgan) get NO in-chart label — they
+    // have no bar. ExpandableChartCard lists them in an HTML legend above the
+    // chart instead (dot + name + "(Suppressed)", like Avertable Deaths'
+    // "(Not calculated)" legend).
+    r._sup = isSuppressedRow(r);
+    r._nameLabel = r._sup ? '' : wrapLabel(r.Geography, 20, MAX_LINES, `· ${r.DisplayValue ?? ''}`);
   });
   const maxValue = Math.max(0, ...sorted.map(r => r.Value ?? 0));
 
@@ -267,9 +282,10 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
   // Label positions are resolved in pixel space by Vega signals so they
   // respond to the actual chart width and the runtime comparison choice.
   // At most two labels: Selected ("S") plus Other ("O") = Comparison when one
-  // is chosen, else Citywide (when shown). Without a comparison the selected
-  // label is value-only (the page already names the neighborhood); with one,
-  // both carry names so the bars aren't distinguished by color alone.
+  // is chosen, else Citywide (when shown). The selected label always carries
+  // the neighborhood name ("Mott Haven · 23%") so selected/Citywide reads the
+  // same way as selected/comparison and bars aren't told apart by color alone
+  // (2026-09-30 — previously value-only when no comparison was active).
   // Widths are estimated from the longest wrapped line (CHAR_W px/char at
   // 11px bold). Placement: the left-ranked label prefers to END at its bar,
   // the right-ranked one to START at its bar; both are clamped inside the
@@ -282,7 +298,8 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
   const q        = (v) => JSON.stringify(v);
   const idsJson  = q(sorted.map(r => r.GeoID));
   const nameLbls = q(sorted.map(r => r._nameLabel));
-  const nameWs   = q(sorted.map(r => estW(r._nameLabel)));
+  const nameWs   = q(sorted.map(r => (r._sup ? 0 : estW(r._nameLabel))));
+  const supFlags = q(sorted.map(r => !!r._sup));
   const selRow   = geoId != null ? sorted.find(r => r.GeoID === geoId) : null;
   const cityRow  = includeCitywide ? sorted.find(r => r.GeoType === 'Citywide') : null;
   const cityLbl  = cityRow ? `Citywide · ${cityRow.DisplayValue}` : '';
@@ -293,12 +310,14 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
     { name: 'lbW',    expr: 'width - 4' }, // small right margin for halo/estimate slack
     { name: 'lbCmp',  expr: 'comparisonGeoId !== null' },
     { name: 'lbSX',   expr: `scale('x', ${geoId}) + lbBw` },
-    { name: 'lbSW',   expr: `lbCmp ? ${estW(selRow._nameLabel)} : ${estW(selRow.DisplayValue)}` },
-    { name: 'lbSTx',  expr: `lbCmp ? ${q(selRow._nameLabel)} : ${q(String(selRow.DisplayValue ?? ''))}` },
-    { name: 'lbHasO', expr: `lbCmp || ${cityRow ? 'true' : 'false'}` },
+    { name: 'lbSW',   expr: `${selRow._sup ? 0 : estW(selRow._nameLabel)}` },
+    { name: 'lbSTx',  expr: q(selRow._nameLabel) },
+    { name: 'lbSSup', expr: selRow._sup ? 'true' : 'false' },
+    { name: 'lbHasO', expr: `(lbCmp && !lbOSup) || (!lbCmp && ${cityRow ? 'true' : 'false'})` },
     { name: 'lbOX',   expr: `lbCmp ? scale('x', comparisonGeoId) + lbBw : ${cityRow ? `scale('x', ${cityRow.GeoID}) + lbBw` : '-1'}` },
     { name: 'lbOW',   expr: `lbCmp ? ${nameWs}[indexof(${idsJson}, comparisonGeoId)] : ${estW(cityLbl)}` },
     { name: 'lbOTx',  expr: `lbCmp ? ${nameLbls}[indexof(${idsJson}, comparisonGeoId)] : ${q(cityLbl)}` },
+    { name: 'lbOSup', expr: `lbCmp ? ${supFlags}[indexof(${idsJson}, comparisonGeoId)] : false` },
     // A = left-ranked label, B = right-ranked label
     { name: 'lbSFirst', expr: 'lbSX <= lbOX' },
     { name: 'lbAX',  expr: 'lbSFirst ? lbSX : lbOX' },
@@ -317,7 +336,7 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
   ] : [];
   // _nameLabel was only needed to build the label arrays above — drop it so
   // it isn't carried in the spec's data rows (PERF 2026-09-29).
-  sorted.forEach(r => { delete r._nameLabel; });
+  sorted.forEach(r => { delete r._nameLabel; delete r._sup; });
 
   // Vertical leader: bar top → label strip (per-row data, conditional color)
   const leaderLayer = (test, color, dash) => ({
@@ -363,22 +382,30 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
     },
   });
 
-  // ── Comparison mode: labels in the top strip ───────────────────────────────
+  // ── Labels in the top strip (selected + comparison OR Citywide) ─────────────
+  // 2026-09-30: selected/Citywide now uses the same strip treatment as
+  // selected/comparison — named labels, leader lines, collision handling.
+  // The "other" slot is Comparison while one is chosen, else Citywide; the
+  // lbO* signals already switch between the two, only color/dash differ.
   const cmpOn = 'comparisonGeoId !== null';
   const labelDefs = hasSel ? [
     // [leftSig, textSig, test, color, dashed, barSig, widthSig]
-    ['lbSL', 'lbSTx', 'lbCmp', SELECTED,   false, 'lbSX', 'lbSW'],
-    ['lbOL', 'lbOTx', 'lbCmp', COMPARISON, false, 'lbOX', 'lbOW'],
+    // Suppressed Selected / Comparison → no label (see HTML legend in card)
+    ['lbSL', 'lbSTx', '!lbSSup',            SELECTED,   false, 'lbSX', 'lbSW'],
+    ['lbOL', 'lbOTx', 'lbCmp && !lbOSup',   COMPARISON, false, 'lbOX', 'lbOW'],
+    ...(cityRow ? [['lbOL', 'lbOTx', '!lbCmp', CITYWIDE, true, 'lbOX', 'lbOW']] : []),
   ] : [];
-  const vDefs = !expanded ? [
-    [`${cmpOn} && ${highlightTest}`, SELECTED,   false],
-    [compTest,                       COMPARISON, false],
+  const vDefs = hasSel ? [
+    [highlightTest,                   SELECTED,   false],
+    [compTest,                        COMPARISON, false],
+    ...(cityRow ? [[`!(${cmpOn}) && ${nycTest}`, CITYWIDE, true]] : []),
   ] : [];
 
-  // ── No comparison: labels hug their own bar (original treatment) ──────────
-  // Selected CD value sits just above its bar; Citywide gets its dashed tick
-  // + "Citywide · X" label above its bar. Edge-aware align keeps labels near
-  // the chart's sides from clipping. White halo copies keep them legible.
+  // ── No selected neighborhood: labels hug their own bar ─────────────────────
+  // Only used when there's no selected CD (hasSel false) — Citywide gets its
+  // dashed tick + "Citywide · X" label above its bar. Edge-aware align keeps
+  // labels near the chart's sides from clipping. White halo copies keep them
+  // legible.
   const HUG_SEL_DY = -6;   // baseline:'bottom' → gap from bar top
   const HUG_NYC_DY = -22;
   const hugAlign   = "datum._pos <= 0.15 ? 'left' : datum._pos >= 0.85 ? 'right' : 'center'";
@@ -394,13 +421,14 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
       color: { value: halo ? 'white' : color },
     },
   });
-  const hugDefs = !expanded ? [
+  const hugDefs = !expanded && !hasSel ? [
     ...(cityRow ? [[HUG_NYC_DY, `!(${cmpOn}) && ${nycTest}`, "'Citywide · ' + datum.DisplayValue", CITYWIDE]] : []),
     [HUG_SEL_DY, `!(${cmpOn}) && ${highlightTest}`, 'datum.DisplayValue', SELECTED],
   ] : [];
-  // Citywide dashed tick (no-comparison only; Citywide is filtered out of the
-  // data entirely while a comparison is active).
-  const cityTick = cityRow ? [{
+  // Citywide dashed tick (no-selection hug mode only — with a selected CD the
+  // dashed leader line replaces it; Citywide is filtered out of the data
+  // entirely while a comparison is active).
+  const cityTick = cityRow && !hasSel ? [{
     mark: { type: 'rule', yOffset: -16, strokeWidth: 2, strokeDash: [4, 2] },
     encoding: {
       color: { condition: { test: nycTest, value: CITYWIDE }, value: 'transparent' },
@@ -475,6 +503,15 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
       ] : []),
       { calculate: 'datum.DisplayValue', as: 'valueLabel' },
       { calculate: valueWithUnitsCalc, as: 'valueWithUnits' },
+      {
+        calculate:
+          // Unreliable-estimate note (2026-09-30): copy lives in
+          // content/site/chartNotes.json → general.unreliable.
+          "indexof(toString(datum.valueWithUnits), '*') >= 0 " +
+          `? datum.valueWithUnits + ${UNRELIABLE_TOOLTIP_EXPR} ` +
+          ": datum.valueWithUnits",
+        as: 'valueWithUnits',
+      },
       // NYC, Selected, and Comparison label fields used by the compact
       // chart text layers. (Borough has no label field here — it's never
       // plotted in this chart; see the file header for where it lives.)
@@ -503,11 +540,14 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
         // chart top, leaving the label strip clear (see "Label band").
         ...(BAND > 0 && maxValue > 0 ? {
           // Total height is constant (height + BAND) so toggling comparison
-          // never shifts the page. Comparison mode: tallest bar tops out BAND
-          // px down (labels live in the strip). Otherwise: just enough
-          // headroom (HUG_ROOM px) for labels hugging the tallest bars.
+          // never shifts the page. With a selected CD (any mode): tallest bar
+          // tops out BAND px down (labels live in the strip). No selected CD
+          // and no comparison: just enough headroom (HUG_ROOM px) for labels
+          // hugging the tallest bars.
           scale: {
-            domainMax: { expr: `comparisonGeoId !== null ? ${maxValue * (height + BAND) / height} : ${maxValue * (height + BAND) / (height + BAND - HUG_ROOM)}` },
+            domainMax: { expr: hasSel
+              ? `${maxValue * (height + BAND) / height}`
+              : `comparisonGeoId !== null ? ${maxValue * (height + BAND) / height} : ${maxValue * (height + BAND) / (height + BAND - HUG_ROOM)}` },
             nice: false, zero: true,
           },
         } : {}),
@@ -594,7 +634,7 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
                   strokeWidth: { value: 0.5 },
                   tooltip: [
                     { field: 'Geography', title: 'Neighborhood' },
-                    { field: 'valueWithUnits', title: metadataOfText || 'Value' }
+                    { field: 'valueWithUnits', title: metadataTypeText || 'Value' }
 
                     // TimePeriod removed (2026-09-04): new-format data/indicators/
                     // rows no longer carry a per-row TimePeriod field (it now lives

@@ -12,7 +12,17 @@
  *   (both return null when sections is empty).
  * - Prose content (paragraphs) lives in /content/site/about.json — edit there,
  *   no code changes needed. Tip boxes and structured elements (keyboard
- *   shortcuts, code snippets) stay here because they need JSX formatting.
+ *   shortcuts) stay here because they need JSX formatting.
+ * - 2026-10-01 review: every instruction on this page was checked against
+ *   the current UI. Removed j/k (never implemented) and the sticky-bar
+ *   neighborhood-name tip (that name was removed from StickyContextBar);
+ *   detail-panel copy updated for the mini bar chart that replaced the
+ *   DistributionStrip; colors updated to purple/orange; added "Saving and
+ *   sharing" (export tray, copy link, print, language).
+ * - SHORTCUTS below must stay in sync with SHORTCUTS in
+ *   components/layout/KeyboardShortcutsButton.jsx. It can't be imported
+ *   here: that file is 'use client', so a server component would receive a
+ *   client reference instead of the array.
  */
 
 import Link from 'next/link';
@@ -28,7 +38,18 @@ const PAGE_NAV = [
   { href: '#tips',         label: 'Things that aren\'t obvious' },
   { href: '#data',         label: 'Understanding the data' },
   { href: '#detail-panel', label: 'Indicator detail panel' },
+  { href: '#sharing',      label: 'Saving and sharing' },
   { href: '#sources',      label: 'Data and methods' },
+];
+
+const SHORTCUTS = [
+  { keys: ['/'],   description: 'Search neighborhoods' },
+  { keys: ['f'],   description: 'Search indicators' },
+  { keys: ['m'],   description: 'Open neighborhood map picker' },
+  { keys: ['e'],   description: 'Expand chart (hover or focus it)' },
+  { keys: ['i'],   description: 'Open indicator details (hover or focus card)' },
+  { keys: ['Esc'], description: 'Close panel / clear search' },
+  { keys: ['?'],   description: 'Show shortcuts menu' },
 ];
 
 export const metadata = {
@@ -138,8 +159,8 @@ export default async function AboutPage() {
             <H3>Choosing a neighborhood</H3>
             <P>{copy.navigating.choosingNeighborhood}</P>
             <Tip>
-              Press <Key>/</Key> anywhere on the page (outside a text field) to jump instantly
-              to the neighborhood search.
+              Press <Key>/</Key> anywhere on the page (outside a text field) to jump straight
+              to the neighborhood search, or <Key>m</Key> to open the full map picker.
             </Tip>
 
             <H3>Topic navigation</H3>
@@ -147,6 +168,9 @@ export default async function AboutPage() {
 
             <H3>Finding a specific indicator</H3>
             <P>{copy.navigating.findingIndicator}</P>
+            <Tip>
+              Press <Key>f</Key> to jump straight to indicator search.
+            </Tip>
 
             {/* ── Comparing neighborhoods ──────────────────────────── */}
             <H2 id="comparing">Comparing neighborhoods</H2>
@@ -166,21 +190,22 @@ export default async function AboutPage() {
             <P>{copy.nonObvious.intro}</P>
 
             <Tip>
-              Once you&rsquo;ve scrolled past the page header, your neighborhood name appears
-              in the thin bar below the topic navigation.{' '}
-              <strong>Clicking it reopens the neighborhood picker</strong>, so you can switch
-              districts without scrolling back to the top.
+              On a larger screen, the <strong>map icon</strong> at the left of the thin bar
+              below the topic navigation reopens the neighborhood map picker, so you can switch
+              districts without scrolling back to the top. On a phone, the neighborhood name at
+              the top of the page does the same.
             </Tip>
 
             <Tip>
-              Every indicator chart card has a <strong>Details</strong> button in the header.
-              Pressing <Key>i</Key> while hovering or focusing a card opens the same panel
-              without using the mouse.
+              A chart&rsquo;s short description is clickable — it opens the same{' '}
+              <strong>Details</strong> panel as the button. Underlined terms show a
+              plain-language definition when you hover over, focus, or tap them.
             </Tip>
 
             <Tip>
-              Press <Key>j</Key> and <Key>k</Key> to jump between sections without scrolling.
-              Press <Key>?</Key> for a full list of keyboard shortcuts.
+              While hovering over or focused on a chart, press <Key>i</Key> to open its details
+              or <Key>e</Key> to expand it. Press <Key>?</Key> for the full list of keyboard
+              shortcuts — you can also turn the shortcuts off there.
             </Tip>
 
             {/* ── Understanding the data ───────────────────────────── */}
@@ -198,6 +223,9 @@ export default async function AboutPage() {
             <H3>Reading the charts</H3>
             <P>{copy.understandingData.readingCharts}</P>
 
+            <H3>Small numbers and suppressed values</H3>
+            <P>{copy.understandingData.smallNumbers}</P>
+
             {/* ── Indicator detail panel ───────────────────────────── */}
             <H2 id="detail-panel">The indicator detail panel</H2>
 
@@ -206,11 +234,31 @@ export default async function AboutPage() {
             <H3>Choropleth map</H3>
             <P>{copy.detailPanel.choropleth}</P>
 
-            <H3>Distribution strip</H3>
-            <P>{copy.detailPanel.distributionStrip}</P>
+            <H3>Bar chart</H3>
+            <P>{copy.detailPanel.barChart}</P>
 
-            <H3>Source and description</H3>
+            <H3>Source and notes</H3>
             <P>{copy.detailPanel.sourceDescription}</P>
+
+            {/* ── Saving and sharing ───────────────────────────────── */}
+            <H2 id="sharing">Saving and sharing</H2>
+
+            <P>{copy.sharing.intro}</P>
+
+            <H3>Download the data</H3>
+            <P>{copy.sharing.data}</P>
+
+            <H3>Download or embed a chart</H3>
+            <P>{copy.sharing.export}</P>
+
+            <H3>Share a link</H3>
+            <P>{copy.sharing.links}</P>
+
+            <H3>Print a full profile</H3>
+            <P>{copy.sharing.print}</P>
+
+            <H3>Other languages</H3>
+            <P>{copy.sharing.language}</P>
 
             {/* ── Data sources ─────────────────────────────────────── */}
             <H2 id="sources">Data and methods</H2>
@@ -245,15 +293,12 @@ export default async function AboutPage() {
                 <p className="text-sm font-semibold text-gray-600 mb-3">
                   Keyboard shortcuts
                 </p>
-                <ShortcutRow keys={['/']}   description="Search neighborhoods" />
-                <ShortcutRow keys={['f']}   description="Search indicators" />
-                <ShortcutRow keys={['m']}   description="Open neighborhood picker" />
-                <ShortcutRow keys={['i']}   description="Open indicator details" />
-                <ShortcutRow keys={['e']}   description="Expand chart" />
-                <ShortcutRow keys={['Esc']} description="Close panel / clear search" />
-                <ShortcutRow keys={['?']}   description="Show shortcuts menu" />
+                {SHORTCUTS.map(s => (
+                  <ShortcutRow key={s.keys.join('+')} keys={s.keys} description={s.description} />
+                ))}
                 <p className="text-xs text-gray-600 leading-snug mt-3">
-                  You can turn these shortcuts off from the ? menu at the top of any profile page.
+                  Shortcuts work anywhere outside a text field. You can turn them off from the
+                  ? menu at the top of any profile page; Esc keeps working either way.
                 </p>
               </div>
             </div>

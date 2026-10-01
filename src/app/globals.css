@@ -301,6 +301,12 @@ summary {
   z-index: 10000 !important;
 }
 
+#vg-tooltip-element td.value {
+  white-space: pre-line;
+  max-width: 280px;
+  text-align: left;
+}
+
 .vg-tooltip {
   visibility: hidden;
   padding: 6px 8px;
