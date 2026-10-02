@@ -50,6 +50,7 @@
 import { useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams, usePathname, useRouter } from 'next/navigation';
+import { setPendingNeighborhood } from '@/lib/utils/pendingNeighborhood';
 import Link from 'next/link';
 import UnifiedSearch from '@/components/controls/UnifiedSearch';
 import MapHoverTooltip from '@/components/core/MapHoverTooltip';
@@ -95,6 +96,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
   const router = useRouter();
 
   const handleNeighborhoodSelect = useCallback((fid) => {
+    setPendingNeighborhood(fid);
     router.push(`/neighborhood/${fid}`);
   }, [router]);
 
