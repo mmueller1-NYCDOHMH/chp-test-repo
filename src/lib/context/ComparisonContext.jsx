@@ -28,7 +28,8 @@
  * - Wrap the page tree once in PageLayout (inside FlyoutShell).
  */
 
-import { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useMemo, useState, useEffect, useCallback, useRef } from 'react';
+import { useParams } from 'next/navigation';
 
 const VALID_VALUES    = ['citywide', 'borough', 'none'];
 const DEFAULT_VALUE   = 'citywide';
@@ -76,6 +77,24 @@ export function ComparisonProvider({ children, neighborhoods = [] }) {
       }
     }
   }, [neighborhoods]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Drop the comparison neighborhood when the primary one changes ─────
+  // The layout (and this provider) now stays mounted across neighborhood
+  // changes (see app/neighborhood/layout.js, 2026-10-02). Before that, the
+  // remount cleared this state for free; do it explicitly so a comparison
+  // never carries over to a neighborhood whose URL no longer has compareTo.
+  const routeParams = useParams();
+  const routeId     = routeParams?.id ? String(routeParams.id) : null;
+  const prevRouteId = useRef(routeId);
+  useEffect(() => {
+    if (prevRouteId.current === routeId) return;
+    prevRouteId.current = routeId;
+    if (new URLSearchParams(window.location.search).get(COMPARE_TO_PARAM)) return;
+    _setComparisonNeighborhood(null);
+    window.dispatchEvent(new CustomEvent('chp:comparison-changed', {
+      detail: { geoId: null },
+    }));
+  }, [routeId]);
 
   // ── Benchmark comparison setter ───────────────────────────────────────
   const setComparison = useCallback((value) => {
