@@ -45,7 +45,7 @@
 
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useParams } from 'next/navigation';
+import { useActiveNeighborhoodId } from '@/lib/utils/pendingNeighborhood';
 import { useComparison } from '@/lib/context/ComparisonContext';
 import { TILE_URL_BASE, TILE_URL_LABELS, TILE_ATTRIBUTION } from '@/lib/utils/mapTiles';
 import { NYC_CENTER, NYC_ZOOM } from './neighborhoodMap/mapStyles';
@@ -73,8 +73,9 @@ export default function NeighborhoodMap({ onSelect }) {
   const geoLayerRef     = useRef(null); // main map GeoJSON layer group
   const hoveredLayerRef = useRef(null); // currently hovered Leaflet layer
 
-  const params                     = useParams();
-  const selectedId                 = params?.id ? String(params.id) : null;
+  // Optimistic: reflects a just-clicked neighborhood immediately instead of
+  // waiting for the route change to commit (see pendingNeighborhood.js).
+  const selectedId                 = useActiveNeighborhoodId();
   const { comparisonNeighborhood } = useComparison();
   const comparisonId               = comparisonNeighborhood?.id ?? null;
 

@@ -53,7 +53,7 @@ export default function MicroStrip({ rows = [], geoId }) {
   return (
     <>
       {/* ── Compact variant — below md ──────────────────────────────────── */}
-      <div className="md:hidden relative mt-auto pt-1" style={{ height: 34 }}>
+      <div className="md:hidden relative mt-auto pt-1 shrink-0 w-full" style={{ height: 34 }}>
         {/* Track */}
         <div className="absolute inset-x-0 h-[2px] bg-gray-200 rounded" style={{ top: 6 }} />
 
@@ -114,7 +114,7 @@ export default function MicroStrip({ rows = [], geoId }) {
       </div>
 
       {/* ── Original variant — md and up, pixel-identical to before ────── */}
-      <div className="hidden md:block relative mt-auto pt-3" style={{ height: 66 }}>
+      <div className="hidden md:block relative mt-auto pt-3 shrink-0 w-full" style={{ height: 66 }}>
         {/* Low / High range labels */}
         <div className="absolute inset-x-0 top-0 flex justify-between">
           <span className="text-xs font-medium text-gray-600 leading-none">Low</span>

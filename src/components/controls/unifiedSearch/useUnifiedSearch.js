@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback, useId } from 'react';
-import { useRouter, useParams, usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { setPendingNeighborhood, useActiveNeighborhoodId } from '@/lib/utils/pendingNeighborhood';
 import { useComparison } from '@/lib/context/ComparisonContext';
 import { searchAddresses } from '@/lib/geoclient/geocode';
 import { BOROUGH_ORDER } from '@/lib/utils/constants';
@@ -35,9 +36,10 @@ export function useUnifiedSearch({ neighborhoods = [], onSelect, onHover }) {
   const debounceRef  = useRef(null);
 
   const router   = useRouter();
-  const params   = useParams();
   const pathname = usePathname();
-  const activeId = params?.id ? String(params.id) : null;
+  // Optimistic: the pill switches to the picked neighborhood right away
+  // rather than after the route change commits (see pendingNeighborhood.js).
+  const activeId = useActiveNeighborhoodId();
 
   const selectedNeighborhood = activeId
     ? neighborhoods.find(n => String(n.id) === activeId)
@@ -182,6 +184,7 @@ export function useUnifiedSearch({ neighborhoods = [], onSelect, onHover }) {
       onSelect(neighborhood);
     } else {
       setComparisonNeighborhood(null);
+      setPendingNeighborhood(neighborhood.id);
       router.push(`/neighborhood/${neighborhood.id}`);
     }
   }, [onSelect, onHover, router, setComparisonNeighborhood]);
