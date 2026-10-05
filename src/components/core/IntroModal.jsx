@@ -94,9 +94,24 @@ export default function IntroModal({ neighborhoods = [] }) {
     isMounted,
     dialogVisible,
     visitedIds,
+    setVisitedIds,
     dialogRef,
     dismiss,
   } = useIntroModalLifecycle({ inputRef });
+
+  // Opened from the explorer badge with every neighborhood already visited:
+  // show a celebration + reset instead of an empty "unvisited" list. The
+  // search then covers ALL neighborhoods (nothing is left to filter to).
+  const allVisited = !!visitedIds && neighborhoods.length > 0 &&
+    neighborhoods.every(n => visitedIds.has(n.id));
+
+  // Clears explorer progress. useExplorerBadge owns the storage keys and
+  // listens for this event; the modal falls back to its normal full list.
+  const handleResetVisited = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('chp:explorer-reset'));
+    setVisitedIds(null);
+    inputRef.current?.focus();
+  }, [setVisitedIds]);
 
   const handleSelect = useCallback((neighborhood) => {
     try { localStorage.setItem(STORAGE_KEY, '1'); } catch { /* ignore */ }
@@ -118,7 +133,7 @@ export default function IntroModal({ neighborhoods = [] }) {
     hasResults,
     filtered,
     handleInputKeyDown,
-  } = useNeighborhoodFilter({ neighborhoods, visitedIds, onSelect: handleSelect, onDismiss: dismiss });
+  } = useNeighborhoodFilter({ neighborhoods, visitedIds: allVisited ? null : visitedIds, onSelect: handleSelect, onDismiss: dismiss });
 
   if (!isMounted) return null;
 
@@ -292,18 +307,60 @@ export default function IntroModal({ neighborhoods = [] }) {
                       </button>
                     )}
                   </div>
-                  {visitedIds && (
+                  {visitedIds && !allVisited && (
                     <p className="text-sm text-brand bg-brand-tint border border-brand rounded-lg px-2.5 py-1.5 mt-2 text-center leading-snug">
                       Showing {filtered.length} unvisited neighborhoods
                     </p>
                   )}
-                  {!visitedIds && flatFiltered.length > 0 && (
+                  {(!visitedIds || (allVisited && query)) && flatFiltered.length > 0 && (
                     <p className="text-sm text-gray-600 mt-2 text-center">
                       {modalCopy.search.keyboardHint}
                     </p>
                   )}
                 </div>
 
+                {allVisited && !query ? (
+                  <div role="status" className="flex-1 overflow-y-auto px-5 pb-5 pt-2 flex flex-col items-center text-center">
+                    <svg
+                      className="chp-celebrate w-28 h-28 shrink-0"
+                      viewBox="0 0 120 120" fill="none" aria-hidden="true"
+                    >
+                      {/* Confetti */}
+                      <g className="chp-celebrate-confetti">
+                        <rect x="16" y="26" width="7" height="7" rx="1.5" fill="#2563eb" transform="rotate(-18 19.5 29.5)" />
+                        <rect x="96" y="20" width="7" height="7" rx="1.5" fill="#db2777" transform="rotate(24 99.5 23.5)" />
+                        <circle cx="30" cy="62" r="3.5" fill="#f59e0b" />
+                        <circle cx="94" cy="58" r="3.5" fill="#10b981" />
+                        <circle cx="60" cy="10" r="3" fill="#8b5cf6" />
+                        <path d="M38 16l3 6" stroke="#10b981" strokeWidth="3" strokeLinecap="round" />
+                        <path d="M82 12l-3 7" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" />
+                        <path d="M106 42l-6 2" stroke="#2563eb" strokeWidth="3" strokeLinecap="round" />
+                        <path d="M12 46l6 2" stroke="#db2777" strokeWidth="3" strokeLinecap="round" />
+                      </g>
+                      {/* Trophy */}
+                      <path d="M42 34h36v16c0 11-8 20-18 20s-18-9-18-20V34z" fill="#fbbf24" />
+                      <path d="M42 38H32c0 10 4 17 12 18M78 38h10c0 10-4 17-12 18" stroke="#f59e0b" strokeWidth="5" strokeLinecap="round" fill="none" />
+                      <rect x="56" y="70" width="8" height="12" fill="#f59e0b" />
+                      <rect x="44" y="82" width="32" height="8" rx="2" fill="#b45309" />
+                      <path d="M60 41l2.6 5.4 5.9.8-4.3 4.1 1 5.8L60 54.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8L60 41z" fill="#fff" />
+                    </svg>
+                    <p className="text-base font-semibold text-gray-900 mt-2 leading-snug">
+                      {modalCopy.allVisited.title.replace('{count}', neighborhoods.length)}
+                    </p>
+                    <p className="text-sm text-gray-600 mt-1.5 leading-snug">
+                      {modalCopy.allVisited.body}
+                    </p>
+                    <button
+                      onClick={handleResetVisited}
+                      className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-brand border border-brand rounded-lg px-3 py-1.5 hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    >
+                      <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5.5 15a7 7 0 0 0 12.2 2.5M18.5 9A7 7 0 0 0 6.3 6.5" />
+                      </svg>
+                      {modalCopy.allVisited.resetButton}
+                    </button>
+                  </div>
+                ) : (
                 <div
                   id="intro-neighborhood-list"
                   ref={listRef}
@@ -359,6 +416,7 @@ export default function IntroModal({ neighborhoods = [] }) {
                     </p>
                   )}
                 </div>
+                )}
               </>
             )}
 

@@ -220,6 +220,20 @@ export default function FlyoutShell({ children }) {
         className="fixed inset-0 bg-black/30 z-40"
       />
 
+      {/* Clip box (2026-10-05) — the closed panel is parked off-screen
+          (translated right on desktop, down on mobile; and during hydration
+          on a phone it briefly sits in the desktop spot, 420px off the right
+          edge, before isMobile resolves). A position:fixed element parked
+          off-screen still counts toward the page's scrollable width, and
+          overflow-x on <html> does NOT clip fixed elements. Mobile browsers
+          respond by widening the layout viewport and don't shrink it back —
+          which is what made the page look off-center/cut off, put fixed
+          buttons off-screen, and let the sticky TopicNav scroll away.
+          This fixed, overflow-hidden box clips the panel instead, so it can
+          never widen the page. pointer-events-none lets clicks through to
+          the page/backdrop; the panel itself re-enables them. The panel is
+          `absolute` (not `fixed`) so this box is its containing block. */}
+      <div className="fixed inset-0 z-50 overflow-hidden pointer-events-none">
       {/* Panel — slides from right on desktop, up from bottom on mobile */}
       <aside
         ref={panelRef}
@@ -238,8 +252,8 @@ export default function FlyoutShell({ children }) {
         style={isMobile ? { '--drag-y': `${dragY}px` } : undefined}
         className={
           isMobile
-            ? `fixed bottom-0 left-0 right-0 w-full rounded-t-2xl bg-white shadow-xl z-50 flex flex-col overflow-hidden ${panelPositionClass} ${panelMaxHeightClass} ${panelTransformClass} ${panelTransitionClass}`
-            : `fixed top-0 right-0 h-full w-[420px] bg-white shadow-xl z-50 flex flex-col overflow-hidden ${panelTransformClass} ${panelTransitionClass}`
+            ? `absolute pointer-events-auto bottom-0 left-0 right-0 w-full rounded-t-2xl bg-white shadow-xl flex flex-col overflow-hidden ${panelPositionClass} ${panelMaxHeightClass} ${panelTransformClass} ${panelTransitionClass}`
+            : `absolute pointer-events-auto top-0 right-0 h-full w-[420px] max-w-full bg-white shadow-xl flex flex-col overflow-hidden ${panelTransformClass} ${panelTransitionClass}`
         }
       >
 
@@ -388,6 +402,7 @@ export default function FlyoutShell({ children }) {
         )}
 
       </aside>
+      </div>
     </FlyoutContext.Provider>
   );
 }
