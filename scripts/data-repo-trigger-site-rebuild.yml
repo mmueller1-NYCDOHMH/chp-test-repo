@@ -1,0 +1,29 @@
+# TEMPLATE — this file belongs in the DATA repo, not this one.
+# Copy it to .github/workflows/trigger-site-rebuild.yml in the data repo.
+#
+# On every push to main that touches data or copy, it asks the site host to
+# rebuild. The rebuild runs scripts/fetch-content.js, which pulls the latest
+# files from the data repo.
+#
+# One-time setup:
+#   1. Netlify -> Site configuration -> Build & deploy -> Build hooks -> add a
+#      hook for the production branch. Copy its URL.
+#   2. Data repo -> Settings -> Secrets and variables -> Actions -> new secret
+#      SITE_BUILD_HOOK_URL = that URL.
+name: Trigger site rebuild
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data/indicators/**'
+      - 'data/metadata/**'
+      - 'content/**'
+  workflow_dispatch:
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call the site build hook
+        run: curl -fsS -X POST -d '{}' "${{ secrets.SITE_BUILD_HOOK_URL }}"
