@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { siteNav } from '@/config/nav/siteNav';
 import { scrollToSection as scrollUtil } from '@/lib/utils/scrollToSection';
+import { watchSections } from '@/lib/utils/watchSections';
 
 /**
  * FILE: useScrollSpy.js
  *
- * TopicNav's scroll-spy: an IntersectionObserver watches all real
- * (non-dummy) section elements and derives `activeId` as the topmost
- * intersecting section, with a suppression window so a tap-triggered
+ * TopicNav's scroll-spy: watches all real (non-dummy) section elements
+ * (via watchSections.js) and derives `activeId` as the topmost visible
+ * section — or null above the first one (At a Glance) — with a suppression window so a tap-triggered
  * smooth scroll doesn't get stomped back by sections still animating
  * past mid-scroll. Also owns the URL hash sync and the on-load smart
  * hash restore. Part of the 2026-09-04 split of TopicNav.jsx.
@@ -18,7 +19,6 @@ const NAV_HEIGHT = 56;
 export function useScrollSpy() {
   const [activeId, setActiveId] = useState(null);
 
-  const intersectingRef   = useRef(new Set());
   // Suppresses scroll-spy's setActiveId while a tap-triggered smooth scroll
   // is still animating. Without this, the IntersectionObserver keeps firing
   // for the sections still passing by mid-animation and stomps the tap's
@@ -59,42 +59,32 @@ export function useScrollSpy() {
   }, []);
 
   // ── Scroll-spy ───────────────────────────────────────────────────────────
+  // Engine lives in watchSections.js (shared with StickyContextBar). It
+  // re-attaches when a neighborhood change swaps the page content, and
+  // reports null when the reader is above the first section (At a Glance),
+  // so no tab stays highlighted there.
   useEffect(() => {
-    if (!realSectionIds.length) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            intersectingRef.current.add(entry.target.id);
-          } else {
-            intersectingRef.current.delete(entry.target.id);
-          }
-        });
-        // Pick the topmost intersecting section in nav order.
-        // Using realSectionIds since only real sections are observed.
-        // rootMargin only clips the top (nav height) — no bottom clip — so a section
-        // is "intersecting" any time any pixel of it is visible below the nav.
-        // This makes the detection symmetric: works the same scrolling up or down.
+    return watchSections(realSectionIds, {
+      topOffset: NAV_HEIGHT,
+      onActive: (id) => {
         if (suppressSpyRef.current) return;
-        const active = realSectionIds.find(id => intersectingRef.current.has(id));
-        if (active) setActiveId(active);
+        setActiveId(id);
       },
-      { rootMargin: `-${NAV_HEIGHT}px 0px 0px 0px`, threshold: 0 }
-    );
-
-    realSectionIds.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
     });
-
-    return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Hash sync ────────────────────────────────────────────────────────────
+  // Also drops a leftover hash when activeId goes back to null (returned to
+  // At a Glance, or changed neighborhood). Only on a real non-null → null
+  // change, so the initial null on load can't wipe a deep-link hash before
+  // the restore effect below has read it.
+  const prevActiveIdRef = useRef(null);
   useEffect(() => {
+    const prev = prevActiveIdRef.current;
+    prevActiveIdRef.current = activeId;
     if (activeId) history.replaceState(null, '', `#${activeId}`);
+    else if (prev) history.replaceState(history.state, '', window.location.pathname + window.location.search);
   }, [activeId]);
 
   // ── Smart hash restore on page load ─────────────────────────────────────

@@ -17,6 +17,12 @@
     "noResults":      "No neighborhoods match"
   },
 
+  "allVisited": {
+    "title":       "Congratulations! You've visited all {count} neighborhoods.",
+    "body":        "You've explored every community district in NYC. Search above to revisit one, or start over.",
+    "resetButton": "Reset visited neighborhoods"
+  },
+
   "map": {
     "hint": "Click any community to explore"
   },

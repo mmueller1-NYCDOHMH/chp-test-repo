@@ -129,7 +129,14 @@ export default function ComparisonStatTilesClient({
   return (
     <div className="flex flex-col">
       <StatTilesLegend />
-      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 md:grid md:grid-cols-2 xl:grid-cols-4 md:gap-4 md:overflow-visible md:snap-none md:pb-0 items-stretch">
+      {/* `relative` is load-bearing (2026-10-05): the tiles contain
+          absolutely-positioned bits (sr-only text, strip dots). Without a
+          positioned ancestor at or inside this horizontal scroller, those
+          escape its clipping and sit at their off-screen swipe positions in
+          the PAGE — making the whole page ~2.5 screens wide on a phone.
+          Mobile browsers then widen the viewport to fit, which shifted the
+          page sideways and let the sticky TopicNav scroll away. */}
+      <div className="relative flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 md:grid md:grid-cols-2 xl:grid-cols-4 md:gap-4 md:overflow-visible md:snap-none md:pb-0 items-stretch">
         {tilesWithComparison.map((tile, i) => {
           const spanClass =
             tilesWithComparison.length % 2 !== 0 && i === tilesWithComparison.length - 1
@@ -143,6 +150,9 @@ export default function ComparisonStatTilesClient({
                 <StatTileSplit
                   {...tileProps}
                   neighborhoodLabel={primaryLabel}
+                  rows={tile.rows}
+                  geoId={geoId}
+                  compGeoId={comparisonNeighborhood?.geoId ?? null}
                   className={spanClass}
                   onOpen={() => setExpandedTile(tile)}
                 />

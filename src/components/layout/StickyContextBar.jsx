@@ -81,6 +81,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { siteNav } from '@/config/nav/siteNav';
 import KeyboardShortcutsButton from './KeyboardShortcutsButton';
+import { watchSections } from '@/lib/utils/watchSections';
 
 // Matches the neighborhood id out of the current pathname (/neighborhood/{id}
 // or /neighborhood/{id}/...) so the "Print this report" link below can point
@@ -128,7 +129,6 @@ export default function StickyContextBar({ sections = [] }) {
     window.dispatchEvent(new CustomEvent('chp:open-intro-modal'));
   }, []);
 
-  const intersectingRef                        = useRef(new Set());
   const manualScrollRef                        = useRef(false);
   const manualTimerRef                         = useRef(null);
   const sectionIds                             = sections.map(s => s.id);
@@ -193,33 +193,18 @@ export default function StickyContextBar({ sections = [] }) {
   }, []);
 
   // ── Scroll-spy ───────────────────────────────────────────────────────────
+  // Engine lives in watchSections.js (shared with TopicNav). Reports null
+  // above the first section, so the breadcrumb falls back to "At a Glance",
+  // and re-attaches when a neighborhood change swaps the page content.
   useEffect(() => {
     if (!sections.length) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            intersectingRef.current.add(entry.target.id);
-          } else {
-            intersectingRef.current.delete(entry.target.id);
-          }
-        });
-
+    return watchSections(sectionIds, {
+      topOffset,
+      onActive: (id) => {
         if (manualScrollRef.current) return;
-
-        const active = sectionIds.find(id => intersectingRef.current.has(id));
-        if (active) setActiveSectionId(active);
+        setActiveSectionId(id);
       },
-      { rootMargin: `-${topOffset}px 0px 0px 0px`, threshold: 0 },
-    );
-
-    sections.forEach(({ id }) => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
     });
-
-    return () => observer.disconnect();
   }, [sections, topOffset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Don't render if there's nothing to navigate (e.g. a static page)

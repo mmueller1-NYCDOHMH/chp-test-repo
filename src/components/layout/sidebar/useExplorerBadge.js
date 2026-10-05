@@ -11,6 +11,10 @@ const TROPHY_KEY   = 'chp_trophy_earned';
  * permanent trophy at 59/59, and flashes an achievement banner when
  * NeighborhoodMap dispatches chp:all-explored. Part of the 2026-09-04
  * split of Sidebar.jsx.
+ *
+ * Listens for chp:explorer-reset (dispatched by IntroModal's "Reset visited
+ * neighborhoods" button) to clear progress and the trophy. The neighborhood
+ * currently being viewed stays counted, so the badge restarts at 1.
  */
 export function useExplorerBadge(activeId) {
   const [exploredCount,   setExploredCount]   = useState(0);
@@ -47,6 +51,24 @@ export function useExplorerBadge(activeId) {
         setTrophyEarned(true);
       }
     } catch { /* ignore */ }
+  }, []);
+
+  // Reset progress on request from the IntroModal's all-visited screen
+  const activeIdRef = useRef(activeId);
+  useEffect(() => { activeIdRef.current = activeId; }, [activeId]);
+  useEffect(() => {
+    function onReset() {
+      const remaining = activeIdRef.current ? [activeIdRef.current] : [];
+      try {
+        localStorage.setItem(EXPLORER_KEY, JSON.stringify(remaining));
+        localStorage.removeItem(TROPHY_KEY);
+      } catch { /* localStorage unavailable */ }
+      setExploredCount(remaining.length);
+      setTrophyEarned(false);
+      setShowAchievement(false);
+    }
+    window.addEventListener('chp:explorer-reset', onReset);
+    return () => window.removeEventListener('chp:explorer-reset', onReset);
   }, []);
 
   // Listen for the all-59 flash achievement from NeighborhoodMap

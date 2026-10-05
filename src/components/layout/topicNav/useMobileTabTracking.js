@@ -42,7 +42,19 @@ export function useMobileTabTracking(activeCategoryId) {
     if (!isMobile || !activeCategoryId) return;
     const idx = siteNav.findIndex(c => c.id === activeCategoryId);
     const btn = mobileCategoryBtnRefs.current[idx];
-    btn?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    const row = mobileTabRowRef.current;
+    if (!btn || !row) return;
+    // FIX (2026-10-05): scroll ONLY the tab row. This used to be
+    // btn.scrollIntoView({ inline: 'center' }), which scrolls every
+    // scrollable ancestor — including the page itself. <html> is
+    // overflow-x: clip/hidden, which stops finger-panning but NOT
+    // programmatic scrolling, so any moment the page was wider than the
+    // screen (e.g. mid neighborhood change) this could shove the whole page
+    // sideways with no way for the user to pan back. btn.offsetLeft is
+    // relative to the row (the row is `relative` — see TopicNav.jsx).
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const left = btn.offsetLeft - (row.clientWidth - btn.offsetWidth) / 2;
+    row.scrollTo({ left: Math.max(0, left), behavior: reducedMotion ? 'auto' : 'smooth' });
   }, [isMobile, activeCategoryId]);
 
   // ── Mobile: track whether the active tab is actually pinned ──────────────

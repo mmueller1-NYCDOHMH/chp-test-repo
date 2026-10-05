@@ -30,6 +30,11 @@ export const metadata = {
 export const viewport = {
   width:       'device-width',
   initialScale: 1,
+  // 2026-10-05: stops mobile browsers from zooming OUT / widening the layout
+  // viewport to fit anything that momentarily overflows sideways (which
+  // un-sticks the sticky nav and shifts the page). Does not limit zooming
+  // IN, so pinch-zoom for accessibility is unaffected.
+  minimumScale: 1,
   viewportFit: 'cover',
 };
 

@@ -4,14 +4,16 @@
  * FILE: StatTileSplit.jsx
  *
  * Split-column stat tile (comparison neighborhood active) — primary value
- * in blue, comparison value in amber, citywide reference below. A real
+ * in blue, comparison value in amber, and the dot distribution strip below
+ * (both neighborhoods marked, plus the citywide marker). A real
  * <button> — clicking it opens StatTileDetailModal via the onOpen prop.
  * Part of the 2026-09-04 split of ComparisonStatTilesClient.jsx.
  */
 import AnimatedValue from '@/components/data-display/AnimatedValue';
 import { SELECTED, COMPARISON } from '@/lib/charts/chartColors';
+import MicroStrip from './MicroStrip';
 
-export default function StatTileSplit({ label, unit, displayValue, delta, compValue, compLabel, nycValue, onOpen, neighborhoodLabel }) {
+export default function StatTileSplit({ label, unit, displayValue, delta, compValue, compLabel, nycValue, rows, geoId, compGeoId, onOpen, neighborhoodLabel }) {
   return (
     <button
       type="button"
@@ -42,14 +44,23 @@ export default function StatTileSplit({ label, unit, displayValue, delta, compVa
       {unit && <div className="text-xs text-gray-600 leading-snug">{unit}</div>}
       <div className="text-xs font-semibold text-gray-700 leading-snug">{label}</div>
 
-      {/* ── BEGIN: citywide reference — TO REVERT: delete this block ── */}
-      {nycValue && (
-        <div className="mt-auto pt-2 border-t border-gray-100 flex items-center gap-1">
-          <span className="text-xs font-semibold text-gray-600 leading-none">Citywide</span>
-          <span className="text-xs text-gray-600 leading-none">{nycValue}</span>
-        </div>
-      )}
-      {/* ── END: citywide reference ── */}
+      {/* ── Distribution strip (2026-10-05, per Morgan) ──────────────────
+          Compare mode used to drop the dot strip entirely and show only a
+          "Citywide {value}" line. It now shows the same strip as the single
+          tile, with the comparison neighborhood as a second (amber) dot.
+          The strip carries the citywide marker + value itself, so the text
+          line is only a fallback for when the strip can't render (no CD
+          rows, or the selected neighborhood has no value). */}
+      {(() => {
+        const canStrip = (rows ?? []).some(r => r.GeoType === 'CD' && r.Value != null && r.GeoID === geoId);
+        if (canStrip) return <MicroStrip rows={rows} geoId={geoId} compGeoId={compGeoId} />;
+        return nycValue ? (
+          <div className="mt-auto pt-2 border-t border-gray-100 flex items-center gap-1">
+            <span className="text-xs font-semibold text-gray-600 leading-none">Citywide</span>
+            <span className="text-xs text-gray-600 leading-none">{nycValue}</span>
+          </div>
+        ) : null;
+      })()}
       <span className="sr-only">. View details</span>
 
     </button>

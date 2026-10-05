@@ -297,6 +297,12 @@ summary {
    z-index: 1000 (ID selector, specificity 0,1,0,0). That beats the class
    selector below (0,0,1,0), hiding the tooltip behind the modal backdrop
    (z-[2000]). Override with !important on the ID to win. */
+/* Hidden while the page (or any inner panel) is scrolling — see TOOLTIP
+   DISMISSAL in VegaLiteChart.jsx. Stops the tooltip popping up and getting
+   stuck when a finger passes over a chart mid-scroll on touch screens. */
+html.chp-scrolling #vg-tooltip-element {
+  display: none !important;
+}
 #vg-tooltip-element {
   z-index: 10000 !important;
 }
@@ -502,4 +508,21 @@ summary {
    with tabindex=-1) — no ring for these, they aren't interactive. */
 [tabindex="-1"]:focus:not(:focus-visible) {
   outline: none;
+}
+
+/* ── IntroModal all-neighborhoods-visited celebration ────────────────────────
+   One-time pop on the trophy graphic + a gentle confetti drift. */
+@keyframes chp-celebrate-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes chp-celebrate-drift {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(4px); }
+}
+.chp-celebrate { animation: chp-celebrate-pop 500ms ease-out both; }
+.chp-celebrate-confetti { animation: chp-celebrate-drift 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .chp-celebrate, .chp-celebrate-confetti { animation: none; }
 }

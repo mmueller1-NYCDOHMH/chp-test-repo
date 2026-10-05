@@ -31,9 +31,15 @@
  *                      baseline neighborhoods").
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { SELECTED, COMPARISON, CITYWIDE, BAR_DEFAULT } from '@/lib/charts/chartColors';
 import { useRovingDots } from './useRovingDots';
+
+// How far (px) the tooltip bubble may overhang the strip's own left/right
+// edge. A small bleed keeps the arrow inside the bubble's rounded corner when
+// the hovered dot sits exactly at 0% / 100%; callers all pad the strip by at
+// least this much, so it never reaches a clipping ancestor.
+const TOOLTIP_EDGE_BLEED = 8;
 
 const REFERENCE_LINE_COLOR = '#D1D5DB'; // gray-300 — neutral, distinct from the CITYWIDE blue tick
 
@@ -56,6 +62,9 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
   const [hovered,  setHovered]  = useState(null);
   const [entered,  setEntered]  = useState(false);
   const hideTimer = useRef(null);
+  const stripRef   = useRef(null); // positioning container for the tooltip
+  const bubbleRef  = useRef(null); // tooltip bubble (measured for edge clamping)
+  const [bubbleShift, setBubbleShift] = useState(0);
 
   // Trigger entrance on mount — rAF ensures first render has painted before transition starts
   useEffect(() => {
@@ -107,10 +116,34 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
     onEscape: () => { setHovered(null); onHoverGeoId?.(null); },
   });
 
-  if (!cdRows.length) return null;
-
   const range = max - min || 1;
   const pct = v => ((v - min) / range) * 100;
+
+  // The row driving the tooltip — direct hover takes priority, then map hover
+  const tooltipRow = hovered ?? (mapHoveredGeoId ? cdRows.find(r => r.GeoID === mapHoveredGeoId) ?? null : null);
+  const tooltipPct = tooltipRow ? pct(tooltipRow.Value) : null;
+
+  // Edge clamping (2026-10-05): the bubble is centered on its dot, then
+  // nudged sideways by however much it would overhang the strip, so a long
+  // neighborhood name on a dot near min/max is no longer cut off by the
+  // modal/flyout's overflow clipping. The arrow stays on the dot. Measured
+  // rather than estimated because bubble width depends on the name length
+  // (the previous fixed clamp(40px, …) assumed an ~80px bubble).
+  // useLayoutEffect so the shift is applied before the tooltip paints.
+  useLayoutEffect(() => {
+    const strip = stripRef.current, bubble = bubbleRef.current;
+    if (tooltipPct == null || !strip || !bubble) return;
+    const stripW = strip.offsetWidth;
+    const half   = bubble.offsetWidth / 2;
+    const x      = (tooltipPct / 100) * stripW;
+    const lo     = half - TOOLTIP_EDGE_BLEED;
+    const hi     = stripW - half + TOOLTIP_EDGE_BLEED;
+    // lo > hi only if the bubble is wider than the strip — then just center it.
+    const center = lo > hi ? stripW / 2 : Math.min(Math.max(x, lo), hi);
+    setBubbleShift(center - x);
+  }, [tooltipPct, tooltipRow?.GeoID]);
+
+  if (!cdRows.length) return null;
 
   const selectedPct  = selected ? pct(selected.Value) : null;
   const citywidePct  = citywide ? pct(citywide.Value) : null;
@@ -122,12 +155,6 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
     citywidePct != null &&
     Math.abs(selectedPct - citywidePct) < 12;
 
-  // The row driving the tooltip — direct hover takes priority, then map hover
-  const tooltipRow  = hovered ?? (mapHoveredGeoId ? cdRows.find(r => r.GeoID === mapHoveredGeoId) : null);
-  const tooltipLeft = tooltipRow
-    ? `clamp(40px, ${pct(tooltipRow.Value)}%, calc(100% - 40px))`
-    : '50%';
-
   return (
     <div>
       <style>{DOT_KEYFRAMES}</style>
@@ -136,23 +163,30 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
       </p>
 
       {/* Track + dots + tooltip — all in one relative container */}
-      <div className="relative" style={{ paddingTop: 20 }}>
+      <div ref={stripRef} className="relative" style={{ paddingTop: 20 }}>
 
         {/* Hover tooltip — sits above the track, fades in */}
         <div
           id="distribution-tooltip"
           aria-hidden="true" /* dot aria-labels already carry name + value */
           role="tooltip"
-          className="absolute bottom-full mb-1.5 -translate-x-1/2 pointer-events-none z-20"
+          /* Zero-width anchor at the dot; children center on it (flex
+             centering overflows equally both ways, unlike -translate-x-1/2
+             on a shrink-to-fit box, which mis-centers near the right edge). */
+          className="absolute bottom-full mb-1.5 w-0 flex flex-col items-center pointer-events-none z-20"
           style={{
-            left:       tooltipRow ? tooltipLeft : '50%',
+            left:       tooltipPct != null ? `${tooltipPct}%` : '50%',
             opacity:    tooltipRow ? 1 : 0,
             transition: 'opacity 50ms ease-in',
           }}
         >
           {tooltipRow && (
             <>
-              <div className="bg-gray-900 text-white rounded-md px-2.5 py-1.5 whitespace-nowrap shadow-lg">
+              <div
+                ref={bubbleRef}
+                className="shrink-0 bg-gray-900 text-white rounded-md px-2.5 py-1.5 whitespace-nowrap shadow-lg"
+                style={{ transform: `translateX(${bubbleShift}px)` }}
+              >
                 <p className="text-xs font-semibold leading-tight">
                   {tooltipRow.Geography.replace(/\s*\(CD\d+\)/i, '').trim()}
                 </p>
@@ -162,7 +196,7 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
                 </p>
               </div>
               {/* Arrow */}
-              <div className="flex justify-center">
+              <div className="flex justify-center shrink-0">
                 <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900" />
               </div>
             </>

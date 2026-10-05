@@ -6,7 +6,7 @@
     "copy": "node scripts/build-copy.js",
     "predev": "node scripts/build-copy.js",
     "dev": "next dev",
-    "prebuild": "node scripts/build-copy.js",
+    "prebuild": "node scripts/fetch-content.js && node scripts/build-copy.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

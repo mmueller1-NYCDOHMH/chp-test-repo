@@ -20,9 +20,12 @@
  * pattern as TopicNav's separate mobile/desktop nav blocks), not a
  * breakpoint-detection rewrite, so there's no hydration flash risk.
  */
-import { SELECTED, CITYWIDE, BAR_DEFAULT } from '@/lib/charts/chartColors';
+import { SELECTED, COMPARISON, CITYWIDE, BAR_DEFAULT } from '@/lib/charts/chartColors';
 
-export default function MicroStrip({ rows = [], geoId }) {
+// compGeoId (2026-10-05): optional comparison neighborhood — drawn as a
+// second highlighted dot in the comparison (amber) color. Used by
+// StatTileSplit so the strip still shows when a neighborhood is compared.
+export default function MicroStrip({ rows = [], geoId, compGeoId = null }) {
   const cdRows   = rows.filter(r => r.GeoType === 'CD' && r.Value != null);
   const citywide = rows.find(r => r.GeoID === 0);
   const selected = cdRows.find(r => r.GeoID === geoId);
@@ -59,6 +62,9 @@ export default function MicroStrip({ rows = [], geoId }) {
 
         {cdRows.map(row => {
           const isSelected = row.GeoID === geoId;
+          const isComp     = compGeoId != null && row.GeoID === compGeoId && !isSelected;
+          const isMarked   = isSelected || isComp;
+          const markColor  = isSelected ? SELECTED : COMPARISON;
           return (
             <div
               key={row.GeoID}
@@ -67,12 +73,12 @@ export default function MicroStrip({ rows = [], geoId }) {
               style={{
                 left:       `${pct(row.Value)}%`,
                 top:        6,
-                width:      isSelected ? 9 : 4,
-                height:     isSelected ? 9 : 4,
-                background: isSelected ? SELECTED : BAR_DEFAULT,
-                boxShadow:  isSelected ? `0 0 0 2px #fff, 0 0 0 3px ${SELECTED}` : 'none',
+                width:      isMarked ? 9 : 4,
+                height:     isMarked ? 9 : 4,
+                background: isMarked ? markColor : BAR_DEFAULT,
+                boxShadow:  isMarked ? `0 0 0 2px #fff, 0 0 0 3px ${markColor}` : 'none',
                 transform:  'translate(-50%, -50%)',
-                zIndex:     isSelected ? 3 : 1,
+                zIndex:     isSelected ? 3 : isComp ? 2 : 1,
               }}
             />
           );
@@ -127,6 +133,9 @@ export default function MicroStrip({ rows = [], geoId }) {
         {/* All CD dots */}
         {cdRows.map(row => {
           const isSelected = row.GeoID === geoId;
+          const isComp     = compGeoId != null && row.GeoID === compGeoId && !isSelected;
+          const isMarked   = isSelected || isComp;
+          const markColor  = isSelected ? SELECTED : COMPARISON;
           return (
             <div
               key={row.GeoID}
@@ -135,12 +144,12 @@ export default function MicroStrip({ rows = [], geoId }) {
               style={{
                 left:       `${pct(row.Value)}%`,
                 top:        20,
-                width:      isSelected ? 10 : 5,
-                height:     isSelected ? 10 : 5,
-                background: isSelected ? SELECTED : BAR_DEFAULT,
-                boxShadow:  isSelected ? `0 0 0 2px #fff, 0 0 0 3px ${SELECTED}` : 'none',
+                width:      isMarked ? 10 : 5,
+                height:     isMarked ? 10 : 5,
+                background: isMarked ? markColor : BAR_DEFAULT,
+                boxShadow:  isMarked ? `0 0 0 2px #fff, 0 0 0 3px ${markColor}` : 'none',
                 transform:  'translate(-50%, -50%)',
-                zIndex:     isSelected ? 3 : 1,
+                zIndex:     isSelected ? 3 : isComp ? 2 : 1,
               }}
             />
           );
