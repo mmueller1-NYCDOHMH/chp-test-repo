@@ -53,6 +53,41 @@ function labelChartSvg(container, label) {
   }
 }
 
+/**
+ * TOOLTIP DISMISSAL (2026-10-05):
+ * Vega treats touch as hover — a finger passing over a chart while
+ * scrolling the page fires its tooltip, and since a touchscreen never sends
+ * a "mouse left" event, the tooltip (position: fixed, appended to <body>)
+ * then stayed stuck on screen with no way to close it. Installed once for
+ * the whole page:
+ *   - While anything is scrolling, <html> gets .chp-scrolling, which hides
+ *     the tooltip (globals.css) so it can't flash up mid-swipe; when the
+ *     scroll settles the tooltip is closed for good.
+ *   - Tapping/clicking anywhere outside a chart closes it.
+ * A deliberate tap on a bar (no scrolling) still shows the tooltip.
+ */
+let tooltipDismissInstalled = false;
+function installTooltipDismiss() {
+  if (tooltipDismissInstalled || typeof window === 'undefined') return;
+  tooltipDismissInstalled = true;
+  const hide = () => document.getElementById('vg-tooltip-element')?.classList.remove('visible');
+  let timer = null;
+  const onScroll = () => {
+    document.documentElement.classList.add('chp-scrolling');
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      hide();
+      document.documentElement.classList.remove('chp-scrolling');
+    }, 200);
+  };
+  // capture: scroll doesn't bubble, and this also catches inner scrollers
+  // (expanded-chart modal, flyout).
+  document.addEventListener('scroll', onScroll, { passive: true, capture: true });
+  document.addEventListener('pointerdown', (e) => {
+    if (!e.target?.closest?.('.vega-embed')) hide();
+  }, { passive: true, capture: true });
+}
+
 const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onViewReady }) {
   const containerRef  = useRef(null);
   const wrapperRef    = useRef(null);
@@ -163,6 +198,8 @@ const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onView
     window.addEventListener('chp:map-hover', onMapHover);
     return () => window.removeEventListener('chp:map-hover', onMapHover);
   }, []); // viewRef.current is always current; no deps needed
+
+  useEffect(() => { if (tooltip) installTooltipDismiss(); }, [tooltip]);
 
   useEffect(() => {
     if (!containerRef.current || !spec || !nearView) return;
