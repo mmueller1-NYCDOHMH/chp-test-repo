@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { inertOthers } from '@/lib/utils/inertOthers';
 
 /**
@@ -87,6 +88,25 @@ export function useMobileSheet() {
     window.addEventListener('chp:open-mobile-sheet', onOpenMobileSheet);
     return () => window.removeEventListener('chp:open-mobile-sheet', onOpenMobileSheet);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Keep the history sentinel on top across route changes (2026-10-07) ────
+  // openSheet() pushes a sentinel entry so Back closes the sheet. Picking a
+  // neighborhood while the sheet is open router.push()es a NEW entry on top of
+  // that sentinel: [old, old(sentinel), new]. closeSheet() then called
+  // history.back(), which no longer popped the sentinel — it popped the new
+  // neighborhood and landed back on the old one (the "resets to the previous
+  // neighborhood when I close the picker" bug). Re-push the sentinel on top of
+  // the new route so closing / Back unwinds to the neighborhood just picked.
+  const pathname    = usePathname();
+  const prevPathRef = useRef(pathname);
+  useEffect(() => {
+    if (prevPathRef.current === pathname) return;
+    prevPathRef.current = pathname;
+    // Only while the sheet is open with a live sentinel. (A Back/Forward
+    // navigation clears hasPushedHistoryRef in onPopState before this runs.)
+    if (!hasPushedHistoryRef.current) return;
+    window.history.pushState({ chpMobileSheet: true }, '');
+  }, [pathname]);
 
   // Animates the sheet down and off-screen, then unmounts it. Doesn't touch
   // browser history — used for real back-navigation, where the history entry
@@ -249,6 +269,7 @@ export function useMobileSheet() {
 
   return {
     sheetRef,
+    isSheetOpen,
     isSheetMounted,
     isDragging,
     transitionMs,

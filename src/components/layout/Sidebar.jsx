@@ -47,7 +47,7 @@
  *   live in dedicated hooks under ./sidebar/ — this file owns layout, the
  *   tab strip contents, and the JSX tree.
  */
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { setPendingNeighborhood } from '@/lib/utils/pendingNeighborhood';
@@ -117,6 +117,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
   // ── Mobile bottom sheet ───────────────────────────────────────────────────
   const {
     sheetRef,
+    isSheetOpen,
     isSheetMounted,
     isDragging,
     transitionMs,
@@ -129,6 +130,35 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
     handleHandlePointerMove,
     handleHandlePointerEnd,
   } = useMobileSheet();
+
+  // ── Mobile sheet: "what next?" prompt after picking a neighborhood ────────
+  // (2026-10-07) The sheet stays open after a selection. Rather than guessing,
+  // offer the choice: close and read the profile, or stay in the sheet for the
+  // at-a-glance snapshot / indicator search. Keyed off the committed route id
+  // (not the optimistic pending id) so "View profile" always closes onto the
+  // page that has actually loaded.
+  const [pickedId, setPickedId] = useState(null);
+  const prevActiveIdRef   = useRef(activeId);
+  const viewProfileBtnRef = useRef(null);
+  const sheetSnapshotRef  = useRef(null);
+
+  useEffect(() => {
+    if (prevActiveIdRef.current === activeId) return;
+    prevActiveIdRef.current = activeId;
+    if (isSheetOpen && activeId) setPickedId(activeId);
+  }, [activeId, isSheetOpen]);
+
+  // Prompt never outlives the sheet.
+  useEffect(() => {
+    if (!isSheetOpen) setPickedId(null);
+  }, [isSheetOpen]);
+
+  // A11Y: move focus to the primary action when the prompt appears.
+  useEffect(() => {
+    if (pickedId) viewProfileBtnRef.current?.focus({ preventScroll: true });
+  }, [pickedId]);
+
+  const showPickedPrompt = !!pickedId && pickedId === activeId && !!neighborhood;
 
   // ── Shared tab strip JSX — rendered in both desktop and mobile sheet ───────
   // NOTE: This is a plain function (not a React component) so it shares
@@ -477,24 +507,56 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                     </p>
                     <UnifiedSearch neighborhoods={neighborhoods} />
 
-                    {/* Map-based picker — the only mobile entry point to this
-                        used to be a separate icon-only "browse map" button in
-                        StickyContextBar, which sat directly under TopicNav's
-                        own icon-only pin and opened a different UI (this was
-                        the mobile-ux-review.md spotlight finding). Now that
-                        TopicNav's pill always opens THIS sheet, the map view
-                        lives one tap deeper here instead of as a second
-                        top-level icon. */}
-                    <button
-                      type="button"
-                      onClick={() => { closeSheet(); window.dispatchEvent(new CustomEvent('chp:open-intro-modal')); }}
-                      className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs font-medium text-gray-600 hover:text-brand py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                      </svg>
-                      Prefer a map? Browse all neighborhoods
-                    </button>
+                    {/* Post-selection choice — close the picker or keep it
+                        open (see the pickedId note above). */}
+                    {showPickedPrompt && (
+                      <div
+                        role="status"
+                        className="mt-3 rounded-lg border border-brand bg-brand-tint p-3"
+                      >
+                        <p className="text-sm text-gray-900">
+                          Now showing <span className="font-semibold">{neighborhood.name}</span>
+                        </p>
+                        <button
+                          ref={viewProfileBtnRef}
+                          type="button"
+                          onClick={() => closeSheet()}
+                          className="mt-2 w-full min-h-[44px] rounded-md bg-brand px-3 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
+                        >
+                          Close and view profile
+                        </button>
+                        <p className="mt-3 text-xs text-gray-600">Or keep this open:</p>
+                        <div className="mt-1.5 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPickedId(null);
+                              requestAnimationFrame(() =>
+                                sheetSnapshotRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                              );
+                            }}
+                            className="flex-1 min-h-[44px] rounded-md border border-gray-300 bg-white px-2 text-sm font-medium text-gray-800 hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                          >
+                            At a glance
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPickedId(null);
+                              focusPanelOnNextChange.current = 'sheet';
+                              setActiveTab('search');
+                            }}
+                            className="flex-1 min-h-[44px] rounded-md border border-gray-300 bg-white px-2 text-sm font-medium text-gray-800 hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                          >
+                            Search by indicator
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* "Prefer a map? Browse all neighborhoods" link removed
+                        (2026-10-07) — map-based neighborhood search isn't
+                        offered on mobile, so the sheet shouldn't point to it. */}
                   </div>
 
                   {/* Compare to — mirrors the desktop aside's section above.
@@ -511,7 +573,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                     </div>
                   )}
 
-                  <div className="px-6 pt-2 pb-4">
+                  <div ref={sheetSnapshotRef} className="px-6 pt-2 pb-4">
                     <MapHoverTooltip
                       indicatorSummaries={indicatorSummaries}
                       selectedNeighborhood={neighborhood

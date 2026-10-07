@@ -64,7 +64,16 @@ function labelChartSvg(container, label) {
  *     the tooltip (globals.css) so it can't flash up mid-swipe; when the
  *     scroll settles the tooltip is closed for good.
  *   - Tapping/clicking anywhere outside a chart closes it.
- * A deliberate tap on a bar (no scrolling) still shows the tooltip.
+ * A deliberate tap on a bar (no scrolling) shows the tooltip — see below.
+ *
+ * TAP TO SHOW (2026-10-07):
+ * The installed Vega (5.33 / vega-scenegraph 4.13) only shows a tooltip on
+ * `pointermove`. A clean tap on a touchscreen sends pointerdown/pointerup
+ * with no pointermove in between, so tapping a bar showed nothing. On a
+ * touch/pen tap inside a chart we replay the tap as a `pointermove` on the
+ * tapped mark, which runs Vega's own tooltip path (same content, same
+ * positioning). `click` is the last event of a tap, so nothing hides the
+ * tooltip afterwards; it stays until a scroll or a tap elsewhere.
  */
 let tooltipDismissInstalled = false;
 function installTooltipDismiss() {
@@ -86,6 +95,19 @@ function installTooltipDismiss() {
   document.addEventListener('pointerdown', (e) => {
     if (!e.target?.closest?.('.vega-embed')) hide();
   }, { passive: true, capture: true });
+  document.addEventListener('click', (e) => {
+    if (e.pointerType === 'mouse') return; // mouse users already get hover
+    const target = e.target;
+    if (!target?.closest?.('.vega-embed')) return;
+    // Vega's SVG renderer stores each mark's scenegraph item on __data__.
+    if (target.__data__?.tooltip == null) { hide(); return; }
+    const init = { bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY };
+    target.dispatchEvent(
+      typeof PointerEvent === 'function'
+        ? new PointerEvent('pointermove', { ...init, pointerType: e.pointerType || 'touch' })
+        : new MouseEvent('pointermove', init)
+    );
+  }, { passive: true });
 }
 
 const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onViewReady }) {
