@@ -24,8 +24,18 @@ import { createPortal } from 'react-dom';
 import { useComparison } from '@/lib/context/ComparisonContext';
 import DistributionStrip from '@/components/data-display/DistributionStrip';
 import { buildInsight, getFlaggedEstimateFootnote } from '@/lib/utils/compareIndicator';
-import { SELECTED } from '@/lib/charts/chartColors';
+import { SELECTED, CITYWIDE } from '@/lib/charts/chartColors';
 import { INSIGHT_ARROWS, getInsightBadgeClass } from './insightHelpers';
+import phrases from '../../../../content/site/phrases.json';
+
+// "…the citywide {noun} of X" — noun follows the copy deck's Type column
+// (Percent → percentage, Number → number, Rate → rate, …) instead of a
+// hardcoded "rate", which was wrong for e.g. Total population (2026-10-07).
+// Words live in content/site/phrases.json → citywideNoun.
+function citywideNoun(measureType) {
+  const nouns = phrases.citywideNoun ?? {};
+  return nouns[String(measureType ?? '').trim().toLowerCase()] ?? nouns.default ?? 'value';
+}
 
 export default function StatTileDetailModal({ tile, geoId, onClose }) {
   const [visible, setVisible] = useState(false);
@@ -147,6 +157,22 @@ export default function StatTileDetailModal({ tile, geoId, onClose }) {
           {insight && (() => {
             const arrow = INSIGHT_ARROWS[insight.direction];
             const badge = getInsightBadgeClass(insight.direction, tile.higherIsBetter);
+            // Count indicators (copy deck Type = "Number", e.g. Total
+            // population): no higher/lower badge — every neighborhood is
+            // lower than the whole city, so the comparison says nothing.
+            // Two plain sentences instead, citywide figure in bold
+            // (2026-10-07, per Morgan).
+            const isCount = String(tile.measureType ?? '').trim().toLowerCase() === 'number';
+            if (isCount) {
+              return (
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  In {insight.name}, {title.toLowerCase()} is{' '}
+                  <span className="font-semibold" style={{ color: SELECTED }}>{insight.cdDisplay}</span>.
+                  {' '}The citywide {citywideNoun(tile.measureType)} is{' '}
+                  <span className="font-semibold" style={{ color: CITYWIDE }}>{insight.cityDisplay}</span>.
+                </p>
+              );
+            }
             return (
               <p className="text-sm text-gray-700 leading-relaxed">
                 In {insight.name}, {title.toLowerCase()} is{' '}
@@ -158,7 +184,8 @@ export default function StatTileDetailModal({ tile, geoId, onClose }) {
                 >
                   <span aria-hidden="true">{arrow}</span> {insight.label}
                 </span>
-                {' '}the citywide rate of {insight.cityDisplay}.
+                {' '}the citywide {citywideNoun(tile.measureType)} of{' '}
+                <span className="font-semibold" style={{ color: CITYWIDE }}>{insight.cityDisplay}</span>.
               </p>
             );
           })()}

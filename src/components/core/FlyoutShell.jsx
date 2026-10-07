@@ -325,7 +325,8 @@ export default function FlyoutShell({ children }) {
             {/* Export — toggles the tray below the header, which holds the same
                 Copy / PNG / CSV / Embed actions as the expanded chart modal.
                 See ./flyoutShell/FlyoutExportTray.jsx (2026-09-29). */}
-            {isIndicator && flyoutHasExports(flyout) && (
+            {/* Desktop only (2026-10-07) — not needed on mobile, per Morgan. */}
+        {!isMobile && isIndicator && flyoutHasExports(flyout) && (
               <button
                 type="button"
                 onClick={() => setTrayOpen(o => !o)}
@@ -362,7 +363,8 @@ export default function FlyoutShell({ children }) {
         </div>
 
         {/* ── Export tray (indicator flyouts) ──────────────────── */}
-        {isIndicator && flyoutHasExports(flyout) && (
+        {/* Desktop only (2026-10-07) — not needed on mobile, per Morgan. */}
+        {!isMobile && isIndicator && flyoutHasExports(flyout) && (
           <FlyoutExportTray
             id="flyout-export-tray"
             open={trayOpen}

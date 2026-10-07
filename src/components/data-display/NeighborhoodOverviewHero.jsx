@@ -108,6 +108,7 @@ export default function NeighborhoodOverviewHero({
       description:    cfg.description ?? null,
       dataSource:     cfg.dataSource  ?? null,
       isPercent:      cfg.isPercent   ?? false,
+      measureType:    cfg.measureType ?? null,
       // buildStatTile() (above) doesn't carry higherIsBetter through to its
       // returned tile object — it only uses cfg.higherIsBetter internally to
       // compute the delta pill's direction. The expand modal's insight badge

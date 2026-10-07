@@ -137,6 +137,10 @@ export function loadOverviewHeroConfig() {
         // which is editorial copy ("of residents"), not a raw "%" symbol.
         dataSource:     meta.dataSource      ?? null,
         isPercent:      meta.unit === '%',
+        // Copy deck's Type column ("Percent", "Rate", "Number", …) — picks the
+        // noun in the expand modal's "…the citywide {noun} of X" sentence
+        // (content/site/phrases.json → citywideNoun).
+        measureType:    meta.type            ?? null,
       };
     })
     .filter(Boolean);

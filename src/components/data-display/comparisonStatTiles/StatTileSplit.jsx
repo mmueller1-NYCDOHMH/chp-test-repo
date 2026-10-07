@@ -29,20 +29,26 @@ export default function StatTileSplit({ label, unit, displayValue, delta, compVa
         {`${neighborhoodLabel ?? 'Selected neighborhood'} ${displayValue ?? 'no data'}, ${compLabel ?? 'comparison'} ${compValue ?? 'no data'}. `}
       </span>
 
-      {/* Values row */}
-      <div className="flex items-baseline" aria-hidden="true">
+      {/* Values row — selected value flush left, comparison flush right.
+          w-full + justify-between are both required (2026-10-06): this row
+          sits inside a <button>, and iOS Safari doesn't stretch a button's
+          children to its full width the way Chrome does (including Chrome's
+          phone emulator). Without an explicit width the row shrank to fit
+          its text, so the two numbers sat squished together on real
+          iPhones while looking fine in the desktop simulator. */}
+      <div className="flex w-full items-baseline justify-between gap-3" aria-hidden="true">
         <div className="text-2xl font-semibold leading-none" style={{ color: SELECTED }}>
           <AnimatedValue key={displayValue} value={displayValue ?? '—'} delay={0} />
         </div>
-        <div className="ml-auto text-2xl font-semibold leading-none" style={{ color: COMPARISON }}>
+        <div className="ml-auto text-right text-2xl font-semibold leading-none" style={{ color: COMPARISON }}>
           <AnimatedValue key={compValue} value={compValue ?? '—'} delay={0} />
         </div>
       </div>
 
       {/* Shared label + unit */}
       {/* 2026-09-29: unit above label; delta pill removed (per Morgan). */}
-      {unit && <div className="text-xs text-gray-600 leading-snug">{unit}</div>}
-      <div className="text-xs font-semibold text-gray-700 leading-snug">{label}</div>
+      {unit && <div className="w-full text-xs text-gray-600 leading-snug">{unit}</div>}
+      <div className="w-full text-xs font-semibold text-gray-700 leading-snug">{label}</div>
 
       {/* ── Distribution strip (2026-10-05, per Morgan) ──────────────────
           Compare mode used to drop the dot strip entirely and show only a
