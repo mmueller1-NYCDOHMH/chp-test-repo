@@ -7,6 +7,16 @@
     "similar": "similar to"
   },
 
+  "_citywideNoun_note": "Noun used in 'higher than the citywide ___ of X' (At a Glance tile pop-ups). Keyed by the copy deck's Type column, lower-cased; 'default' covers a blank or unlisted Type.",
+  "citywideNoun": {
+    "percent":        "percentage",
+    "rate":           "rate",
+    "number":         "population",
+    "annual average": "annual average",
+    "score":          "score",
+    "default":        "value"
+  },
+
   "flaggedFootnote": {
     "survey":                 "*Interpret estimate with caution due to small sample size.",
     "administrativePercent":  "*Interpret proportion with caution due to small number of events.",
