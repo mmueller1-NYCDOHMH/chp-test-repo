@@ -233,7 +233,11 @@ export default function FlyoutShell({ children }) {
           never widen the page. pointer-events-none lets clicks through to
           the page/backdrop; the panel itself re-enables them. The panel is
           `absolute` (not `fixed`) so this box is its containing block. */}
-      <div className="fixed inset-0 z-50 overflow-hidden pointer-events-none">
+      {/* overflow:clip (2026-10-08) — unlike overflow:hidden, a clip box can't
+          be scrolled at all, so focus()/scrollIntoView on anything in the
+          parked panel can't yank it on-screen mid-animation (the "bounce").
+          overflow-hidden stays as the fallback for browsers without clip. */}
+      <div className="fixed inset-0 z-50 overflow-hidden pointer-events-none" style={{ overflow: 'clip' }}>
       {/* Panel — slides from right on desktop, up from bottom on mobile */}
       <aside
         ref={panelRef}

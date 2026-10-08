@@ -264,15 +264,24 @@ export default function StickyContextBar({ sections = [] }) {
               users (WCAG 4.1.3 says status messages shouldn't over-announce).
               Section changes the user actually requests are covered by
               scrollToSection moving focus to the section heading. */}
+          {/* TRANSLATION (a11y audit 2026-10-08, WCAG 3.1.2): Google Translate only
+              translates text once, when it first appears in the DOM. The breadcrumb
+              spans used to stay mounted while React swapped their text on scroll,
+              so in Spanish mode every label after the first stayed in English.
+              Keying the row on its labels mounts a fresh element per section, which
+              Translate picks up and translates like any newly added content. */}
           <div className="min-w-0">
             {breadcrumb ? (
-              <div className="flex items-center gap-1.5 min-w-0">
+              <div
+                key={`${breadcrumb.catLabel}|${breadcrumb.subLabel}`}
+                className="flex items-center gap-1.5 min-w-0"
+              >
                 <span className="text-xs text-gray-600 truncate">{breadcrumb.catLabel}</span>
                 <span className="text-xs text-gray-600 shrink-0">›</span>
                 <span className="text-xs text-brand font-medium truncate">{breadcrumb.subLabel}</span>
               </div>
             ) : (
-              <span className="text-xs text-gray-600 truncate">At a Glance</span>
+              <span key="at-a-glance" className="text-xs text-gray-600 truncate">At a Glance</span>
             )}
           </div>
 

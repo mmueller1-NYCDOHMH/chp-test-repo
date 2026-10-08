@@ -14,7 +14,7 @@
  * entry point they used.
  *
  * ROUTING:
- * /  →  /neighborhood/long-island-city-and-astoria
+ * /  →  /neighborhood/woodside-and-sunnyside  (Queens CD2)
  *
  * NOTES:
  * - Server component (no "use client")

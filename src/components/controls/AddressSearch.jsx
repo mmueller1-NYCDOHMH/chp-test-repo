@@ -29,7 +29,7 @@
  * neighborhood tabs, which stay visibly focused most of the time users
  * see them. The "sidebar" variant keeps ring-blue-400, untouched.
  */
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useId } from 'react';
 import { useRouter } from 'next/navigation';
 import { searchAddresses } from '@/lib/geoclient/geocode';
 import { highlight } from '@/lib/utils/highlight';
@@ -54,6 +54,7 @@ export default function AddressSearch({
   const itemRefs     = useRef([]);
   const debounceRef  = useRef(null);
   const router       = useRouter();
+  const inputId      = useId();
 
   // Animate dropdown in/out
   useEffect(() => {
@@ -148,7 +149,10 @@ export default function AddressSearch({
   return (
     <div ref={containerRef} className="relative">
 
-      {/* Input */}
+      {/* Input — a real <label> tied by id (a11y audit 2026-10-08, WCAG 3.3.2),
+          visually hidden since the surrounding tab ("By address") gives the
+          visible context. */}
+      <label htmlFor={inputId} className="sr-only">Search by address</label>
       <div className="relative">
         {/* Pin icon */}
         {loading ? (
@@ -180,7 +184,7 @@ export default function AddressSearch({
           onFocus={() => { if (results.length > 0) setIsOpen(true); }}
           onKeyDown={handleKeyDown}
           placeholder="Enter an NYC address…"
-          aria-label="Search by address"
+          id={inputId}
           aria-expanded={isOpen}
           aria-autocomplete="list"
           role="combobox"

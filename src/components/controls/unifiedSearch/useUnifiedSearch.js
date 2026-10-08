@@ -4,6 +4,7 @@ import { setPendingNeighborhood, useActiveNeighborhoodId } from '@/lib/utils/pen
 import { useComparison } from '@/lib/context/ComparisonContext';
 import { searchAddresses } from '@/lib/geoclient/geocode';
 import { BOROUGH_ORDER } from '@/lib/utils/constants';
+import { byCdNumber, matchesNeighborhoodQuery } from '@/lib/utils/formatGeography';
 
 /**
  * FILE: useUnifiedSearch.js
@@ -80,10 +81,7 @@ export function useUnifiedSearch({ neighborhoods = [], onSelect, onHover }) {
     const q = query.trim().toLowerCase();
 
     const filtered = q
-      ? neighborhoods.filter(n =>
-          n.name.toLowerCase().includes(q) ||
-          n.borough.toLowerCase().includes(q)
-        )
+      ? neighborhoods.filter(n => matchesNeighborhoodQuery(n, q))
       : neighborhoods;
 
     const map = {};
@@ -93,6 +91,9 @@ export function useUnifiedSearch({ neighborhoods = [], onSelect, onHover }) {
       if (!map[key]) map[key] = [];
       map[key].push(n);
     });
+
+    // Within each borough, order by community district number (not name)
+    Object.values(map).forEach(ns => ns.sort(byCdNumber));
 
     const groups   = Object.entries(map).filter(([, ns]) => ns.length > 0);
     const flatList = groups.flatMap(([, ns]) => ns);

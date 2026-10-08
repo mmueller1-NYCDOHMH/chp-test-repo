@@ -39,7 +39,7 @@
  * color is what actually reads as "the input's border."
  */
 
-import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect, useId } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { searchIndex }            from '@/config/searchIndex';
 import { scrollToSection }        from '@/lib/utils/scrollToSection';
@@ -53,6 +53,7 @@ import { getSearchSuggestions, matchesQuery } from '@/lib/utils/searchSuggestion
 const MOBILE_MAX_WIDTH = 767;
 
 export default function IndicatorSearch({ onNavigate, categoryFilter = null, onClearFilter, activeNeighborhood = null, autoFocus = true }) {
+  const inputId = useId();
   const [query, setQuery]           = useState('');
   const [focusedIndex, setFocused]  = useState(-1);
   const inputRef                    = useRef(null);
@@ -217,6 +218,10 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
     <div className="flex flex-col gap-3 px-6 pt-4 pb-3">
 
       {/* ── Search input ────────────────────────────────────────── */}
+      {/* A11Y (audit 2026-10-08, WCAG 3.3.2): a real <label> tied by id, not just
+          aria-label. Visually hidden — the panel's tab ("Find indicator") is the
+          visible context. */}
+      <label htmlFor={inputId} className="sr-only">Search indicators</label>
       <div className="relative">
         <svg
           className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none"
@@ -233,7 +238,7 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
           onKeyDown={handleKeyDown}
           placeholder="Search indicators…"
           autoFocus={autoFocus}
-          aria-label="Search indicators"
+          id={inputId}
           aria-controls="indicator-search-results"
           aria-activedescendant={focusedIndex >= 0 ? `search-result-${focusedIndex}` : undefined}
           className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
@@ -348,7 +353,7 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
             let globalIdx = 0;
             return Object.entries(grouped).map(([subcat, inds]) => (
               <div key={subcat} role="group" aria-label={subcat}>
-                <p className="text-sm font-semibold text-gray-600 mb-1.5 px-1" aria-hidden="true">
+                <p className="sticky top-0 z-10 text-sm py-1.5 px-3 mb-1.5 font-bold text-gray-900 bg-gray-100 border-y border-gray-200 select-none" aria-hidden="true">
                   {subcat}
                 </p>
                 <div className="flex flex-col gap-0.5">

@@ -39,13 +39,22 @@
  * both are only meaningful in the context of browsing a profile page, so
  * scoping them there is fine.
  *
+ * HOME LINKS (2026-10-07):
+ * The logo and the site title both link "home". Home is the last-viewed
+ * neighborhood profile when there is one (lib/utils/lastNeighborhood.js),
+ * otherwise `/`, which redirects to the default neighborhood. Linking
+ * straight to `/` would bounce someone reading Mott Haven over to the
+ * default district.
+ *
  * NOTES:
  * - Client component — date must be read at runtime, not render time
  * - Receives no props; self-contained
  */
 
 import Image from 'next/image';
+import Link from 'next/link';
 import LanguageToggle from './LanguageToggle';
+import { useLastNeighborhood } from '@/lib/utils/lastNeighborhood';
 import headerContent from '../../../content/site/header.json';
 
 /**
@@ -100,6 +109,9 @@ const DEFAULT_SUBTITLE = headerContent.defaultSubtitle;
 
 export default function PageHeader() {
   const subtitle = getSpecialSubtitle() ?? DEFAULT_SUBTITLE;
+  const last     = useLastNeighborhood();
+  const homeHref = last ? `/neighborhood/${last.id}` : '/';
+  const homeName = `${headerContent.siteName} home`;
 
   return (
     <header
@@ -110,15 +122,21 @@ export default function PageHeader() {
           slim (small pb, subtle hairline) so it reads as a lightweight
           utility strip rather than competing with the title row below. */}
       <div className="flex items-center justify-between gap-4 pb-1.5 border-b border-blue-100/20">
-        <Image
-          src="https://www.nyc.gov/assets/doh/respiratory-illness-data/assets/NYC_Health_color_main.png"
-          alt="NYC Health"
-          width={217}
-          height={100}
-          className="opacity-90 h-7 sm:h-8 w-auto shrink-0"
-          style={{ filter: 'brightness(0) invert(1)' }}
-          priority
-        />
+        <Link
+          href={homeHref}
+          aria-label={`NYC Health: ${homeName}`}
+          className="inline-flex shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        >
+          <Image
+            src="https://www.nyc.gov/assets/doh/respiratory-illness-data/assets/NYC_Health_color_main.png"
+            alt="NYC Health"
+            width={217}
+            height={100}
+            className="opacity-90 h-7 sm:h-8 w-auto shrink-0"
+            style={{ filter: 'brightness(0) invert(1)' }}
+            priority
+          />
+        </Link>
 
         {/* Small, right-aligned — see UTILITY CONTROLS note above */}
         <LanguageToggle variant="onBrand" />
@@ -131,7 +149,13 @@ export default function PageHeader() {
           onto multiple lines if it's too long. */}
       <div className="pt-2 min-w-0 flex flex-nowrap items-baseline justify-between gap-4">
         <h1 className="text-xl sm:text-2xl font-bold leading-tight shrink-0">
-          {headerContent.siteName}
+          <Link
+            href={homeHref}
+            aria-label={homeName}
+            className="rounded-sm hover:underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            {headerContent.siteName}
+          </Link>
         </h1>
         <p className="text-sm text-blue-100 max-w-xs sm:max-w-xl text-right hidden sm:block whitespace-pre-line">
           {subtitle}

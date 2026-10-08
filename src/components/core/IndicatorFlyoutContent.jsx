@@ -48,6 +48,7 @@ import { useComparison } from '@/lib/context/ComparisonContext';
 import VegaLiteChart from '@/components/charts/VegaLiteChart';
 import RankDotStrip from '@/components/data-display/RankDotStrip';
 import { CHOROPLETH_STOPS, SELECTED, CITYWIDE } from '@/lib/charts/chartColors';
+import IconHint from '@/components/charts/expandableChartCard/IconHint';
 
 const ChoroplethMap = dynamic(
   () => import('@/components/maps/ChoroplethMap'),
@@ -369,13 +370,15 @@ export default function IndicatorFlyoutContent({
                 <span className="font-medium text-gray-600">Source:</span> {sourceClean}
               </p>
               {hasNotes && (
-                <button
-                  onClick={() => setNotesOpen(true)}
-                  aria-label="View source notes"
-                  className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shrink-0 text-xs font-semibold"
-                >
-                  ?
-                </button>
+                <IconHint label="View source notes">
+                  <button
+                    onClick={() => setNotesOpen(true)}
+                    aria-label="View source notes"
+                    className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shrink-0 text-xs font-semibold"
+                  >
+                    ?
+                  </button>
+                </IconHint>
               )}
             </div>
           )}

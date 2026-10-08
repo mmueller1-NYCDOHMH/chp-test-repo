@@ -87,7 +87,9 @@ export default function ComparisonPyramidChart({
   if (!segments.length) {
     return (
       <div id={anchorId} className="flex flex-col gap-3 min-w-0">
-        {title && <div className="text-xs font-semibold text-gray-700 leading-snug">{title}</div>}
+        {title && (onDetails
+          ? <h4 className="text-xs font-semibold text-gray-700 leading-snug">{title}</h4>
+          : <h3 className="text-xs font-semibold text-gray-700 leading-snug">{title}</h3>)}
         <div className="flex items-center justify-center h-24 rounded-lg bg-gray-50 border border-dashed border-gray-200">
           <p className="text-xs text-gray-600">{messages.chartNoData}</p>
         </div>
@@ -127,7 +129,9 @@ export default function ComparisonPyramidChart({
           <CardReadMore text={narrative} onMore={onDetails} padded={false} />
         </>
       ) : (
-        <div className="text-xs font-semibold text-gray-700 leading-snug">{title}</div>
+        // At a Glance hero: h3 under the "… at a Glance" h2 (a11y audit 2026-10-08 —
+        // was a plain div, so these titles were missing from the heading outline).
+        <h3 className="text-xs font-semibold text-gray-700 leading-snug">{title}</h3>
       )}
 
       {/* ── Legend ───────────────────────────────────────────── */}

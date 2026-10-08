@@ -54,6 +54,7 @@ import CardReadMore from '@/components/charts/expandableChartCard/CardReadMore';
 import DetailsButton from '@/components/charts/expandableChartCard/DetailsButton';
 import { useCardDetailsShortcut } from '@/components/charts/expandableChartCard/useCardDetailsShortcut';
 import { useFlyout } from '@/components/core/FlyoutShell';
+import IconHint from '@/components/charts/expandableChartCard/IconHint';
 
 const DOT_OTHER = '#9CA3AF'; // gray-400 — mockup's mid-gray; BAR_DEFAULT is too faint on the shaded plot
 const REFERENCE_LINE = '#9CA3AF';
@@ -203,28 +204,32 @@ export default function AvertableDeathsChart({
 
           <div className="flex items-center gap-1.5 shrink-0">
             {hasNotes && (
-              <button
-                type="button"
-                onClick={() => setNotesOpen(true)}
-                aria-label={`Source notes for ${title}`} /* A11Y: names the indicator (was identical on every card) */
-                className="flex w-9 h-9 items-center justify-center rounded-md border border-brand text-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-xs font-semibold"
-              >
-                ?
-              </button>
+              <IconHint label="About this data" className="inline-flex">
+                <button
+                  type="button"
+                  onClick={() => setNotesOpen(true)}
+                  aria-label={`About this data: ${title}`} /* A11Y: names the indicator (was identical on every card); starts with the tooltip text (WCAG 2.5.3) */
+                  className="flex w-9 h-9 items-center justify-center rounded-md border border-brand text-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-xs font-semibold"
+                >
+                  ?
+                </button>
+              </IconHint>
             )}
             {rows.length > 0 && (
-              <button
-                ref={expandBtnRef}
-                type="button"
-                onClick={() => setExpandedOpen(true)}
-                aria-label={`Expand chart: ${title}`}
-                aria-haspopup="dialog"
-                className="hidden sm:flex w-9 h-9 items-center justify-center rounded-md border border-brand text-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
-              </button>
+              <IconHint label="Expand chart" className="hidden sm:inline-flex">
+                <button
+                  ref={expandBtnRef}
+                  type="button"
+                  onClick={() => setExpandedOpen(true)}
+                  aria-label={`Expand chart: ${title}`}
+                  aria-haspopup="dialog"
+                  className="hidden sm:flex w-9 h-9 items-center justify-center rounded-md border border-brand text-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                </button>
+              </IconHint>
             )}
           </div>
         </div>
