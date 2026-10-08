@@ -48,7 +48,7 @@ import NeighborhoodGroups from '@/components/controls/NeighborhoodGroups';
 const NO_RESULTS_COPY = (q) =>
   `No neighborhood or address matches “${q.trim()}”. Try a borough, a community district number, or a street address.`;
 
-export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover }) {
+export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover, inputId }) {
   const {
     listboxId,
     optPrefix,
@@ -118,7 +118,11 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
           onFocus={() => setIsEditing(true)}
           onKeyDown={handleKeyDown}
           placeholder="Neighborhood or address"
-          aria-label="Search neighborhoods or address"
+          /* A11Y (audit 2026-10-08, WCAG 3.3.2): when `inputId` is passed, the parent renders a visible
+             <label htmlFor={inputId}> (Sidebar's "Find neighborhood"), which becomes the accessible name — so
+             aria-label is dropped to keep the name matching the visible label (WCAG 2.5.3). */
+          id={inputId}
+          aria-label={inputId ? undefined : 'Search neighborhoods or address'}
           aria-keyshortcuts="/"
           aria-expanded={isOpen}
           aria-autocomplete="list"

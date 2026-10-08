@@ -322,7 +322,20 @@ const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onView
           transition: 'opacity 450ms ease-out, transform 450ms ease-out',
         }}
       >
-        <div ref={containerRef} className="w-full min-w-0 overflow-hidden" />
+        {/* LANGUAGE (a11y audit 2026-10-08, WCAG 3.1.2): Google Translate can't
+            reliably translate the text Vega draws inside its <svg> (Vega redraws
+            those labels itself), and the wrapper's aria-label is an attribute,
+            which Translate never touches. So chart labels ("Citywide · 58%",
+            district names) and the chart's accessible name stay English on a
+            translated page. Marking the chart lang="en" lets screen readers
+            switch to an English voice for it; translate="no" + notranslate keep
+            Translate from half-translating some labels and not others. */}
+        <div
+          ref={containerRef}
+          lang="en"
+          translate="no"
+          className="notranslate w-full min-w-0 overflow-hidden"
+        />
       </div>
     </div>
   );

@@ -42,6 +42,7 @@ import { useState, useRef, useEffect, useMemo, useCallback, useId } from 'react'
 import { useParams } from 'next/navigation';
 import { useComparison } from '@/lib/context/ComparisonContext';
 import { BOROUGH_ORDER } from '@/lib/utils/constants';
+import { byCdNumber, matchesNeighborhoodQuery } from '@/lib/utils/formatGeography';
 import NeighborhoodGroups from '@/components/controls/NeighborhoodGroups';
 
 // ── Pill — shown when a comparison neighborhood is selected ───────────────────
@@ -93,7 +94,7 @@ function ComparisonPill({ neighborhood, onClear, onEdit }) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
+export default function ComparisonNeighborhoodSelector({ neighborhoods = [], inputId }) {
   const uid       = useId();
   const listboxId = `${uid}-listbox`;
   const optPrefix = `${uid}-opt`;
@@ -117,10 +118,7 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
     const candidates = neighborhoods.filter(n => String(n.id) !== primaryId);
 
     const filtered = q
-      ? candidates.filter(n =>
-          n.name.toLowerCase().includes(q) ||
-          n.borough.toLowerCase().includes(q)
-        )
+      ? candidates.filter(n => matchesNeighborhoodQuery(n, q))
       : candidates;
 
     const map = {};
@@ -131,7 +129,10 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
       map[key].push(n);
     });
 
-    const groups  = Object.entries(map).filter(([, ns]) => ns.length > 0);
+    // Within each borough, order by community district number (not name)
+    Object.values(map).forEach(ns => ns.sort(byCdNumber));
+
+    const groups   = Object.entries(map).filter(([, ns]) => ns.length > 0);
     const flatList = groups.flatMap(([, ns]) => ns);
     return { grouped: groups, flat: flatList };
   }, [query, neighborhoods, primaryId]);
@@ -242,7 +243,11 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
           onFocus={() => setIsEditing(true)}
           onKeyDown={handleKeyDown}
           placeholder="Neighborhood name"
-          aria-label="Search comparison neighborhoods"
+          /* A11Y (audit 2026-10-08, WCAG 3.3.2): with `inputId`, Sidebar's visible
+             <label htmlFor> ("Compare to") names the field, so aria-label is
+             dropped to keep the name matching the visible label (WCAG 2.5.3). */
+          id={inputId}
+          aria-label={inputId ? undefined : 'Search comparison neighborhoods'}
           aria-expanded={isOpen}
           aria-autocomplete="list"
           aria-controls={listboxId}

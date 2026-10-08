@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { BOROUGH_ORDER } from '@/lib/utils/constants';
+import { byCdNumber, matchesNeighborhoodQuery } from '@/lib/utils/formatGeography';
 
 /**
  * FILE: useNeighborhoodFilter.js
@@ -30,10 +31,7 @@ export function useNeighborhoodFilter({ neighborhoods, visitedIds, onSelect, onD
   // ── Filter + group neighborhoods ──────────────────────────────────────────
   const filtered = useMemo(() => {
     let base = query
-      ? neighborhoods.filter(n =>
-          n.name.toLowerCase().includes(query.toLowerCase()) ||
-          n.borough.toLowerCase().includes(query.toLowerCase())
-        )
+      ? neighborhoods.filter(n => matchesNeighborhoodQuery(n, query))
       : neighborhoods;
     // When opened from the explorer badge, only show unvisited CDs
     if (visitedIds) base = base.filter(n => !visitedIds.has(n.id));
@@ -42,7 +40,8 @@ export function useNeighborhoodFilter({ neighborhoods, visitedIds, onSelect, onD
 
   const grouped = useMemo(() =>
     BOROUGH_ORDER.reduce((acc, borough) => {
-      const matches = filtered.filter(n => n.borough === borough);
+      // Within each borough, order by community district number (not name)
+      const matches = filtered.filter(n => n.borough === borough).sort(byCdNumber);
       if (matches.length > 0) acc[borough] = matches;
       return acc;
     }, {}),

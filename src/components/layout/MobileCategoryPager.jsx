@@ -34,12 +34,11 @@ export default function MobileCategoryPager({ children }) {
     nodes.forEach((el) => {
       const cat = el.getAttribute('data-chp-category');
       const shouldShow = !isMobile || cat === 'always' || cat === pagedCategoryId;
+      // `hidden` alone removes the element from the accessibility tree, so
+      // aria-hidden is deliberately NOT touched here (2026-10-07). Toggling it
+      // stripped the static aria-hidden="true" off CHPBuilder's category
+      // spacers before React hydrated them, causing a hydration mismatch.
       el.hidden = !shouldShow;
-      if (shouldShow) {
-        el.removeAttribute('aria-hidden');
-      } else {
-        el.setAttribute('aria-hidden', 'true');
-      }
     });
   }, [isMobile, pagedCategoryId, children]);
 

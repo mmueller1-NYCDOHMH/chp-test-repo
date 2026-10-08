@@ -323,10 +323,10 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
             >
               {/* Search — scrolls away as user scrolls down */}
               <div className="px-6 pt-4 pb-3 shrink-0">
-                <p className="text-sm font-semibold text-gray-600 mb-2">
+                <label htmlFor="sidebar-find-neighborhood" className="block text-sm font-semibold text-gray-600 mb-2">
                   Find neighborhood
-                </p>
-                <UnifiedSearch neighborhoods={neighborhoods} />
+                </label>
+                <UnifiedSearch neighborhoods={neighborhoods} inputId="sidebar-find-neighborhood" />
               </div>
 
               {/* Compare to — also rendered in the mobile bottom sheet below;
@@ -335,10 +335,10 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                   "Comparing: X" pill all have working mobile layouts). */}
               {neighborhood && (
                 <div className="px-6 pb-3 shrink-0">
-                  <p className="text-sm font-semibold text-gray-600 mb-2">
+                  <label htmlFor="sidebar-compare-to" className="block text-sm font-semibold text-gray-600 mb-2">
                     Compare to
-                  </p>
-                  <ComparisonNeighborhoodSelector neighborhoods={neighborhoods} />
+                  </label>
+                  <ComparisonNeighborhoodSelector neighborhoods={neighborhoods} inputId="sidebar-compare-to" />
                 </div>
               )}
 
@@ -502,10 +502,10 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                   className="flex flex-col flex-1 min-h-0 focus:outline-none"
                 >
                   <div className="px-6 pt-4 pb-3 shrink-0">
-                    <p className="text-sm font-semibold text-gray-600 mb-2">
+                    <label htmlFor="sheet-find-neighborhood" className="block text-sm font-semibold text-gray-600 mb-2">
                       Find neighborhood
-                    </p>
-                    <UnifiedSearch neighborhoods={neighborhoods} />
+                    </label>
+                    <UnifiedSearch neighborhoods={neighborhoods} inputId="sheet-find-neighborhood" />
 
                     {/* Post-selection choice — close the picker or keep it
                         open (see the pickedId note above). */}
@@ -566,10 +566,10 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                       mobile — not just a secondary option like on desktop. */}
                   {neighborhood && (
                     <div className="px-6 pb-3 shrink-0">
-                      <p className="text-sm font-semibold text-gray-600 mb-2">
+                      <label htmlFor="sheet-compare-to" className="block text-sm font-semibold text-gray-600 mb-2">
                         Compare to
-                      </p>
-                      <ComparisonNeighborhoodSelector neighborhoods={neighborhoods} />
+                      </label>
+                      <ComparisonNeighborhoodSelector neighborhoods={neighborhoods} inputId="sheet-compare-to" />
                     </div>
                   )}
 

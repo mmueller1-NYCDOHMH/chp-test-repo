@@ -67,7 +67,7 @@ export default function CardReadMore({ text, onMore, padded = true }) {
                 type="button"
                 onClick={onMore}
                 tabIndex={-1}
-                className="ml-1 rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-medium leading-none text-gray-600 shadow-sm transition-colors hover:bg-gray-300 hover:text-gray-800 focus-visible:outline-none"
+                className="ml-1 rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-medium leading-none text-gray-700 shadow-sm transition-colors hover:bg-gray-300 hover:text-gray-800 focus-visible:outline-none"
               >
                 read more
               </button>

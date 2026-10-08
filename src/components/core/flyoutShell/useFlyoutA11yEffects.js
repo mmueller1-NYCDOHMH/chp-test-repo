@@ -18,11 +18,15 @@ export function useFlyoutA11yEffects({ isOpen, isMobile, close, panelRef }) {
   useEffect(() => {
     if (!isOpen) return;
 
-    // Move focus into the panel on open
+    // Move focus into the panel on open.
+    // preventScroll (2026-10-08): the panel is still parked off-screen when
+    // this runs. A plain focus() makes the browser scroll the clip box in
+    // FlyoutShell to reveal the button, snapping the panel into view before
+    // the slide-in transition plays — that was the "bounce" on Details.
     const firstFocusable = panelRef.current?.querySelector(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
-    firstFocusable?.focus();
+    firstFocusable?.focus({ preventScroll: true });
 
     function onKey(e) {
       // A dialog opened from inside the flyout but portaled outside it (e.g.
@@ -43,10 +47,10 @@ export function useFlyoutA11yEffects({ isOpen, isMobile, close, panelRef }) {
         const last  = focusable[focusable.length - 1];
         if (e.shiftKey && document.activeElement === first) {
           e.preventDefault();
-          last.focus();
+          last.focus({ preventScroll: true });
         } else if (!e.shiftKey && document.activeElement === last) {
           e.preventDefault();
-          first.focus();
+          first.focus({ preventScroll: true });
         }
       }
     }
