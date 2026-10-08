@@ -25,7 +25,7 @@
  *   client reference instead of the array.
  */
 
-import Link from 'next/link';
+import BackToProfileLink from '@/components/controls/BackToProfileLink';
 import PageLayout from '@/components/layout/PageLayout';
 import copy from '../../../content/site/about.json';
 
@@ -115,24 +115,14 @@ export default async function AboutPage() {
     <PageLayout config={EMPTY_CONFIG} pageLabel="About" pageNav={PAGE_NAV}>
       <article>
 
-        {/* ── Mobile-only back link ─────────────────────────────────────
-            This page has an empty `sections` config, so StickyContextBar
-            (the usual home for a persistent mobile nav control) returns
-            null here — there's no sticky bar to add a back button to.
-            Until now the only way back on mobile was the "← Back to
-            neighborhood profiles" link at the very bottom of this long
-            prose page. Mirrors that same link/destination, just also
-            reachable without scrolling all the way down first. Desktop
-            already has the sidebar for this, so md:hidden. */}
-        <Link
-          href="/"
-          className="md:hidden inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors mb-6"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to neighborhood profiles
-        </Link>
+        {/* ── Back link (all widths) ────────────────────────────────────
+            Shown at every width (was md:hidden until 2026-10-07 — feedback
+            that returning from this page wasn't intuitive on desktop, where
+            the only above-the-fold route was a small sidebar link). The
+            label names the destination: "Back to {last-viewed neighborhood}"
+            or "Choose a neighborhood". Same component is repeated at the
+            bottom of the prose. */}
+        <BackToProfileLink className="mb-6" />
 
         {/* ── Page header ────────────────────────────────────────────── */}
         <div className="mb-10 pb-10 border-b border-gray-100">
@@ -279,9 +269,7 @@ export default async function AboutPage() {
 
             {/* ── Footer nav ───────────────────────────────────────── */}
             <div className="mt-12 pt-6 border-t border-gray-100">
-              <Link href="/" className="text-sm text-blue-600 hover:text-blue-800 transition-colors">
-                ← Back to neighborhood profiles
-              </Link>
+              <BackToProfileLink />
             </div>
 
           </div>

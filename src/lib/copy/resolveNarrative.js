@@ -247,9 +247,8 @@ export function resolveNarrativeParts(template, { rows, geoId, neighborhoodName,
  *   <AGG(If NYC and CD are the same omit City - child obesity)>
  *                               → " of <NYC value>" unless similar to NYC
  *   <AGG(However for premature mort)>
- *                               → "However," when the CD's rate is higher
- *                                 than NYC (contrasts the preceding "…in all
- *                                 communities in NYC" sentence), else nothing
+ *                               → "At <value> per 100,000 people," — the
+ *                                 neighborhood's premature mortality rate
  */
 function resolveBespokeToken(argLower, { cdRow, nycRow, cdValue, cmp }) {
   const nycValue = nycRow ? stripReliabilityMark(nycRow.DisplayValue) : null;
@@ -285,8 +284,15 @@ function resolveBespokeToken(argLower, { cdRow, nycRow, cdValue, cmp }) {
     return [{ kind: 'text', text: ' of ' }, { kind: 'nyc', text: nycValue }];
   }
   if (inner.startsWith('however for premature mort')) {
-    const c = cmp();
-    return { kind: 'text', text: c?.direction === 'up' ? 'However,' : '' };
+    // 2026-10-07 (Morgan): this token is the neighborhood's own premature
+    // mortality rate, not a conditional "However,". Lead-in wording ("At …,")
+    // is ours so the rate reads as a rate, not a count of residents — confirm
+    // with the copy team. Units match the copy deck's units column.
+    return [
+      { kind: 'text', text: 'At ' },
+      { kind: 'value', text: `${cdValue} per 100,000 people` },
+      { kind: 'text', text: ',' },
+    ];
   }
   return undefined;
 }

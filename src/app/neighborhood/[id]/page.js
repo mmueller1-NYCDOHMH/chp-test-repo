@@ -24,6 +24,7 @@
 
 import CHPBuilder from '@/components/core/CHPBuilder';
 import IntroModal from '@/components/core/IntroModal';
+import RememberNeighborhood from '@/components/controls/RememberNeighborhood';
 import { pageRegistry } from '@/config/registries/pageRegistry';
 import { getData } from '@/lib/data/getData';
 import { getNeighborhoods } from '@/lib/data/getNeighborhoods';
@@ -67,8 +68,8 @@ export default async function NeighborhoodPage({ params }) {
   const neighborhoods = await getNeighborhoods();
 
   // Validate the id against the known neighborhood list before fetching
-  const isValid = neighborhoods.some(n => String(n.id) === id);
-  if (!isValid) notFound();
+  const neighborhood = neighborhoods.find(n => String(n.id) === id);
+  if (!neighborhood) notFound();
 
   const data = await getData({ geography: id });
 
@@ -76,6 +77,9 @@ export default async function NeighborhoodPage({ params }) {
     <>
       {/* Intro modal — shown on first visit regardless of entry point */}
       <IntroModal neighborhoods={neighborhoods} />
+      {/* Records this as the last-viewed neighborhood so /about and the
+          header can link back to it by name (lib/utils/lastNeighborhood.js) */}
+      <RememberNeighborhood id={id} name={neighborhood.name} />
       <CHPBuilder config={config} data={data} />
     </>
   );
