@@ -160,7 +160,9 @@ export default function NeighborhoodOverviewHero({
           (loadOverviewHeroConfig → buildSourceFootnote), so they update with
           the data. The closing sentence lives in
           /content/site/overviewSections.json (sourceFootnoteSuffix). */}
-      <p className="text-xs text-gray-600 border-t border-gray-100 pt-4">
+      {/* text-gray-700 (#4B5563), not 600: gray-600 on the page bg (#F0F4F9) is
+          4.38:1, below the 4.5:1 AA minimum for small text (a11y audit 2026-10-08). */}
+      <p className="text-xs text-gray-700 border-t border-gray-100 pt-4">
         {[sourceFootnote, HERO_FOOTNOTE_SUFFIX].filter(Boolean).join(' ')}
       </p>
 
