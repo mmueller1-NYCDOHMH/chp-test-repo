@@ -42,8 +42,10 @@ import { useState, useRef, useEffect, useMemo, useCallback, useId } from 'react'
 import { useParams } from 'next/navigation';
 import { useComparison } from '@/lib/context/ComparisonContext';
 import { BOROUGH_ORDER } from '@/lib/utils/constants';
+import { byCdNumber, matchesNeighborhoodQuery } from '@/lib/utils/formatGeography';
 import NeighborhoodGroups from '@/components/controls/NeighborhoodGroups';
 
+import LiveText from '@/components/content/LiveText'; // translatable live text (checklist #34)
 // ── Pill — shown when a comparison neighborhood is selected ───────────────────
 function ComparisonPill({ neighborhood, onClear, onEdit }) {
   const [visible, setVisible] = useState(false);
@@ -93,7 +95,7 @@ function ComparisonPill({ neighborhood, onClear, onEdit }) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
+export default function ComparisonNeighborhoodSelector({ neighborhoods = [], inputId }) {
   const uid       = useId();
   const listboxId = `${uid}-listbox`;
   const optPrefix = `${uid}-opt`;
@@ -117,10 +119,7 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
     const candidates = neighborhoods.filter(n => String(n.id) !== primaryId);
 
     const filtered = q
-      ? candidates.filter(n =>
-          n.name.toLowerCase().includes(q) ||
-          n.borough.toLowerCase().includes(q)
-        )
+      ? candidates.filter(n => matchesNeighborhoodQuery(n, q))
       : candidates;
 
     const map = {};
@@ -131,7 +130,10 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
       map[key].push(n);
     });
 
-    const groups  = Object.entries(map).filter(([, ns]) => ns.length > 0);
+    // Within each borough, order by community district number (not name)
+    Object.values(map).forEach(ns => ns.sort(byCdNumber));
+
+    const groups   = Object.entries(map).filter(([, ns]) => ns.length > 0);
     const flatList = groups.flatMap(([, ns]) => ns);
     return { grouped: groups, flat: flatList };
   }, [query, neighborhoods, primaryId]);
@@ -228,7 +230,7 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
       {/* Input */}
       <div className="relative">
         <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-comparison-text pointer-events-none"
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-comparison pointer-events-none"
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
           aria-hidden="true"
         >
@@ -242,12 +244,18 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
           onFocus={() => setIsEditing(true)}
           onKeyDown={handleKeyDown}
           placeholder="Neighborhood name"
-          aria-label="Search comparison neighborhoods"
+          /* A11Y (audit 2026-10-08, WCAG 3.3.2): with `inputId`, Sidebar's visible
+             <label htmlFor> ("Compare to") names the field, so aria-label is
+             dropped to keep the name matching the visible label (WCAG 2.5.3). */
+          id={inputId}
+          aria-label={inputId ? undefined : 'Search comparison neighborhoods'}
           aria-expanded={isOpen}
           aria-autocomplete="list"
           aria-controls={listboxId}
           aria-activedescendant={focusedIndex >= 0 ? `${optPrefix}-${focusedIndex}` : undefined}
           role="combobox"
+          /* Search icon is solid rust (2026-10-09, per Morgan) to draw the eye to
+             the compare feature; the box itself stays neutral. */
           className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white placeholder-gray-600 text-gray-800 focus:outline-none focus:ring-2 focus:ring-comparison focus:border-transparent"
         />
         {isEditing && query && (
@@ -267,11 +275,11 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [] }) {
           results state — the visual "no matches" <li> inside the listbox
           was never announced. Always mounted so updates are picked up. */}
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-        {!isOpen || !query.trim()
+        <LiveText>{!isOpen || !query.trim()
           ? ''
           : flat.length === 0
             ? `No neighborhood matches “${query.trim()}”. Try a borough or community district number.`
-            : `${flat.length} neighborhood${flat.length === 1 ? '' : 's'} available. Use up and down arrows to choose.`}
+            : `${flat.length} neighborhood${flat.length === 1 ? '' : 's'} available. Use up and down arrows to choose.`}</LiveText>
       </div>
 
       {/* Dropdown */}

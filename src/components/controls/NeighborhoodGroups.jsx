@@ -9,8 +9,11 @@
  *
  * DESCRIPTION:
  * Encapsulates the repeating pattern of:
- *   - A borough-label header
+ *   - A borough-label header (sticky tinted band, so it reads as a category
+ *     header rather than another row; sentence case, never all-caps)
  *   - An ARIA group of neighborhood options
+ *   - Neighborhoods ordered by community district number, shown as
+ *     "Name (CD n)" — ordering is done by the parent's grouping step
  *   - Per-item focus highlight, active badge, hover sync, and text highlight
  *
  * Used by UnifiedSearch and ComparisonNeighborhoodSelector.
@@ -40,6 +43,7 @@
  */
 
 import { highlight } from '@/lib/utils/highlight';
+import { cdLabel } from '@/lib/utils/formatGeography';
 
 const SCHEMES = {
   blue: {
@@ -75,13 +79,13 @@ export default function NeighborhoodGroups({
 }) {
   const scheme   = SCHEMES[colorScheme] ?? SCHEMES.blue;
   const textSize = size === 'xs' ? 'text-xs' : 'text-sm';
-  const ptHeader = size === 'xs' ? 'pt-2'   : 'pt-2.5';
+  const headerSize = size === 'xs' ? 'text-xs py-1' : 'text-sm py-1.5';
 
   let localIdx = 0;
 
   return grouped.map(([borough, ns]) => (
     <li key={borough} role="none">
-      <p className={`text-sm font-semibold text-gray-600 px-3 ${ptHeader} pb-1 select-none`}>
+      <p className={`sticky top-0 z-10 ${headerSize} px-3 font-bold text-gray-900 bg-gray-100 border-y border-gray-200 select-none`}>
         {borough}
       </p>
       <ul role="group" aria-label={borough}>
@@ -107,6 +111,11 @@ export default function NeighborhoodGroups({
             >
               <span className="font-medium">
                 {highlight(n.name, query.trim(), scheme.mark)}
+                {cdLabel(n) && (
+                  <span className={`font-normal ${isFocused || isActive ? '' : 'text-gray-600'}`}>
+                    {' '}{cdLabel(n)}
+                  </span>
+                )}
               </span>
               {isActive && (
                 <span className={`text-xs ${scheme.badgeText} font-semibold ml-2 shrink-0`}>

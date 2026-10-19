@@ -43,12 +43,13 @@ import { useUnifiedSearch, ADDRESS_MIN_LENGTH } from './unifiedSearch/useUnified
 import { highlight } from '@/lib/utils/highlight';
 import NeighborhoodGroups from '@/components/controls/NeighborhoodGroups';
 
+import LiveText from '@/components/content/LiveText'; // translatable live text (checklist #34)
 // Shared no-results copy (visible + announced) — says what went wrong and
 // how to fix it (WCAG 3.3.3 Error Suggestion).
 const NO_RESULTS_COPY = (q) =>
   `No neighborhood or address matches “${q.trim()}”. Try a borough, a community district number, or a street address.`;
 
-export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover }) {
+export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover, inputId }) {
   const {
     listboxId,
     optPrefix,
@@ -118,7 +119,11 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
           onFocus={() => setIsEditing(true)}
           onKeyDown={handleKeyDown}
           placeholder="Neighborhood or address"
-          aria-label="Search neighborhoods or address"
+          /* A11Y (audit 2026-10-08, WCAG 3.3.2): when `inputId` is passed, the parent renders a visible
+             <label htmlFor={inputId}> (Sidebar's "Find neighborhood"), which becomes the accessible name — so
+             aria-label is dropped to keep the name matching the visible label (WCAG 2.5.3). */
+          id={inputId}
+          aria-label={inputId ? undefined : 'Search neighborhoods or address'}
           aria-keyshortcuts="/"
           aria-expanded={isOpen}
           aria-autocomplete="list"
@@ -157,13 +162,13 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover })
           screen readers pick up changes. "No results" used to be only a
           visual <li> inside the listbox, which NVDA/VoiceOver never announced. */}
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-        {!isOpen || !query.trim() || isNYCEasterEgg
+        <LiveText>{!isOpen || !query.trim() || isNYCEasterEgg
           ? ''
           : addressLoading && !hasResults
             ? 'Searching addresses…'
             : hasResults
               ? `${flatNeighborhoods.length + addressResults.length} result${flatNeighborhoods.length + addressResults.length === 1 ? '' : 's'} available. Use up and down arrows to choose.`
-              : NO_RESULTS_COPY(query)}
+              : NO_RESULTS_COPY(query)}</LiveText>
       </div>
 
       {/* ── Dropdown ───────────────────────────────────────────────────────── */}

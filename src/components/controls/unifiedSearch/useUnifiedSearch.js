@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect, useMemo, useCallback, useId } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { setPendingNeighborhood, useActiveNeighborhoodId } from '@/lib/utils/pendingNeighborhood';
+import { useActiveNeighborhoodId } from '@/lib/utils/pendingNeighborhood';
+import { pushNeighborhood } from '@/lib/utils/neighborhoodSwitch';
 import { useComparison } from '@/lib/context/ComparisonContext';
 import { searchAddresses } from '@/lib/geoclient/geocode';
 import { BOROUGH_ORDER } from '@/lib/utils/constants';
+import { byCdNumber, matchesNeighborhoodQuery } from '@/lib/utils/formatGeography';
 
 /**
  * FILE: useUnifiedSearch.js
@@ -16,7 +18,11 @@ import { BOROUGH_ORDER } from '@/lib/utils/constants';
  */
 
 const DEBOUNCE_MS = 200; // reduced from 350ms for faster address feedback
-export const ADDRESS_MIN_LENGTH = 5; // Geoclient needs enough context to identify a street
+// QA rows 10/26 (2026-10-12): was 5, so at 3–4 characters ("163") no lookup
+// ran and the dropdown flashed the "No neighborhood or address matches" error
+// mid-typing. 3 matches the intro modal's AddressSearch; GeoSearch
+// autocomplete handles short input.
+export const ADDRESS_MIN_LENGTH = 3;
 
 export function useUnifiedSearch({ neighborhoods = [], onSelect, onHover }) {
   const uid       = useId();
@@ -34,6 +40,7 @@ export function useUnifiedSearch({ neighborhoods = [], onSelect, onHover }) {
   const itemRefs     = useRef([]);
   const containerRef = useRef(null);
   const debounceRef  = useRef(null);
+  const requestSeq   = useRef(0); // drops out-of-order address responses
 
   const router   = useRouter();
   const pathname = usePathname();
@@ -80,10 +87,7 @@ export function useUnifiedSearch({ neighborhoods = [], onSelect, onHover }) {
     const q = query.trim().toLowerCase();
 
     const filtered = q
-      ? neighborhoods.filter(n =>
-          n.name.toLowerCase().includes(q) ||
-          n.borough.toLowerCase().includes(q)
-        )
+      ? neighborhoods.filter(n => matchesNeighborhoodQuery(n, q))
       : neighborhoods;
 
     const map = {};
@@ -94,22 +98,25 @@ export function useUnifiedSearch({ neighborhoods = [], onSelect, onHover }) {
       map[key].push(n);
     });
 
+    // Within each borough, order by community district number (not name)
+    Object.values(map).forEach(ns => ns.sort(byCdNumber));
+
     const groups   = Object.entries(map).filter(([, ns]) => ns.length > 0);
     const flatList = groups.flatMap(([, ns]) => ns);
     return { grouped: groups, flatNeighborhoods: flatList };
   }, [query, neighborhoods]);
 
   // ── Address lookup (debounced) ────────────────────────────────────────────
-  // NOTE: Geoclient /search is a geocoder, not an autocomplete API — it needs
-  // a reasonably complete address to return results. For true keystroke-level
-  // suggestions, swap searchAddresses() for a Places Autocomplete API.
-  //
-  // Borough context: when the user is already on a neighborhood page, appending
-  // that borough to the query helps Geoclient resolve short/ambiguous inputs
-  // like "125th st" → "125th st Manhattan". Only appended when the user hasn't
-  // already typed the borough name.
+  // searchAddresses() merges GeoSearch autocomplete + search (see geocode.js).
+  // 2026-10-12: no longer appends the active neighborhood's borough to the
+  // query — it biased results toward the borough you were viewing, so an
+  // address in another borough could resolve to the wrong place. Showing
+  // several results lets the user pick the borough instead.
+  // requestSeq: only the latest request may write results, so a slow
+  // response for "163 west 8" can't overwrite the one for "163 west 85".
   useEffect(() => {
     clearTimeout(debounceRef.current);
+    const seq = ++requestSeq.current;
     if (query.trim().length < ADDRESS_MIN_LENGTH) {
       setAddressResults([]);
       setAddressLoading(false);
@@ -117,22 +124,14 @@ export function useUnifiedSearch({ neighborhoods = [], onSelect, onHover }) {
     }
     setAddressLoading(true);
     debounceRef.current = setTimeout(async () => {
-      const activeNeighborhood = activeId
-        ? neighborhoods.find(n => String(n.id) === activeId)
-        : null;
-      const borough = activeNeighborhood?.borough ?? '';
-      const geocodeQuery =
-        borough && !query.toLowerCase().includes(borough.toLowerCase())
-          ? `${query.trim()} ${borough}`
-          : query.trim();
-
-      const hits = await searchAddresses(geocodeQuery, neighborhoods);
+      const hits = await searchAddresses(query.trim(), neighborhoods);
+      if (seq !== requestSeq.current) return; // superseded by newer typing
       setAddressResults(hits);
       setAddressLoading(false);
     }, DEBOUNCE_MS);
 
     return () => clearTimeout(debounceRef.current);
-  }, [query, neighborhoods, activeId]);
+  }, [query, neighborhoods]);
 
   // Flat list combining neighborhoods + addresses for keyboard nav
   const flatAll = useMemo(() => [
@@ -184,8 +183,7 @@ export function useUnifiedSearch({ neighborhoods = [], onSelect, onHover }) {
       onSelect(neighborhood);
     } else {
       setComparisonNeighborhood(null);
-      setPendingNeighborhood(neighborhood.id);
-      router.push(`/neighborhood/${neighborhood.id}`);
+      pushNeighborhood(router, neighborhood.id); // keeps the reader's place mid-page
     }
   }, [onSelect, onHover, router, setComparisonNeighborhood]);
 

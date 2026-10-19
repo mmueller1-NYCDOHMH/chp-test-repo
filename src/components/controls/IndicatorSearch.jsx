@@ -39,7 +39,7 @@
  * color is what actually reads as "the input's border."
  */
 
-import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect, useId } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { searchIndex }            from '@/config/searchIndex';
 import { scrollToSection }        from '@/lib/utils/scrollToSection';
@@ -47,12 +47,14 @@ import { DEFAULT_NEIGHBORHOOD_ID } from '@/lib/utils/constants';
 import { highlight }              from '@/lib/utils/highlight';
 import { getSearchSuggestions, matchesQuery } from '@/lib/utils/searchSuggestions';
 
+import LiveText from '@/components/content/LiveText'; // translatable live text (checklist #34)
 // Matches the Tailwind `md` breakpoint used everywhere else in the app for
 // the mobile/desktop split (Sidebar's aside vs. bottom sheet), and the same
 // max-width MobileCategoryContext.jsx itself checks.
 const MOBILE_MAX_WIDTH = 767;
 
 export default function IndicatorSearch({ onNavigate, categoryFilter = null, onClearFilter, activeNeighborhood = null, autoFocus = true }) {
+  const inputId = useId();
   const [query, setQuery]           = useState('');
   const [focusedIndex, setFocused]  = useState(-1);
   const inputRef                    = useRef(null);
@@ -61,6 +63,20 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
   const pathname                    = usePathname();
   const router                      = useRouter();
   const isNeighborhoodPage          = pathname?.startsWith('/neighborhood/');
+
+  // Focus the input on mount (replaces the autoFocus attribute, 2026-10-12,
+  // QA row 35). Native autoFocus scrolls the page to "reveal" the input —
+  // this sidebar is sticky, so after a top-nav CATEGORY click (which opens
+  // this tab) the page jumped ~200px past where the click had scrolled it,
+  // leaving the section header below the scroll-spy line and the status bar
+  // showing the previous section. preventScroll fixes that. Also leave focus
+  // alone when it's already in the main content: a category click moves
+  // focus to that section's heading (A11Y), which this used to steal.
+  useEffect(() => {
+    if (!autoFocus) return;
+    if (document.getElementById('main-content')?.contains(document.activeElement)) return;
+    inputRef.current?.focus({ preventScroll: true });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps — mount only
 
   // ── Flat filtered results ─────────────────────────────────────────────────
   const results = useMemo(() => {
@@ -217,6 +233,10 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
     <div className="flex flex-col gap-3 px-6 pt-4 pb-3">
 
       {/* ── Search input ────────────────────────────────────────── */}
+      {/* A11Y (audit 2026-10-08, WCAG 3.3.2): a real <label> tied by id, not just
+          aria-label. Visually hidden — the panel's tab ("Find indicator") is the
+          visible context. */}
+      <label htmlFor={inputId} className="sr-only">Search indicators</label>
       <div className="relative">
         <svg
           className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none"
@@ -232,8 +252,7 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
           onChange={e => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Search indicators…"
-          autoFocus={autoFocus}
-          aria-label="Search indicators"
+          id={inputId}
           aria-controls="indicator-search-results"
           aria-activedescendant={focusedIndex >= 0 ? `search-result-${focusedIndex}` : undefined}
           className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
@@ -286,14 +305,14 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
         role="status"
         aria-live="polite"
       >
-        {isFiltered
+        <LiveText>{isFiltered
           ? filteredCount === 0
             ? 'No results'
             : `${filteredCount} of ${baseCount} indicators`
           : categoryFilter
           ? `${baseCount} indicators`
           : `${totalCount} indicators`
-        }
+        }</LiveText>
       </p>
 
       {/* ── Results ─────────────────────────────────────────────── */}
@@ -348,7 +367,7 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
             let globalIdx = 0;
             return Object.entries(grouped).map(([subcat, inds]) => (
               <div key={subcat} role="group" aria-label={subcat}>
-                <p className="text-sm font-semibold text-gray-600 mb-1.5 px-1" aria-hidden="true">
+                <p className="sticky top-0 z-10 text-sm py-1.5 px-3 mb-1.5 font-bold text-gray-900 bg-gray-100 border-y border-gray-200 select-none" aria-hidden="true">
                   {subcat}
                 </p>
                 <div className="flex flex-col gap-0.5">
