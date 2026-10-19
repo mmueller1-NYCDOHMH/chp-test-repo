@@ -30,4 +30,4 @@ export const GEOJSON_URL = '/data/CD.geojson';
  * page, or when redirecting from the root route.
  * Must match a valid id in the neighborhoods list (slugified GeoJSON GEONAME).
  */
-export const DEFAULT_NEIGHBORHOOD_ID = 'long-island-city-and-astoria';
+export const DEFAULT_NEIGHBORHOOD_ID = 'woodside-and-sunnyside';

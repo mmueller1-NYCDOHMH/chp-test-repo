@@ -20,7 +20,8 @@
  * WHAT IT DOES:
  * - Observes each id's CURRENT element, and re-attaches whenever the page
  *   content is swapped (MutationObserver on <main>).
- * - Calls onActive(id) with the topmost visible section (in `ids` order).
+ * - Calls onActive(id) with the last section (in `ids` order) whose top has
+ *   passed the activation line (see report()).
  * - Calls onActive(null) when the reader is ABOVE the first section (the
  *   At a Glance hero), or no sections are on the page (loading skeleton).
  *   Scrolled past the last section (footer), it reports that last section,
@@ -28,28 +29,36 @@
  *
  * Returns a cleanup function.
  */
+const ACTIVE_LINE_PCT = 35; // a section becomes active once its top passes 35% down the viewport
+
 export function watchSections(ids, { topOffset = 0, onActive }) {
   if (typeof window === 'undefined' || !ids.length) return () => {};
 
   const observed     = new Map();  // id → element currently being observed
   const intersecting = new Set();  // ids with any pixel visible below the sticky bars
 
+  // Active = the LAST rendered section whose top has scrolled above the
+  // activation line (ACTIVE_LINE_PCT down the viewport, below the sticky
+  // bars). Rewritten 2026-10-12 (QA rows 35/119): it used to be the TOPMOST
+  // section with any pixel visible, so (a) right after jumping to a new
+  // category header, the previous section's last few pixels above it still
+  // won, and (b) back at the top of the page, a section merely peeking in
+  // under the At a Glance hero kept its nav tab highlighted.
+  // Above the first section (or none on the page) → null. Hidden elements
+  // (offsetParent === null, e.g. another mobile category page) are skipped.
   function report() {
-    const active = ids.find(id => intersecting.has(id));
-    if (active) { onActive(active); return; }
-    // Nothing visible: decide from where the rendered sections sit.
-    // (offsetParent === null → hidden, e.g. another mobile category page.)
-    const rendered = ids
-      .map(id => observed.get(id))
-      .filter(el => el && el.isConnected && el.offsetParent !== null);
-    const passed = rendered.filter(el => el.getBoundingClientRect().top <= topOffset);
-    // Above the first section (or none on the page) → nothing is active.
-    // Past the last one (footer) → keep the last section we scrolled past.
-    onActive(passed.length ? passed[passed.length - 1].id : null);
+    const line = topOffset + (window.innerHeight - topOffset) * (ACTIVE_LINE_PCT / 100);
+    let active = null;
+    for (const id of ids) {
+      const el = observed.get(id);
+      if (!el || !el.isConnected || el.offsetParent === null) continue;
+      if (el.getBoundingClientRect().top <= line) active = id;
+    }
+    onActive(active);
   }
 
-  // rootMargin only clips the top (sticky bar height) — a section counts as
-  // visible any time any pixel of it shows below the bars.
+  // The observer just keeps `intersecting` current and triggers report();
+  // the active section itself is decided by position in report().
   const io = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       const id = entry.target.id;
@@ -59,6 +68,14 @@ export function watchSections(ids, { topOffset = 0, onActive }) {
     });
     report();
   }, { rootMargin: `-${Math.round(topOffset)}px 0px 0px 0px`, threshold: 0 });
+
+  // Section tops crossing the activation line don't change intersection,
+  // so also re-evaluate on scroll (one pass per frame).
+  let scrollRaf = null;
+  const onScroll = () => {
+    if (scrollRaf == null) scrollRaf = requestAnimationFrame(() => { scrollRaf = null; report(); });
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
 
   // Point the observer at whichever element currently owns each id.
   function sync() {
@@ -86,9 +103,16 @@ export function watchSections(ids, { topOffset = 0, onActive }) {
   });
   mo.observe(document.getElementById('main-content') ?? document.body, { childList: true, subtree: true });
 
-  return () => {
+  const cleanup = () => {
     clearTimeout(timer);
     mo.disconnect();
     io.disconnect();
+    window.removeEventListener('scroll', onScroll);
+    if (scrollRaf != null) cancelAnimationFrame(scrollRaf);
   };
+  // Callers that temporarily ignore onActive (during a tap-triggered smooth
+  // scroll) call cleanup.recheck() when they stop ignoring it, so the final
+  // position is reported even if nothing moves afterwards.
+  cleanup.recheck = report;
+  return cleanup;
 }

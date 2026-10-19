@@ -141,7 +141,7 @@ export default function IndicatorComparisonChart({
       const DOT_R      = 5  * scale;
       const BLOCK_GAP  = 18 * scale;
 
-      const legendItems = buildLegendItems(data, geoId, comparisonNeighborhood);
+      const legendItems = buildLegendItems(data, geoId, comparisonNeighborhood).filter(i => i.suppressed); // labels are in-chart (2026-10-13)
       const headerH = PADDING + TITLE_SIZE + BLOCK_GAP;
       const legendH = legendItems.length ? legendItems.length * LEG_ROW + BLOCK_GAP : 0;
 

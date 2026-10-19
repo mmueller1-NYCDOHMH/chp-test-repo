@@ -47,6 +47,16 @@ export function useComparison() {
 export function ComparisonProvider({ children, neighborhoods = [] }) {
   const [comparison,             _setComparison]             = useState(DEFAULT_VALUE);
   const [comparisonNeighborhood, _setComparisonNeighborhood] = useState(null);
+  // A11Y (2026-10-12, checklist #42 / WCAG 4.1.3): announce comparison
+  // set/clear without moving focus. Only user actions announce — not the
+  // URL restore on load or the reset on route change.
+  const [announcement, setAnnouncement] = useState('');
+  const announceTimer = useRef(null);
+  // Mirrors comparisonNeighborhood so the setter can tell whether a
+  // comparison was actually active before it was cleared.
+  const comparisonRef = useRef(null);
+  useEffect(() => { comparisonRef.current = comparisonNeighborhood; }, [comparisonNeighborhood]);
+  useEffect(() => () => clearTimeout(announceTimer.current), []);
 
   // NOTE: comparison neighborhoods used to be force-cleared below 768px
   // ("comparison charts are unreadable at narrow widths"). That's no longer
@@ -114,6 +124,21 @@ export function ComparisonProvider({ children, neighborhoods = [] }) {
     const next = neighborhood ?? null;
     _setComparisonNeighborhood(next);
 
+    // Clear first, then set on the next tick, so picking the same
+    // neighborhood twice still re-announces.
+    setAnnouncement('');
+    clearTimeout(announceTimer.current);
+    // FIX (2026-10-14): selectors clear the comparison on every neighborhood
+    // switch, so "Comparison removed." was announced even when nothing was
+    // being compared — and it talked over "Now showing data for …".
+    const hadComparison = comparisonRef.current != null;
+    comparisonRef.current = next;
+    if (next || hadComparison) {
+      announceTimer.current = setTimeout(() => {
+        setAnnouncement(next ? `Now comparing to ${next.name}.` : 'Comparison removed.');
+      }, 100);
+    }
+
     // Broadcast to all mounted VegaLiteChart instances so they can update
     // the comparisonGeoId signal without rebuilding the spec.
     window.dispatchEvent(new CustomEvent('chp:comparison-changed', {
@@ -138,6 +163,10 @@ export function ComparisonProvider({ children, neighborhoods = [] }) {
   return (
     <ComparisonContext.Provider value={value}>
       {children}
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {/* Keyed span: a new node per message so Google Translate translates it (checklist #34) */}
+        {announcement && <span key={announcement}>{announcement}</span>}
+      </div>
     </ComparisonContext.Provider>
   );
 }

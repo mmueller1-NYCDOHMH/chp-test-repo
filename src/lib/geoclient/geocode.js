@@ -14,14 +14,38 @@
  * The folder is still named "geoclient" only to keep existing imports working.
  *
  * searchAddresses(query, neighborhoods)
- *   Returns [{ label, neighborhood }] (0 or 1 entries) for the address search
- *   dropdown — never throws. An address outside the 59 districts (parks,
- *   airports) or outside NYC returns [].
+ *   Returns [{ label, neighborhood }] (up to MAX_RESULTS entries) for the
+ *   address search dropdown — never throws. Addresses outside the 59
+ *   districts (parks, airports) or outside NYC are skipped.
+ *
+ * QA rows 7/10/26 (2026-10-12): the dropdown used to show ONE suggestion
+ * from /search, which is a full-address geocoder — partial input like
+ * "163 west 85" matched "85 West 163 St" as readily as the right address.
+ * Now /autocomplete (prefix matching, built for typing) and /search (fuzzy,
+ * catches inputs autocomplete can't parse yet, e.g. "163 west 8") run in
+ * parallel; autocomplete hits come first, duplicates are dropped, and up to
+ * MAX_RESULTS are shown so the right address is usually in the list early.
  */
 
 import { fetchGeoJson } from '@/lib/utils/fetchGeoJson';
 
-const GEOSEARCH_URL = 'https://geosearch.planninglabs.nyc/v2/search';
+const GEOSEARCH_BASE = 'https://geosearch.planninglabs.nyc/v2';
+const MAX_RESULTS = 5;
+
+/** GeoSearch features for one endpoint ('autocomplete' | 'search'); [] on any failure. */
+async function fetchFeatures(endpoint, text) {
+  try {
+    const url = new URL(`${GEOSEARCH_BASE}/${endpoint}`);
+    url.searchParams.set('text', text);
+    url.searchParams.set('size', '10');
+    const res = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+    if (!res.ok) return [];
+    const body = await res.json();
+    return body?.features ?? [];
+  } catch {
+    return [];
+  }
+}
 
 /** Even-odd ray cast over every ring, so holes are excluded correctly. */
 function pointInRings(lng, lat, rings) {
@@ -69,32 +93,32 @@ export async function searchAddresses(query, neighborhoods) {
   if (!text || text.length < 3) return [];
 
   try {
-    const url = new URL(GEOSEARCH_URL);
-    url.searchParams.set('text', text);
-    url.searchParams.set('size', '5');
-
-    const [res, geo] = await Promise.all([
-      fetch(url.toString(), { headers: { Accept: 'application/json' } }),
+    const [auto, fuzzy, geo] = await Promise.all([
+      fetchFeatures('autocomplete', text),
+      fetchFeatures('search', text),
       fetchGeoJson(),
     ]);
-    if (!res.ok) return [];
 
-    const body = await res.json();
-
-    // Best match first; take the first one that lands inside a district.
-    for (const feature of body?.features ?? []) {
+    const results = [];
+    const seen = new Set();
+    for (const feature of [...auto, ...fuzzy]) {
+      if (results.length >= MAX_RESULTS) break;
       const [lng, lat] = feature?.geometry?.coordinates ?? [];
       if (typeof lng !== 'number' || typeof lat !== 'number') continue;
+
+      const p = feature.properties ?? {};
+      const label = [p.name, p.borough].filter(Boolean).join(', ') || p.label || text;
+      const dedupeKey = label.toLowerCase();
+      if (seen.has(dedupeKey)) continue;
 
       const geoId = findDistrictGeoId(lng, lat, geo);
       const nbhd = geoId != null ? neighborhoods.find(n => n.geoId === geoId) : null;
       if (!nbhd) continue;
 
-      const p = feature.properties ?? {};
-      const label = [p.name, p.borough].filter(Boolean).join(', ') || p.label || text;
-      return [{ label, neighborhood: nbhd }];
+      seen.add(dedupeKey);
+      results.push({ label, neighborhood: nbhd });
     }
-    return [];
+    return results;
   } catch {
     return [];
   }

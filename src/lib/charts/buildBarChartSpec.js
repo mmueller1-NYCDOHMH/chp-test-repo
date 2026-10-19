@@ -193,7 +193,6 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
   const highlightTest =
     geoId != null ? `datum.GeoID === ${geoId}` : 'false';
 
-  const subtitleText = subtitle || '';
   const metadataTypeText = metadataType
   ? `${metadataType.charAt(0).toUpperCase()}${metadataType.slice(1)}`
     : '';
@@ -209,7 +208,10 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
   // reference tick only in compact mode, and only for non-count indicators
   // (see isCount doc above) — expanded charts show neighborhoods only, with
   // citywide moved to the same legend as borough.
-  const includeCitywide = !expanded && !isCount;
+  // 2026-10-13 (per Morgan): expanded charts now label Selected / Comparison /
+  // Citywide inline exactly like the card (label strip + leader lines) instead
+  // of a separate HTML key — so Citywide is included in both modes.
+  const includeCitywide = !isCount;
 
   // Expanded charts (non-count) plot Citywide + the selected CD's own borough
   // as colored reference bars, sorted in among the neighborhoods (restored
@@ -220,7 +222,7 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
   const boroughId = geoId != null ? Math.floor(geoId / 100) : null;
 
   const chartData = data.filter(r => {
-    if (r.GeoType === 'Citywide') return includeCitywide || includeRefBars;
+    if (r.GeoType === 'Citywide') return includeCitywide;
     if (r.GeoType === 'Borough')  return includeRefBars && r.GeoID === boroughId;
     return true;
   });
@@ -236,7 +238,7 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
   // pixel space — see "Pixel layout" below.
   const LINE_H      = 13;
   const MAX_LINES   = 3;
-  const BAND        = !expanded ? LINE_H * MAX_LINES + 10 : 0;
+  const BAND        = LINE_H * MAX_LINES + 10; // both modes (2026-10-13)
   const HUG_ROOM    = 30;         // headroom (px) above tallest bar when not comparing
   const TEXT_Y      = BAND - 6;   // pixel y of the label's bottom line
   const LEADER_TOP  = BAND - 3;   // pixel y where leader lines end
@@ -323,7 +325,7 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
   const selRow   = geoId != null ? sorted.find(r => r.GeoID === geoId) : null;
   const cityRow  = includeCitywide ? sorted.find(r => r.GeoType === 'Citywide') : null;
   const cityLbl  = cityRow ? `Citywide · ${cityRow.DisplayValue}` : '';
-  const hasSel   = !expanded && !!selRow;
+  const hasSel   = !!selRow; // both modes (2026-10-13)
 
   const layoutParams = hasSel ? [
     { name: 'lbBw',   expr: "bandwidth('x') / 2" },
@@ -441,10 +443,17 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
       color: { value: halo ? 'white' : color },
     },
   });
-  const hugDefs = !expanded && !hasSel ? [
-    ...(cityRow ? [[HUG_NYC_DY, `!(${cmpOn}) && ${nycTest}`, "'Citywide · ' + datum.DisplayValue", CITYWIDE]] : []),
-    [HUG_SEL_DY, `!(${cmpOn}) && ${highlightTest}`, 'datum.DisplayValue', SELECTED],
-  ] : [];
+  const hugDefs = [
+    ...(!hasSel ? [
+      ...(cityRow ? [[HUG_NYC_DY, `!(${cmpOn}) && ${nycTest}`, "'Citywide · ' + datum.DisplayValue", CITYWIDE]] : []),
+      [HUG_SEL_DY, `!(${cmpOn}) && ${highlightTest}`, 'datum.DisplayValue', SELECTED],
+    ] : []),
+    // Expanded-only borough reference bar: labeled right on its bar
+    // ("Bronx · 23%") so it isn't identified by color alone now that the
+    // separate HTML key is gone (2026-10-13). Borough is a median, so it sits
+    // mid-chart, well below the label strip.
+    ...(includeRefBars ? [[HUG_SEL_DY, "datum.GeoType === 'Borough'", "datum.Geography + ' · ' + datum.DisplayValue", BOROUGH]] : []),
+  ];
   // Citywide dashed tick (no-selection hug mode only — with a selected CD the
   // dashed leader line replaces it; Citywide is filtered out of the data
   // entirely while a comparison is active).
@@ -477,7 +486,9 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
     // in IndicatorChartGrid.jsx. config.aria:false below stops Vega from
     // exposing every bar/axis tick as its own screen-reader item (≈59+ per
     // chart), which drowned out that description.
-    description: `${title ?? 'Chart'}${subtitleText ? `. ${subtitleText}` : ''}. Bar chart of NYC community districts.`,
+    // 2026-10-13 (checklist #2): title only — no subtitle. The subtitle is already
+    // visible text on the card, so including it here made it read 2–3 times.
+    description: `Chart: ${title ?? 'indicator'}`,
 
     // Named Vega signals driven externally by VegaLiteChart.jsx via
     //   view.signal('signalName', value).run()
@@ -597,10 +608,16 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
                 params: [
                   {
                     name: 'hover',
+                    // Mouse only (QA "Bar chart tapping on mobile", 2026-10-12):
+                    // with plain mouseover/mouseout, a tap on a phone set the
+                    // highlight (via the browser's emulated mouseover) and nothing
+                    // ever cleared it — tapping around left several bars
+                    // highlighted. Touch taps get the tooltip instead (see
+                    // TAP TO SHOW in VegaLiteChart.jsx).
                     select: {
                       type: 'point',
-                      on: 'mouseover',
-                      clear: 'mouseout',
+                      on: "pointerover[event.pointerType === 'mouse']",
+                      clear: 'pointerout',
                     },
                   },
                 ],

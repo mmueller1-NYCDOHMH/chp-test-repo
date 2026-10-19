@@ -137,6 +137,10 @@ export function loadOverviewHeroConfig() {
         // which is editorial copy ("of residents"), not a raw "%" symbol.
         dataSource:     meta.dataSource      ?? null,
         isPercent:      meta.unit === '%',
+        // Copy deck's Type column ("Percent", "Rate", "Number", …) — picks the
+        // noun in the expand modal's "…the citywide {noun} of X" sentence
+        // (content/site/phrases.json → citywideNoun).
+        measureType:    meta.type            ?? null,
       };
     })
     .filter(Boolean);
@@ -148,6 +152,11 @@ export function loadOverviewHeroConfig() {
         indicatorKey: meta.key,
         title:        meta.title,
         segments:     meta.segments ?? [],
+        // For the card's source footer + expand modal (2026-10-14).
+        subtitle:     meta.subtitle    ?? null,
+        source:       meta.source      ?? null,
+        sourceUrl:    meta.sourceUrl   ?? null,
+        description:  meta.methodsNote ?? null,
       };
     })
     .filter(Boolean);

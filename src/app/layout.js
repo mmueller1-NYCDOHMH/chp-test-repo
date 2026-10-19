@@ -1,9 +1,9 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from 'next/script';
 import 'leaflet/dist/leaflet.css';
 import "./globals.css";
 import RouteAnnouncer from "@/components/layout/RouteAnnouncer";
 import GoogleTranslateLoader from "@/components/layout/GoogleTranslateLoader";
+import TranslatedAriaLabels from '@/components/layout/TranslatedAriaLabels';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -68,19 +68,13 @@ export default function RootLayout({ children }) {
 
         {children}
 
-        {/* Google Translate — init callback defined inline so it runs before the script */}
-        <Script id="google-translate-init" strategy="beforeInteractive">{`
-          function googleTranslateElementInit() {
-            new google.translate.TranslateElement({
-              pageLanguage: 'en',
-              includedLanguages: 'es,zh-CN,ru,it,ht,bn,yi,ko,ar,fr,pl,ur,pt',
-              autoDisplay: false,
-            }, 'google_translate_element');
-          }
-        `}</Script>
         {/* Loaded only when a non-English language is active (googtrans
             cookie) — see GoogleTranslateLoader.jsx. */}
         <GoogleTranslateLoader />
+
+        {/* Translated pages only: makes aria-labels translatable by Google
+            Translate (a11y checklist #34) — see TranslatedAriaLabels.jsx. */}
+        <TranslatedAriaLabels />
       </body>
     </html>
   );

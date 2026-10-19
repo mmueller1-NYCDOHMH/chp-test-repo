@@ -7,8 +7,8 @@
  *
  * Usage:
  *   import { scrollToSection } from '@/lib/utils/scrollToSection';
- *   scrollToSection('#community-safety');
- *   scrollToSection('#community-safety', { focus: true }); // user-initiated jumps
+ *   scrollToSection('#community-conditions');
+ *   scrollToSection('#community-conditions', { focus: true }); // user-initiated jumps
  *
  * A11Y (2026-09-26):
  * - { focus: true } moves keyboard focus to the section's first heading
@@ -22,6 +22,7 @@
 const SETTLE_MS         = 140;   // scroll is "quiet" after this long without a scroll event
 const MAX_CORRECTION_MS = 3000;  // stop watching for layout shifts after this
 const TOLERANCE_PX      = 12;    // ignore sub-header-height drift (incl. the 10px reveal slide)
+const HOLD_MS           = 1500;  // instant jumps: re-aim every frame this long
 // Any of these means the user is steering — never fight them.
 const USER_INPUT_EVENTS = ['wheel', 'touchstart', 'keydown', 'mousedown'];
 
@@ -29,7 +30,10 @@ const USER_INPUT_EVENTS = ['wheel', 'touchstart', 'keydown', 'mousedown'];
 let cancelPendingCorrection = null;
 
 // Where the page must be scrolled for `el` to sit just under the sticky bars.
-function targetTopFor(el) {
+// `viewportTop` (optional): put el's top at this many px from the top of the
+// viewport instead of just under the sticky bars — used by the
+// neighborhood-switch "keep my place" restore (neighborhoodSwitch.js).
+function targetTopFor(el, viewportTop = null) {
   // Measure both sticky layers so neither obscures the target element.
   // TopicNav (#topic-nav) and StickyContextBar ([data-sticky-context-bar]) each
   // contribute height. Fall back to known defaults if elements aren't in DOM.
@@ -40,18 +44,27 @@ function targetTopFor(el) {
   const stickyTotal   = navHeight + contextHeight;
 
   const maxTop = document.documentElement.scrollHeight - window.innerHeight;
-  const top    = el.getBoundingClientRect().top + window.scrollY - stickyTotal - 16;
+  const offset = viewportTop ?? (stickyTotal + 16);
+  const top    = el.getBoundingClientRect().top + window.scrollY - offset;
   return Math.max(0, Math.min(top, maxTop));
 }
 
-export function scrollToSection(anchor, { focus = false } = {}) {
+// Options:
+//   focus       — move keyboard focus to the section's heading (see A11Y above)
+//   instant     — jump without smooth scrolling (keep-my-place restores)
+//   viewportTop — see targetTopFor()
+// Returns the target element (or undefined if it isn't on the page).
+export function scrollToSection(anchor, { focus = false, instant = false, viewportTop = null } = {}) {
   const id  = String(anchor).replace(/^#/, '');
   const el  = document.getElementById(id);
   if (!el) return;
 
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const behavior = reducedMotion ? 'auto' : 'smooth';
-  window.scrollTo({ top: targetTopFor(el), behavior });
+  // 'instant', not 'auto': globals.css sets html { scroll-behavior: smooth },
+  // and 'auto' defers to it — so "auto" jumps were really smooth scrolls.
+  const behavior = instant ? 'instant' : reducedMotion ? 'auto' : 'smooth';
+  const aim = () => targetTopFor(el, viewportTop);
+  window.scrollTo({ top: aim(), behavior });
 
   // FIX (2026-10-02): re-aim after the page settles. Charts render lazily as
   // they near the viewport (VegaLiteChart) and grow past their placeholder
@@ -64,7 +77,33 @@ export function scrollToSection(anchor, { focus = false } = {}) {
   const startedAt = Date.now();
   let timer = null;
 
+  // Instant jumps (keep-my-place restores) also hold the target still while
+  // content around it changes size: ResizeObserver callbacks run before
+  // paint, so a chart growing above the target never shows as a jump.
+  let ro = null;
+  if (instant && typeof ResizeObserver !== 'undefined') {
+    ro = new ResizeObserver(() => {
+      if (!el.isConnected) return;
+      if (Math.abs(aim() - window.scrollY) > 2) window.scrollTo({ top: aim(), behavior: 'instant' });
+    });
+    ro.observe(document.getElementById('main-content') ?? document.body);
+  }
+  // …and per frame for the first moments, for swaps that change heights
+  // without changing <main>'s total size (rAF runs before paint too).
+  let holdRaf = null;
+  if (instant) {
+    const holdUntil = Date.now() + HOLD_MS;
+    const hold = () => {
+      if (!el.isConnected || Date.now() > holdUntil) { holdRaf = null; return; }
+      if (Math.abs(aim() - window.scrollY) > 2) window.scrollTo({ top: aim(), behavior: 'instant' });
+      holdRaf = requestAnimationFrame(hold);
+    };
+    holdRaf = requestAnimationFrame(hold);
+  }
+
   const stop = () => {
+    ro?.disconnect();
+    if (holdRaf) cancelAnimationFrame(holdRaf);
     clearTimeout(timer);
     window.removeEventListener('scroll', onScroll);
     USER_INPUT_EVENTS.forEach(evt => window.removeEventListener(evt, stop));
@@ -73,10 +112,10 @@ export function scrollToSection(anchor, { focus = false } = {}) {
   const check = () => {
     if (!el.isConnected) return stop();
     const expired = Date.now() - startedAt > MAX_CORRECTION_MS;
-    const offBy   = targetTopFor(el) - window.scrollY;
+    const offBy   = aim() - window.scrollY;
     if (Math.abs(offBy) > TOLERANCE_PX) {
       // Late corrections jump instantly so they can't themselves be outrun.
-      window.scrollTo({ top: targetTopFor(el), behavior: expired ? 'auto' : behavior });
+      window.scrollTo({ top: aim(), behavior: instant ? 'instant' : expired ? 'auto' : behavior });
     }
     if (expired) return stop();
     timer = setTimeout(check, SETTLE_MS * 2); // also catches growth after scrolling stops
@@ -97,4 +136,5 @@ export function scrollToSection(anchor, { focus = false } = {}) {
     if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
     target.focus({ preventScroll: true });
   }
+  return el;
 }

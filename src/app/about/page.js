@@ -25,21 +25,22 @@
  *   client reference instead of the array.
  */
 
-import Link from 'next/link';
+import BackToProfileLink from '@/components/controls/BackToProfileLink';
 import PageLayout from '@/components/layout/PageLayout';
 import copy from '../../../content/site/about.json';
 
+import HydrationSignal from '@/components/layout/HydrationSignal';
 const SITE_NAME    = 'Community Health Profiles · NYC';
 const EMPTY_CONFIG = { sections: [] };
 
 const PAGE_NAV = [
-  { href: '#navigating',   label: 'Navigating the site' },
-  { href: '#comparing',    label: 'Comparing neighborhoods' },
-  { href: '#tips',         label: 'Things that aren\'t obvious' },
-  { href: '#data',         label: 'Understanding the data' },
-  { href: '#detail-panel', label: 'Indicator detail panel' },
-  { href: '#sharing',      label: 'Saving and sharing' },
   { href: '#sources',      label: 'Data and methods' },
+  { href: '#data',         label: 'Understanding the data' },
+  { href: '#comparing',    label: 'Comparing neighborhoods' },
+  { href: '#sharing',      label: 'Saving and sharing' },
+  { href: '#navigating',   label: 'Navigating the site' },
+  { href: '#tips',         label: 'Things that aren\'t obvious' },
+  { href: '#detail-panel', label: 'Indicator detail panel' },
 ];
 
 const SHORTCUTS = [
@@ -49,7 +50,7 @@ const SHORTCUTS = [
   { keys: ['e'],   description: 'Expand chart (hover or focus it)' },
   { keys: ['i'],   description: 'Open indicator details (hover or focus card)' },
   { keys: ['Esc'], description: 'Close panel / clear search' },
-  { keys: ['?'],   description: 'Show shortcuts menu' },
+  { keys: ['?'],   description: 'Show help menu' },
 ];
 
 export const metadata = {
@@ -63,7 +64,7 @@ function H2({ id, children }) {
   return (
     <h2
       id={id}
-      className="text-xl font-semibold text-gray-900 mt-12 mb-4 pt-8 border-t border-gray-100 first:mt-0 first:pt-0 first:border-t-0"
+      className="text-xl font-semibold text-gray-900 mt-14 mb-4 first:mt-0 scroll-mt-28"
     >
       {children}
     </h2>
@@ -77,14 +78,18 @@ function H3({ children }) {
 }
 
 function P({ children }) {
-  return <p className="text-base text-gray-600 leading-relaxed mb-4">{children}</p>;
+  return <p className="text-base text-gray-700 leading-relaxed mb-4">{children}</p>;
 }
 
 function Tip({ children }) {
+  // Lightbulb (not ↗, which reads as "external link"); brand tokens instead
+  // of generic Tailwind blues (2026-10-09).
   return (
-    <div className="my-5 bg-blue-50 border border-blue-100 rounded-xl px-5 py-4 flex gap-3">
-      <span className="text-blue-400 shrink-0 mt-0.5 text-base leading-none" aria-hidden="true">↗</span>
-      <p className="text-sm text-blue-800 leading-relaxed m-0">{children}</p>
+    <div className="my-5 bg-brand-tint border border-brand/10 rounded-xl px-5 py-4 flex gap-3">
+      <svg className="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+      </svg>
+      <p className="text-sm text-gray-800 leading-relaxed m-0">{children}</p>
     </div>
   );
 }
@@ -108,37 +113,48 @@ function ShortcutRow({ keys, description }) {
   );
 }
 
+function ShortcutsCard() {
+  return (
+    // Plain section (no card) so it matches the "On this page" nav above it
+    // in the sidebar (2026-10-09).
+    <section aria-labelledby="sidebar-shortcuts-heading">
+      <p id="sidebar-shortcuts-heading" className="text-sm font-semibold text-gray-600 mb-2">
+        Keyboard shortcuts
+      </p>
+      {SHORTCUTS.map(s => (
+        <ShortcutRow key={s.keys.join('+')} keys={s.keys} description={s.description} />
+      ))}
+      <p className="text-xs text-gray-600 leading-snug mt-3">
+        Shortcuts work anywhere outside a text field. You can turn them off from the
+        ? menu at the top of any profile page; Esc keeps working either way.
+      </p>
+    </section>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function AboutPage() {
   return (
-    <PageLayout config={EMPTY_CONFIG} pageLabel="About" pageNav={PAGE_NAV}>
+    <PageLayout
+      config={EMPTY_CONFIG}
+      pageLabel="About"
+      pageNav={PAGE_NAV}
+      /* Desktop sidebar shows back link + "On this page" + shortcuts instead
+         of the neighborhood search and map (2026-10-09). */
+      sidebarContent={<ShortcutsCard />}
+    >
       <article>
 
-        {/* ── Mobile-only back link ─────────────────────────────────────
-            This page has an empty `sections` config, so StickyContextBar
-            (the usual home for a persistent mobile nav control) returns
-            null here — there's no sticky bar to add a back button to.
-            Until now the only way back on mobile was the "← Back to
-            neighborhood profiles" link at the very bottom of this long
-            prose page. Mirrors that same link/destination, just also
-            reachable without scrolling all the way down first. Desktop
-            already has the sidebar for this, so md:hidden. */}
-        <Link
-          href="/"
-          className="md:hidden inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors mb-6"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to neighborhood profiles
-        </Link>
+        {/* ── Back link (mobile only) ───────────────────────────────────
+            On desktop the sidebar shows the back link (sticky, always in
+            view), so these in-page ones are md:hidden to keep exactly one
+            back button visible at a time (2026-10-09). Repeated at the
+            bottom of the prose for mobile. */}
+        <BackToProfileLink className="mb-6 md:hidden" />
 
         {/* ── Page header ────────────────────────────────────────────── */}
-        <div className="mb-10 pb-10 border-b border-gray-100">
-          <p className="text-sm font-semibold text-blue-600 mb-3">
-            {copy.deptLabel}
-          </p>
+        <div className="mb-12 pb-10 border-b border-gray-200">
           <h1 className="text-3xl font-bold text-gray-900 leading-tight mb-4">
             {copy.pageTitle}
           </h1>
@@ -147,11 +163,78 @@ export default async function AboutPage() {
           </p>
         </div>
 
-        {/* ── Two-column body ────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-12 items-start">
+        {/* ── Body (single column; shortcuts moved to the sidebar 2026-10-09) ── */}
+        <div className="max-w-3xl">
 
-          {/* Left — main prose */}
+          {/* Main prose */}
           <div className="min-w-0">
+
+            {/* ── Data sources ─────────────────────────────────────── */}
+            <H2 id="sources">Data and methods</H2>
+
+            <P>{copy.dataSources.p1}</P>
+            <P>
+              For full methodology, data definitions, and source documentation, refer to the{' '}
+              <a
+                href={copy.dataSources.sourceLink.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand hover:text-brand/80 underline underline-offset-2"
+              >
+                {copy.dataSources.sourceLink.text}
+              </a>
+              .
+            </P>
+
+            {/* ── Understanding the data ───────────────────────────── */}
+            <H2 id="data">Understanding the data</H2>
+
+            <H3>Community districts</H3>
+            <P>{copy.understandingData.communityDistricts}</P>
+
+            <H3>Indicators</H3>
+            <P>{copy.understandingData.indicators}</P>
+
+            <H3>Comparisons</H3>
+            <P>{copy.understandingData.comparisons}</P>
+
+            <H3>Reading the charts</H3>
+            <P>{copy.understandingData.readingCharts}</P>
+
+            <H3>Small numbers and suppressed values</H3>
+            <P>{copy.understandingData.smallNumbers}</P>
+
+            {/* ── Comparing neighborhoods ──────────────────────────── */}
+            <H2 id="comparing">Comparing neighborhoods</H2>
+
+            <P>{copy.comparing.p1}</P>
+            <P>{copy.comparing.p2}</P>
+            <P>{copy.comparing.p3}</P>
+
+            <Tip>
+              The comparison is saved in the page URL, so you can share a direct link
+              to a specific two-neighborhood comparison.
+            </Tip>
+
+            {/* ── Saving and sharing ───────────────────────────────── */}
+            <H2 id="sharing">Saving and sharing</H2>
+
+            <P>{copy.sharing.intro}</P>
+
+            <H3>Download the data</H3>
+            <P>{copy.sharing.data}</P>
+
+            <H3>Download or embed a chart</H3>
+            <P>{copy.sharing.export}</P>
+
+            <H3>Share a link</H3>
+            <P>{copy.sharing.links}</P>
+
+            <H3>Print a full profile</H3>
+            <P>{copy.sharing.print}</P>
+
+            <H3>Other languages</H3>
+            <P>{copy.sharing.language}</P>
 
             {/* ── Navigating the site ──────────────────────────────── */}
             <H2 id="navigating">Navigating the site</H2>
@@ -170,18 +253,6 @@ export default async function AboutPage() {
             <P>{copy.navigating.findingIndicator}</P>
             <Tip>
               Press <Key>f</Key> to jump straight to indicator search.
-            </Tip>
-
-            {/* ── Comparing neighborhoods ──────────────────────────── */}
-            <H2 id="comparing">Comparing neighborhoods</H2>
-
-            <P>{copy.comparing.p1}</P>
-            <P>{copy.comparing.p2}</P>
-            <P>{copy.comparing.p3}</P>
-
-            <Tip>
-              The comparison is saved in the page URL, so you can share a direct link
-              to a specific two-neighborhood comparison.
             </Tip>
 
             {/* ── Non-obvious interactions ─────────────────────────── */}
@@ -208,24 +279,6 @@ export default async function AboutPage() {
               shortcuts — you can also turn the shortcuts off there.
             </Tip>
 
-            {/* ── Understanding the data ───────────────────────────── */}
-            <H2 id="data">Understanding the data</H2>
-
-            <H3>Community districts</H3>
-            <P>{copy.understandingData.communityDistricts}</P>
-
-            <H3>Indicators</H3>
-            <P>{copy.understandingData.indicators}</P>
-
-            <H3>Comparisons</H3>
-            <P>{copy.understandingData.comparisons}</P>
-
-            <H3>Reading the charts</H3>
-            <P>{copy.understandingData.readingCharts}</P>
-
-            <H3>Small numbers and suppressed values</H3>
-            <P>{copy.understandingData.smallNumbers}</P>
-
             {/* ── Indicator detail panel ───────────────────────────── */}
             <H2 id="detail-panel">The indicator detail panel</H2>
 
@@ -240,72 +293,18 @@ export default async function AboutPage() {
             <H3>Source and notes</H3>
             <P>{copy.detailPanel.sourceDescription}</P>
 
-            {/* ── Saving and sharing ───────────────────────────────── */}
-            <H2 id="sharing">Saving and sharing</H2>
-
-            <P>{copy.sharing.intro}</P>
-
-            <H3>Download the data</H3>
-            <P>{copy.sharing.data}</P>
-
-            <H3>Download or embed a chart</H3>
-            <P>{copy.sharing.export}</P>
-
-            <H3>Share a link</H3>
-            <P>{copy.sharing.links}</P>
-
-            <H3>Print a full profile</H3>
-            <P>{copy.sharing.print}</P>
-
-            <H3>Other languages</H3>
-            <P>{copy.sharing.language}</P>
-
-            {/* ── Data sources ─────────────────────────────────────── */}
-            <H2 id="sources">Data and methods</H2>
-
-            <P>{copy.dataSources.p1}</P>
-            <P>
-              For full methodology, data definitions, and source documentation, refer to the{' '}
-              <a
-                href={copy.dataSources.sourceLink.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 underline underline-offset-2"
-              >
-                {copy.dataSources.sourceLink.text}
-              </a>
-              .
-            </P>
-
             {/* ── Footer nav ───────────────────────────────────────── */}
-            <div className="mt-12 pt-6 border-t border-gray-100">
-              <Link href="/" className="text-sm text-blue-600 hover:text-blue-800 transition-colors">
-                ← Back to neighborhood profiles
-              </Link>
+            <div className="mt-12 pt-6 border-t border-gray-100 md:hidden">
+              <BackToProfileLink />
             </div>
 
           </div>
 
           {/* Right — keyboard shortcuts reference */}
-          <aside className="hidden lg:block">
-            <div className="sticky top-32">
-              <div className="bg-gray-50 border border-gray-200 rounded-xl px-5 py-4">
-                <p className="text-sm font-semibold text-gray-600 mb-3">
-                  Keyboard shortcuts
-                </p>
-                {SHORTCUTS.map(s => (
-                  <ShortcutRow key={s.keys.join('+')} keys={s.keys} description={s.description} />
-                ))}
-                <p className="text-xs text-gray-600 leading-snug mt-3">
-                  Shortcuts work anywhere outside a text field. You can turn them off from the
-                  ? menu at the top of any profile page; Esc keeps working either way.
-                </p>
-              </div>
-            </div>
-          </aside>
 
         </div>
       </article>
+      <HydrationSignal />
     </PageLayout>
   );
 }
