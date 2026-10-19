@@ -27,7 +27,7 @@
       "intro": "Social and economic factors shape the conditions in which people live, work, and age. Indicators in this category reflect the economic pressures, safety, and educational opportunities available to residents across NYC neighborhoods.",
       "sections": [
         {
-          "id": "community-safety",
+          "id": "community-conditions",
           "label": "Community conditions",
           "rows": [
             {
@@ -43,7 +43,7 @@
           "bespokeSections": []
         },
         {
-          "id": "economic-conditions",
+          "id": "economic",
           "label": "Economic",
           "rows": [
             {
@@ -114,7 +114,7 @@
           "bespokeSections": []
         },
         {
-          "id": "food-environment",
+          "id": "food",
           "label": "Food",
           "rows": [
             {
@@ -151,7 +151,7 @@
           "bespokeSections": []
         },
         {
-          "id": "transportation-safety",
+          "id": "transport-and-safety",
           "label": "Transport & safety",
           "rows": [
             {
@@ -171,7 +171,7 @@
       "intro": "Access to affordable, high-quality health care is essential to keeping communities healthy. These indicators measure insurance coverage, unmet need, health care utilization patterns, and preventive service uptake across NYC neighborhoods.",
       "sections": [
         {
-          "id": "health-care-access",
+          "id": "access-to-care",
           "label": "Access to care",
           "rows": [
             {
@@ -184,7 +184,7 @@
           "bespokeSections": []
         },
         {
-          "id": "injury-hospitalizations",
+          "id": "injury-and-hospitalization",
           "label": "Injury & hospitalization",
           "rows": [
             {
@@ -212,7 +212,7 @@
       ]
     },
     {
-      "id": "maternal-child-health",
+      "id": "family-and-child-health",
       "label": "Family & child health",
       "intro": "The health of mothers and children reflects the quality and equity of care in a neighborhood. These indicators capture outcomes during pregnancy, birth, and early childhood across NYC community districts.",
       "sections": [
@@ -233,7 +233,7 @@
           "bespokeSections": []
         },
         {
-          "id": "infant-child",
+          "id": "infant-and-child",
           "label": "Infant & child",
           "rows": [
             {
@@ -251,12 +251,12 @@
       ]
     },
     {
-      "id": "mental-health-substance-use",
+      "id": "mental-health-and-substance-use",
       "label": "Mental health & substance use",
       "intro": "",
       "sections": [
         {
-          "id": "mental-wellness",
+          "id": "mental-health",
           "label": "Mental health",
           "rows": [
             {

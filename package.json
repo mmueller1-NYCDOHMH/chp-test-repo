@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "copy": "node scripts/build-copy.js",
-    "predev": "node scripts/build-copy.js",
+    "predev": "node scripts/build-copy.js && node scripts/publish-data-downloads.js",
     "dev": "next dev",
-    "prebuild": "node scripts/fetch-content.js && node scripts/build-copy.js",
+    "prebuild": "node scripts/fetch-content.js && node scripts/build-copy.js && node scripts/publish-data-downloads.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

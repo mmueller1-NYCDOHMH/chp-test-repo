@@ -2,15 +2,19 @@
   command   = "npm run build"
   publish   = ".next"
 
+# Root → default neighborhood profile, as a real server-side redirect on
+# Netlify staging (no blank page while JS loads). app/page.js keeps a static
+# meta-refresh fallback for hosts without redirect rules. Keep the target in
+# sync with DEFAULT_NEIGHBORHOOD_ID in src/lib/utils/constants.js.
+[[redirects]]
+  from   = "/"
+  to     = "/neighborhood/woodside-and-sunnyside"
+  status = 302
+  force  = true
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Environment variables required at runtime (set these in Netlify dashboard):
-#
-#   NYC_GEOCLIENT_KEY   — server-only API key for the geocode proxy route
-#                         (/app/api/geocode/route.js). Use this name, NOT
-#                         NEXT_PUBLIC_NYC_GEOCLIENT_KEY, so the key stays
-#                         out of the client bundle.
-#
-# How to set them:
-#   Netlify dashboard → Site → Site configuration → Environment variables
+# No runtime environment variables are needed: the address search runs in the
+# browser against NYC GeoSearch (keyless) since 2026-10-02, and the old
+# /api/geocode proxy (which used NYC_GEOCLIENT_KEY) was removed 2026-10-13.
