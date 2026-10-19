@@ -26,6 +26,7 @@ import Footer from './Footer';
 import TopicNav from './TopicNav';
 import StickyContextBar from './StickyContextBar';
 import StickyOffsetSync from './StickyOffsetSync';
+import NeighborhoodSwitchKeeper from './NeighborhoodSwitchKeeper';
 import MobileCategoryPager from './MobileCategoryPager';
 import FlyoutShell from '@/components/core/FlyoutShell';
 import BackToTopButton, { BackToTopButtonMobile } from '@/components/controls/BackToTopButton';
@@ -35,7 +36,7 @@ import { getNeighborhoods } from '@/lib/data/getNeighborhoods';
 import { getIndicatorSummaries } from '@/lib/data/getIndicatorSummaries';
 import { loadOverviewHeroConfig } from '@/lib/data/loadSectionIndicators';
 
-export default async function PageLayout({ config, children, pageLabel, pageNav }) {
+export default async function PageLayout({ config, children, pageLabel, pageNav, sidebarContent }) {
   const neighborhoods = await getNeighborhoods();
 
   // At-a-glance keys come from the copy deck's "At a glance" rows.
@@ -71,6 +72,7 @@ export default async function PageLayout({ config, children, pageLabel, pageNav 
             neighborhoods={neighborhoods}
             indicatorSummaries={indicatorSummaries}
             pageNav={pageNav}
+            sidebarContent={sidebarContent}
           />
 
           {/* Main content */}
@@ -98,6 +100,10 @@ export default async function PageLayout({ config, children, pageLabel, pageNav 
               {/* A11Y: publishes the sticky bars' combined height as
                   --chp-sticky-offset for scroll-padding-top (globals.css). */}
               <StickyOffsetSync />
+
+              {/* Keep-my-place on neighborhood switches: restores the reader's
+                  spot, shows a "Now showing …" pill, announces the change. */}
+              <NeighborhoodSwitchKeeper neighborhoods={neighborhoods} />
 
               {/* Page body */}
               <main

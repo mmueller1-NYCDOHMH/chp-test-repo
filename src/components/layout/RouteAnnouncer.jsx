@@ -31,6 +31,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
+import LiveText from '@/components/content/LiveText'; // translatable live text (checklist #34)
+import { isKeepingPlace } from '@/lib/utils/neighborhoodSwitch';
 export default function RouteAnnouncer() {
   const pathname = usePathname();
   const [message, setMessage] = useState('');
@@ -41,7 +43,12 @@ export default function RouteAnnouncer() {
       isFirstRender.current = false;
       return;
     }
+    // Keep-my-place neighborhood switch (2026-10-14): NeighborhoodSwitchKeeper
+    // announces "Now showing data for …" and deliberately leaves focus on the
+    // selector, so skip the page-change announcement + focus-to-heading.
+    if (isKeepingPlace(pathname)) return;
     const timer = setTimeout(() => {
+      if (isKeepingPlace(pathname)) return;
       setMessage(document.title ? `Navigated to ${document.title}` : 'Page changed');
 
       // A11Y (2026-09-26, WCAG 2.4.3): move focus to the new page's main
@@ -66,7 +73,7 @@ export default function RouteAnnouncer() {
 
   return (
     <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-      {message}
+      <LiveText>{message}</LiveText>
     </div>
   );
 }

@@ -20,7 +20,7 @@ import { baseStyle, hoverStyle, selectedStyle, comparisonStyle } from './mapStyl
  *     mobile (mouseover doesn't fire there); click calls onSelect.
  * Part of the 2026-09-04 split of NeighborhoodMap.jsx.
  */
-export function useMapHoverInteractions({ geoLayerRef, hoveredLayerRef, selectedIdRef, comparisonIdRef, geo, onSelect }) {
+export function useMapHoverInteractions({ geoLayerRef, modalGeoLayerRef, hoveredLayerRef, selectedIdRef, comparisonIdRef, geo, onSelect }) {
   const [hoveredDistrict, setHoveredDistrict] = useState(null);
   // One-time hint surfacing the map↔chart hover sync feature
   const [showMapHint, setShowMapHint] = useState(false);
@@ -35,6 +35,39 @@ export function useMapHoverInteractions({ geoLayerRef, hoveredLayerRef, selected
       if (!localStorage.getItem('chp_map_hint_seen')) setShowMapHint(true);
     } catch { /* localStorage unavailable */ }
   }, []);
+
+  // ── Clear hover when the window loses the pointer (QA row 13, 2026-10-12) ──
+  // Leaflet only un-hovers a district on its own `mouseout`. Switching to
+  // another tab/window (or opening the flyout over the map) never sends one,
+  // so the hovered district, its name overlay and the navy chart highlights
+  // stayed stuck. Reset everything on window blur, tab hide, or the pointer
+  // leaving the page.
+  useEffect(() => {
+    function clearHover() {
+      const prev = hoveredLayerRef.current;
+      if (prev) {
+        const prevFid = slugify(prev.feature?.properties?.GEONAME ?? '');
+        const sid = selectedIdRef.current;
+        const cid = comparisonIdRef.current;
+        if (sid && prevFid === sid)      prev.setStyle(selectedStyle());
+        else if (cid && prevFid === cid) prev.setStyle(comparisonStyle());
+        else                             prev.setStyle(baseStyle());
+        hoveredLayerRef.current = null;
+      }
+      setHoveredDistrict(null);
+      window.dispatchEvent(new CustomEvent('chp:map-hover', { detail: { geoId: null, name: null } }));
+    }
+    const onVisibility = () => { if (document.hidden) clearHover(); };
+    const onDocLeave = (e) => { if (!e.relatedTarget) clearHover(); };
+    window.addEventListener('blur', clearHover);
+    document.addEventListener('visibilitychange', onVisibility);
+    document.documentElement.addEventListener('mouseleave', onDocLeave);
+    return () => {
+      window.removeEventListener('blur', clearHover);
+      document.removeEventListener('visibilitychange', onVisibility);
+      document.documentElement.removeEventListener('mouseleave', onDocLeave);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps — refs only
 
   function onEachFeature(feature, layer) {
     const fid          = slugify(feature.properties.GEONAME);
@@ -138,13 +171,13 @@ export function useMapHoverInteractions({ geoLayerRef, hoveredLayerRef, selected
       else                                                    layer.setStyle(baseStyle());
 
       // Re-raise selected/comparison so they're never covered by the hovered district
-      const mainLayer = geoLayerRef.current;
-      if (mainLayer) {
-        mainLayer.eachLayer(l => {
+      // (both the sidebar map and the expanded-map copy)
+      [geoLayerRef.current, modalGeoLayerRef?.current].forEach(group => {
+        group?.eachLayer(l => {
           const lfid = slugify(l.feature.properties.GEONAME);
           if ((sid && lfid === sid) || (cid && lfid === cid)) l.bringToFront();
         });
-      }
+      });
 
       setHoveredDistrict(null);
       window.dispatchEvent(new CustomEvent('chp:map-hover', {

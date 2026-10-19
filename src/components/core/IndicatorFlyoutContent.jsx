@@ -48,6 +48,8 @@ import { useComparison } from '@/lib/context/ComparisonContext';
 import VegaLiteChart from '@/components/charts/VegaLiteChart';
 import RankDotStrip from '@/components/data-display/RankDotStrip';
 import { CHOROPLETH_STOPS, SELECTED, CITYWIDE } from '@/lib/charts/chartColors';
+import IconHint from '@/components/charts/expandableChartCard/IconHint';
+import ChartDataTable from '@/components/charts/expandableChartCard/ChartDataTable';
 
 const ChoroplethMap = dynamic(
   () => import('@/components/maps/ChoroplethMap'),
@@ -168,7 +170,11 @@ export default function IndicatorFlyoutContent({
       .sort((a, b) => Number(a.Value) - Number(b.Value));
   }, [indicatorData]);
 
-  const hasMap = cdRows.length > 0;
+  // Multi-indicator cards (Avertable Deaths, Educational Attainment, pyramids,
+  // Leading Causes of Premature Death) pass their own `chart` instead of a
+  // compactSpec. A choropleth of whichever single indicator happens to be in
+  // indicatorData would misrepresent the card, so no map for them (2026-10-14).
+  const hasMap = !chart && cdRows.length > 0;
 
   const rankData = useMemo(() => {
     if (!cdRows.length || geoId == null) return null;
@@ -235,7 +241,9 @@ export default function IndicatorFlyoutContent({
 
   return (
     <>
-      <div className="overflow-y-auto flex-1 min-h-0 overscroll-contain border-t border-gray-200">
+      {/* data-flyout-export: the Details PNG/Copy export captures this whole
+          body — title, context, map, mini bar, source (2026-10-14). */}
+      <div data-flyout-export className="overflow-y-auto flex-1 min-h-0 overscroll-contain border-t border-gray-200">
 
         {/* ── 1. Title + context sentence (above map) ──────────────────────── */}
         {/* Context only — the comparison half of the copy lives below the map
@@ -341,6 +349,14 @@ export default function IndicatorFlyoutContent({
                 How this neighborhood compares
               </p> */}
               <VegaLiteChart spec={compactSpec} onViewReady={handleMiniBarViewReady} />
+              {/* Screen-reader table for the card's chart — lives here (and in
+                  the expanded chart) instead of on every card (2026-10-13). */}
+              <ChartDataTable
+                title={title}
+                data={indicatorData}
+                geoId={geoId}
+                compGeoId={comparisonNeighborhood?.geoId ?? null}
+              />
             </div>
           )}
 
@@ -369,13 +385,15 @@ export default function IndicatorFlyoutContent({
                 <span className="font-medium text-gray-600">Source:</span> {sourceClean}
               </p>
               {hasNotes && (
-                <button
-                  onClick={() => setNotesOpen(true)}
-                  aria-label="View source notes"
-                  className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shrink-0 text-xs font-semibold"
-                >
-                  ?
-                </button>
+                <IconHint label="View source notes">
+                  <button
+                    onClick={() => setNotesOpen(true)}
+                    aria-label="View source notes"
+                    className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shrink-0 text-xs font-semibold"
+                  >
+                    ?
+                  </button>
+                </IconHint>
               )}
             </div>
           )}

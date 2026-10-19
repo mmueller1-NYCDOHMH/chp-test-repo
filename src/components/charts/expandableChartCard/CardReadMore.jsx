@@ -30,7 +30,7 @@
  *             the parent card already pads its content (pyramid chart card).
  */
 
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useOverflowClamp } from './useOverflowClamp';
 import SubtitleWithGlossary from './SubtitleWithGlossary';
 
@@ -39,6 +39,29 @@ export default function CardReadMore({ text, onMore, padded = true }) {
   // Re-measured on resize: a card that fits on desktop can overflow once the
   // grid reflows to a narrower column.
   const clamped = useOverflowClamp(textRef, { deps: [text], watchResize: true });
+
+  // A11Y (2026-10-13, checklist #13 / WCAG 2.4.7 + 2.4.11): glossary-term
+  // buttons in the clamped-off part of the text are out of sight, so take
+  // them out of the Tab order (they could otherwise receive invisible
+  // focus). Screen readers still read the full text, and the full text with
+  // working terms is in the Details flyout. Re-checked on clamp change and
+  // resize, since a different width changes which terms are visible.
+  useEffect(() => {
+    const el = textRef.current;
+    if (!el) return;
+    function sync() {
+      const box = el.getBoundingClientRect();
+      el.querySelectorAll('button').forEach((btn) => {
+        const r = btn.getBoundingClientRect();
+        const hidden = r.top >= box.bottom - 1 || r.bottom > box.bottom + 1;
+        if (hidden) btn.setAttribute('tabindex', '-1');
+        else btn.removeAttribute('tabindex');
+      });
+    }
+    const raf = requestAnimationFrame(sync);
+    window.addEventListener('resize', sync);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', sync); };
+  }, [text, clamped]);
 
   if (!text) return null;
 
@@ -67,7 +90,7 @@ export default function CardReadMore({ text, onMore, padded = true }) {
                 type="button"
                 onClick={onMore}
                 tabIndex={-1}
-                className="ml-1 rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-medium leading-none text-gray-600 shadow-sm transition-colors hover:bg-gray-300 hover:text-gray-800 focus-visible:outline-none"
+                className="relative ml-1 after:absolute after:inset-x-0 after:-inset-y-[5px] after:content-[''] rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-medium leading-none text-gray-700 shadow-sm transition-colors hover:bg-gray-300 hover:text-gray-800 focus-visible:outline-none"
               >
                 read more
               </button>

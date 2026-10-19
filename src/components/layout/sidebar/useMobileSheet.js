@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { inertOthers } from '@/lib/utils/inertOthers';
 
 /**
@@ -27,6 +28,9 @@ const SHEET_OPEN_HEIGHT_RATIO = 0.85; // matches the previous fixed 85vh
 const SAFE_AREA_GAP           = 60;   // px gap to preserve below the notch when expanded
 const FAST_SWIPE_VELOCITY     = 0.5;  // px/ms — above this counts as a "quick" swipe
 const TAP_MOVEMENT_THRESHOLD  = 8;    // px — below this, a touch counts as a tap
+// QA rows 19/24/28 (2026-10-12):
+const PEEK_HEIGHT_RATIO       = 0.5;  // after a pick, drop to half height so the page updating behind is visible
+const MIN_KEEP_HEIGHT_RATIO   = 0.3;  // a slow drag released below this sheet height closes it instead of leaving a sliver
 
 export function useMobileSheet() {
   // isSheetOpen = user intent; isSheetMounted keeps DOM alive during exit anim.
@@ -66,6 +70,18 @@ export function useMobileSheet() {
   function getMinTop()       { return safeAreaTop + SAFE_AREA_GAP; }
   function getMaxTop()       { return getWindowHeight(); }
   function currentTop()      { return sheetTop != null ? sheetTop : getOpenTop(); }
+  function getPeekTop()      { return getWindowHeight() * (1 - PEEK_HEIGHT_RATIO); }
+
+  // After a neighborhood / comparison is picked: ease down to half height so
+  // the page behind can be seen updating (QA rows 19/24, replaces the old
+  // "Now showing… / Close and view profile" prompt). Never moves the sheet UP.
+  function peekSheet() {
+    if (!isSheetOpen) return;
+    const target = getPeekTop();
+    if (currentTop() >= target) return;
+    setTransitionMs(300);
+    setSheetTop(target);
+  }
 
   function openSheet() {
     // Remember the opener (the TopicNav pill / map button) for focus return.
@@ -87,6 +103,25 @@ export function useMobileSheet() {
     window.addEventListener('chp:open-mobile-sheet', onOpenMobileSheet);
     return () => window.removeEventListener('chp:open-mobile-sheet', onOpenMobileSheet);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Keep the history sentinel on top across route changes (2026-10-07) ────
+  // openSheet() pushes a sentinel entry so Back closes the sheet. Picking a
+  // neighborhood while the sheet is open router.push()es a NEW entry on top of
+  // that sentinel: [old, old(sentinel), new]. closeSheet() then called
+  // history.back(), which no longer popped the sentinel — it popped the new
+  // neighborhood and landed back on the old one (the "resets to the previous
+  // neighborhood when I close the picker" bug). Re-push the sentinel on top of
+  // the new route so closing / Back unwinds to the neighborhood just picked.
+  const pathname    = usePathname();
+  const prevPathRef = useRef(pathname);
+  useEffect(() => {
+    if (prevPathRef.current === pathname) return;
+    prevPathRef.current = pathname;
+    // Only while the sheet is open with a live sentinel. (A Back/Forward
+    // navigation clears hasPushedHistoryRef in onPopState before this runs.)
+    if (!hasPushedHistoryRef.current) return;
+    window.history.pushState({ chpMobileSheet: true }, '');
+  }, [pathname]);
 
   // Animates the sheet down and off-screen, then unmounts it. Doesn't touch
   // browser history — used for real back-navigation, where the history entry
@@ -152,7 +187,10 @@ export function useMobileSheet() {
     const raf = requestAnimationFrame(() => {
       // A11Y (2026-09-28): make the rest of the page inert while the sheet
       // is open, so screen reader virtual-cursor/swipe can't reach it.
-      releaseInertRef.current = inertOthers(sheetRef.current);
+      // Inert from the sheet's WRAPPER (backdrop + sheet), not the sheet:
+      // inerting the backdrop (the sheet's sibling) made it ignore taps, so
+      // tapping outside the sheet couldn't close it (QA row 28, 2026-10-12).
+      releaseInertRef.current = inertOthers(sheetRef.current?.parentElement ?? sheetRef.current);
       const target = sheetRef.current?.querySelector('[data-sheet-autofocus]') ?? focusables()[0];
       target?.focus({ preventScroll: true });
     });
@@ -237,9 +275,12 @@ export function useMobileSheet() {
       return;
     }
 
-    // Slow downward drag — leave the sheet exactly where the finger lifted.
+    // Slow downward drag — leave the sheet where the finger lifted, unless
+    // that leaves only a sliver: then close it (QA row 28, 2026-10-12 — the
+    // sheet could be dragged almost but not quite closed and got stuck as a
+    // thin strip over the page).
     const releaseTop = Math.min(getMaxTop(), Math.max(getMinTop(), d.startTop + netDelta));
-    if (releaseTop >= getMaxTop() - 1) {
+    if (getMaxTop() - releaseTop < getWindowHeight() * MIN_KEEP_HEIGHT_RATIO) {
       closeSheet({ fast: false });
     } else {
       setTransitionMs(0);
@@ -249,6 +290,7 @@ export function useMobileSheet() {
 
   return {
     sheetRef,
+    isSheetOpen,
     isSheetMounted,
     isDragging,
     transitionMs,
@@ -257,6 +299,7 @@ export function useMobileSheet() {
     getMaxTop,
     safeAreaProbeRef,
     closeSheet,
+    peekSheet,
     handleHandlePointerDown,
     handleHandlePointerMove,
     handleHandlePointerEnd,

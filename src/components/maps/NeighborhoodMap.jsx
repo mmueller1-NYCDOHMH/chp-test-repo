@@ -72,6 +72,8 @@ export default function NeighborhoodMap({ onSelect }) {
   const mapRef          = useRef(null); // Leaflet L.Map instance
   const geoLayerRef     = useRef(null); // main map GeoJSON layer group
   const hoveredLayerRef = useRef(null); // currently hovered Leaflet layer
+  const modalMapRef      = useRef(null); // expanded-map L.Map instance
+  const modalGeoLayerRef = useRef(null); // expanded-map GeoJSON layer group
 
   // Optimistic: reflects a just-clicked neighborhood immediately instead of
   // waiting for the route change to commit (see pendingNeighborhood.js).
@@ -82,11 +84,11 @@ export default function NeighborhoodMap({ onSelect }) {
   const { leaflet, geo, geoError, mapVisible, fetchGeo } = useGeoJsonLoader();
 
   const { selectedIdRef, comparisonIdRef, initialStyle, handleRecenter } = useMapSelectionSync({
-    leaflet, geo, selectedId, comparisonId, mapRef, geoLayerRef, hoveredLayerRef,
+    leaflet, geo, selectedId, comparisonId, mapRef, geoLayerRef, modalGeoLayerRef, hoveredLayerRef,
   });
 
   const { hoveredDistrict, showMapHint, onEachFeature } = useMapHoverInteractions({
-    geoLayerRef, hoveredLayerRef, selectedIdRef, comparisonIdRef, geo, onSelect,
+    geoLayerRef, modalGeoLayerRef, hoveredLayerRef, selectedIdRef, comparisonIdRef, geo, onSelect,
   });
 
   // ── Error state ───────────────────────────────────────────────────────────
@@ -129,6 +131,7 @@ export default function NeighborhoodMap({ onSelect }) {
   const modalGeoLayer = geo ? (
     <GeoJSON
       key="modal-geolayer"
+      ref={modalGeoLayerRef}
       data={geo}
       style={initialStyle}
       onEachFeature={onEachFeature}
@@ -144,7 +147,7 @@ export default function NeighborhoodMap({ onSelect }) {
         {/* First-visit hint — surfaces the map↔chart hover sync feature */}
         {showMapHint && !hoveredDistrict && (
           <div
-            className="absolute top-2 left-2 right-10 z-[1000] pointer-events-none"
+            className={`absolute top-2 left-2 ${selectedId ? 'right-[76px]' : 'right-10'} z-[1000] pointer-events-none`}
             aria-hidden="true"
           >
             <div className="bg-gray-900/85 text-white text-xs px-2.5 py-1.5 rounded-md leading-snug flex items-start gap-1.5">
@@ -230,6 +233,20 @@ export default function NeighborhoodMap({ onSelect }) {
             aria-label="Expanded neighborhood map"
             className="relative w-[80vw] h-[80vh] bg-white rounded-xl overflow-hidden shadow-2xl"
           >
+            {/* Re-center in the expanded map too (QA row 41, 2026-10-12) —
+                it had no way back after panning/zooming. */}
+            {selectedId && (
+              <button
+                onClick={() => handleRecenter(modalMapRef.current)}
+                aria-label="Re-center on selected district"
+                className="absolute top-3 right-[104px] z-[9100] inline-flex items-center justify-center h-8 w-8 text-gray-600 bg-white hover:text-brand border border-gray-200 hover:border-brand hover:bg-brand-tint rounded-md shadow transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <circle cx="12" cy="12" r="3" />
+                  <path strokeLinecap="round" d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                </svg>
+              </button>
+            )}
             <button
               data-modal-autofocus
               onClick={() => setIsExpanded(false)}
@@ -242,6 +259,7 @@ export default function NeighborhoodMap({ onSelect }) {
               </svg>
             </button>
             <MapContainer
+              ref={modalMapRef}
               center={modalInitialView?.center ?? NYC_CENTER}
               zoom={modalInitialView?.zoom ?? NYC_ZOOM}
               minZoom={NYC_ZOOM}

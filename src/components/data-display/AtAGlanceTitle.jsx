@@ -19,6 +19,10 @@
  *                       these same two neighborhoods everywhere else (charts,
  *                       dots, map) — see chartColors.js.
  *
+ * HEADING LEVEL: h2 — sits directly under the page h1 (a11y audit 2026-10-08
+ * flagged the old h3 as a skipped level). The pyramid chart titles under
+ * it are h3.
+ *
  * PROPS:
  *   neighborhood — primary neighborhood name (e.g. "Woodside")
  */
@@ -30,18 +34,18 @@ export default function AtAGlanceTitle({ neighborhood = 'Neighborhood' }) {
 
   if (comparisonNeighborhood) {
     return (
-      <h3 className="text-lg font-semibold text-gray-900 leading-snug">
+      <h2 className="text-lg font-semibold text-gray-900 leading-snug">
         <span className="text-selected">{neighborhood}</span>
         {' and '}
         <span className="text-comparison">{comparisonNeighborhood.name}</span>
         {' at a Glance'}
-      </h3>
+      </h2>
     );
   }
 
   return (
-    <h3 className="text-lg font-semibold text-gray-900">
+    <h2 className="text-lg font-semibold text-gray-900">
       {neighborhood} at a Glance
-    </h3>
+    </h2>
   );
 }

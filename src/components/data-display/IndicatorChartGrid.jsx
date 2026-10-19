@@ -138,45 +138,8 @@ function resolveFlyoutCopy({ indicatorKey, data, geoId, neighborhoodName, title 
   };
 }
 
-/**
- * Build an accessible text description for a geographic bar chart.
- * Used as the aria-describedby content in ExpandableChartCard.
- */
-function buildAriaDescription({ data, title, subtitle, geoId }) {
-  if (!data.length) return '';
-
-  const cdRows      = data.filter(r => r.GeoType === 'CD');
-  const nycRow      = data.find(r => r.GeoID === 0);
-  const selectedRow = geoId ? data.find(r => r.GeoID === geoId) : null;
-
-  // Suppressed/missing rows carry a null Value (see the suppression note in
-  // the sitewide audit / data-team open items) and a zero-CD-rows indicator
-  // is plausible mid-migration — both used to reach Math.min/max with an
-  // empty or null-filled array, producing "Values range from Infinity to
-  // -Infinity" in the accessible description. Filter to real numbers and
-  // skip the range sentence entirely when none remain.
-  //
-  // A11Y (2026-09-26): the range now reads from the min/max ROWS'
-  // DisplayValue (e.g. "8%") instead of the raw Value. Raw values are 0–1
-  // fractions for percent indicators, so screen readers used to hear
-  // "Values range from 0.08 to 0.41" next to "citywide average: 23%".
-  // Naming the lowest/highest district also gives a concrete finding.
-  const valued = cdRows.filter(r => typeof r.Value === 'number' && !Number.isNaN(r.Value));
-  const cleanName = (g) => String(g ?? '').replace(/\s*\(CD\d+\)/i, '').trim();
-
-  let desc = title;
-  if (subtitle) desc += `. ${subtitle}`;
-  desc += `. Bar chart comparing ${cdRows.length} NYC community districts.`;
-  if (valued.length) {
-    const lo = valued.reduce((a, b) => (b.Value < a.Value ? b : a));
-    const hi = valued.reduce((a, b) => (b.Value > a.Value ? b : a));
-    desc += ` Values range from ${lo.DisplayValue ?? lo.Value} (${cleanName(lo.Geography)}) to ${hi.DisplayValue ?? hi.Value} (${cleanName(hi.Geography)}).`;
-  }
-  if (nycRow)      desc += ` NYC citywide average: ${nycRow.DisplayValue}.`;
-  if (selectedRow) desc += ` Selected neighborhood (${selectedRow.Geography}): ${selectedRow.DisplayValue}.`;
-
-  return desc;
-}
+// buildAriaDescription() removed 2026-10-13 — replaced by lib/charts/chartSummary.js,
+// built client-side in ExpandableChartCard so it includes the comparison neighborhood.
 
 export default function IndicatorChartGrid({ charts = [], context, sectionLabel, children }) {
   const geoId            = context?.geoId ?? null;
@@ -258,7 +221,6 @@ export default function IndicatorChartGrid({ charts = [], context, sectionLabel,
       higherIsBetter:  meta?.higherIsBetter ?? null,
       indicatorData:   data,
       geoId,
-      ariaDescription: buildAriaDescription({ ...base, subtitle: displaySubtitle }),
       // PERF (2026-09-29): Vega specs are no longer built here. They're derived
       // entirely from `indicatorData` (already sent to the client for the
       // flyout + CSV download) plus these few options, so shipping them too
@@ -302,7 +264,6 @@ export default function IndicatorChartGrid({ charts = [], context, sectionLabel,
           relatedIndicators={relatedIndicators}
           indicatorData={chart.indicatorData}
           geoId={chart.geoId}
-          ariaDescription={chart.ariaDescription}
           sectionLabel={sectionLabel}
         />
         );

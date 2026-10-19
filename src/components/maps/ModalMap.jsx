@@ -180,6 +180,38 @@ export default function ModalMap({ neighborhoods = [], hoveredId, visitedIds, on
     };
   }, []); // intentionally empty — map is created once
 
+  // ── Clear hover when the window loses the pointer (QA row 13, 2026-10-12) ──
+  // Leaflet only closes a sticky tooltip / un-hovers a district on that
+  // district's own `mouseout`. Clicking into another tab or window and coming
+  // back never sends one, so the old name box stayed up next to the new one.
+  // On window blur, tab hide, or the pointer leaving the page: close every
+  // tooltip and clear the hover (parent's hoveredId too, via onHover(null)).
+  useEffect(() => {
+    function clearHover() {
+      Object.entries(layerRefs.current).forEach(([fid, layer]) => {
+        if (!layer?.setStyle) return;
+        layer.closeTooltip?.();
+        const geoId   = geoIdRefs.current[fid];
+        const palette = visitedIdsRef.current?.has(fid) && geoId
+          ? BOROUGH_PALETTE[Math.floor(geoId / 100)] : null;
+        layer.setStyle(palette
+          ? { ...BASE_STYLE, fillColor: palette.fill, color: palette.stroke, weight: 1.5, fillOpacity: 0.55 }
+          : BASE_STYLE);
+      });
+      onHoverRef.current?.(null);
+    }
+    const onVisibility = () => { if (document.hidden) clearHover(); };
+    const onDocLeave = (e) => { if (!e.relatedTarget) clearHover(); };
+    window.addEventListener('blur', clearHover);
+    document.addEventListener('visibilitychange', onVisibility);
+    document.documentElement.addEventListener('mouseleave', onDocLeave);
+    return () => {
+      window.removeEventListener('blur', clearHover);
+      document.removeEventListener('visibilitychange', onVisibility);
+      document.documentElement.removeEventListener('mouseleave', onDocLeave);
+    };
+  }, []);
+
   // ── Sync highlight styles when hoveredId or visitedIds prop changes ─────────
   useEffect(() => {
     Object.entries(layerRefs.current).forEach(([fid, layer]) => {

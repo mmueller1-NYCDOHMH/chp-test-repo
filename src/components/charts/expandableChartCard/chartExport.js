@@ -156,7 +156,9 @@ export async function renderSpecToImage(spec, { width = 840, scale = 2, signals 
   document.body.appendChild(host);
   let view;
   try {
-    ({ view } = await embed(host, spec, { actions: false, renderer: 'svg', tooltip: false }));
+    const opts = { actions: false, renderer: 'svg', tooltip: false };
+    // Same Edge fallback as VegaLiteChart.jsx: retry with the no-eval interpreter.
+    ({ view } = await embed(host, spec, opts).catch(() => embed(host, spec, { ...opts, ast: true })));
     for (const [name, value] of Object.entries(signals)) {
       try { view.signal(name, value); } catch { /* signal not in this spec */ }
     }

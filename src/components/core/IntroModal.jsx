@@ -62,12 +62,13 @@
  *   lives in ./introModal/FeatureIcon.jsx — this file owns layout and the
  *   JSX tree.
  */
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import AddressSearch from '@/components/controls/AddressSearch';
 import { highlight } from '@/lib/utils/highlight';
+import { cdLabel } from '@/lib/utils/formatGeography';
 import FeatureIcon from './introModal/FeatureIcon';
 import { useIntroModalLifecycle, STORAGE_KEY } from './introModal/useIntroModalLifecycle';
 import { useNeighborhoodFilter } from './introModal/useNeighborhoodFilter';
@@ -87,6 +88,7 @@ export default function IntroModal({ neighborhoods = [] }) {
 
   const router   = useRouter();
   const inputRef = useRef(null);
+  const searchInputId = useId();
 
   const {
     isOpen,
@@ -271,6 +273,9 @@ export default function IntroModal({ neighborhoods = [] }) {
             {searchTab === 'neighborhood' && (
               <>
                 <div className="px-5 pt-5 pb-3 shrink-0">
+                  {/* Real <label> tied by id (a11y audit 2026-10-08, WCAG 3.3.2);
+                      visually hidden — the "By neighborhood" tab is the visible context. */}
+                  <label htmlFor={searchInputId} className="sr-only">{modalCopy.search.placeholder}</label>
                   <div className="relative">
                     <svg
                       className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none"
@@ -287,7 +292,7 @@ export default function IntroModal({ neighborhoods = [] }) {
                       onChange={(e) => setQuery(e.target.value)}
                       onKeyDown={handleInputKeyDown}
                       placeholder={modalCopy.search.placeholder}
-                      aria-label={modalCopy.search.placeholder}
+                      id={searchInputId}
                       role="combobox"
                       aria-expanded={flatFiltered.length > 0}
                       aria-autocomplete="list"
@@ -374,12 +379,14 @@ export default function IntroModal({ neighborhoods = [] }) {
                       return Object.entries(grouped).map(([borough, nhoods]) => (
                         // Mobile styling matches the Sidebar's "Find neighborhood"
                         // search (UnifiedSearch + NeighborhoodGroups, used in the
-                        // mobile bottom sheet): plain header, flat
+                        // mobile bottom sheet): sticky tinted borough band, flat
                         // blue-50/blue-700 highlight, no rounding. Desktop (md+)
-                        // keeps this modal's own sticky header + brand-tint pill.
+                        // rounds the band and keeps the brand-tint pill. Rows are
+                        // ordered by CD number and labelled "Name (CD n)".
                         <div key={borough} className="md:mb-3">
-                          <div className="text-sm md:text-base font-semibold text-gray-600 md:text-gray-600
-                                          px-3 md:px-2 pt-2.5 md:pt-0 pb-1 md:mb-1 select-none md:sticky md:top-0 md:bg-white md:py-1">
+                          <div className="sticky top-0 z-10 text-sm md:text-base font-bold text-gray-900
+                                          bg-gray-100 border-y border-gray-200 md:border md:rounded-md
+                                          px-3 py-1.5 md:mb-1 select-none">
                             {borough}
                           </div>
                           {nhoods.map(n => {
@@ -404,6 +411,11 @@ export default function IntroModal({ neighborhoods = [] }) {
                                 ].join(' ')}
                               >
                                 {highlight(n.name, query)}
+                                {cdLabel(n) && (
+                                  <span className={isFocused || isHovered ? '' : 'text-gray-600'}>
+                                    {' '}{cdLabel(n)}
+                                  </span>
+                                )}
                               </li>
                             );
                           })}

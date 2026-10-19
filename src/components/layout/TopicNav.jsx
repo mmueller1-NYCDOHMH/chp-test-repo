@@ -58,6 +58,7 @@ import { useComparison } from '@/lib/context/ComparisonContext';
 import { useScrollSpy } from './topicNav/useScrollSpy';
 import { useDropdown } from './topicNav/useDropdown';
 import { useMobileTabTracking } from './topicNav/useMobileTabTracking';
+import { useOverflowFade } from './topicNav/useOverflowFade';
 
 export default function TopicNav({ neighborhoods = [] }) {
   // EXPERIMENTAL (mobile pseudo-pages) — see MobileCategoryContext.jsx.
@@ -97,6 +98,9 @@ export default function TopicNav({ neighborhoods = [] }) {
 
   // ── Mobile viewport + tab-scroll tracking ─────────────────────────────────
   const { isMobile, stuckSide, mobileTabRowRef, mobileCategoryBtnRefs } = useMobileTabTracking(activeCategoryId);
+
+  // ── Desktop overflow cue (QA row 86) ──────────────────────────────────────
+  const desktopNavFade = useOverflowFade();
 
   // ── Desktop dropdown ──────────────────────────────────────────────────────
   const {
@@ -217,7 +221,7 @@ export default function TopicNav({ neighborhoods = [] }) {
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setComparisonNeighborhood(null); }}
                   aria-label={`Remove comparison with ${comparisonNeighborhood.name}`}
-                  className="shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-amber-700 hover:text-amber-900 hover:bg-amber-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                  className="shrink-0 w-6 h-6 -my-1 flex items-center justify-center rounded-full text-amber-700 hover:text-amber-900 hover:bg-amber-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                 >
                   <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -356,8 +360,13 @@ export default function TopicNav({ neighborhoods = [] }) {
         </div>
 
         {/* ── Desktop: horizontal scrolling nav ───────────────────────────── */}
+        {/* Wrapper is the positioning context for the overflow fades/arrows
+            (QA row 86, 2026-10-12): when the categories don't all fit, a
+            white fade + chevron appears on the side with more to scroll to. */}
+        <div className="hidden md:block relative">
         <ul
-          className="hidden md:flex items-stretch px-4 overflow-x-auto scrollbar-none"
+          ref={desktopNavFade.ref}
+          className="flex items-stretch px-4 overflow-x-auto scrollbar-none"
           aria-label="Health topics"
         >
           {siteNav.map((category, index) => {
@@ -413,6 +422,45 @@ export default function TopicNav({ neighborhoods = [] }) {
             );
           })}
         </ul>
+          {desktopNavFade.canLeft && (
+            <div
+              className="absolute inset-y-0 left-0 bg-gradient-to-r pl-1 w-16 from-white via-white/90 to-transparent flex items-center justify-start pointer-events-none"
+            >
+              {/* Mouse convenience only: keyboard users reach every category
+                  by Tab (focus scrolls it into view), so no extra Tab stop. */}
+              <button
+                type="button"
+                tabIndex={-1}
+                aria-hidden="true"
+                onClick={() => desktopNavFade.scrollBy(-1)}
+                className="pointer-events-auto w-7 h-7 flex items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm text-gray-600 hover:text-brand hover:border-brand"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            </div>
+          )}
+          {desktopNavFade.canRight && (
+            <div
+              className="absolute inset-y-0 right-0 bg-gradient-to-l pr-1 w-16 from-white via-white/90 to-transparent flex items-center justify-end pointer-events-none"
+            >
+              {/* Mouse convenience only: keyboard users reach every category
+                  by Tab (focus scrolls it into view), so no extra Tab stop. */}
+              <button
+                type="button"
+                tabIndex={-1}
+                aria-hidden="true"
+                onClick={() => desktopNavFade.scrollBy(1)}
+                className="pointer-events-auto w-7 h-7 flex items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm text-gray-600 hover:text-brand hover:border-brand"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
       </nav>
 
       {/* ── Dropdown — rendered as fixed so it escapes any overflow context ──

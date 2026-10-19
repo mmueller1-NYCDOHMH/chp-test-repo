@@ -5,9 +5,9 @@ import { useState, useRef, useCallback, useEffect } from 'react';
  *
  * MOBILE GESTURES (drag handle only):
  * - Tap                  -> dismiss immediately (quick fly-down)
- * - Slow drag down       -> panel tracks the finger 1:1, no easing, and
- *                           simply pauses wherever the finger lifts off
- *                           (it does not auto-close or snap back)
+ * - Slow drag down       -> panel tracks the finger 1:1; on release it
+ *                           closes if pulled CLOSE_DISTANCE_PX or more,
+ *                           otherwise snaps back open (2026-10-12, QA row 49)
  * - Fast flick down      -> panel finishes a quick fly-down and dismisses,
  *                           even if released before reaching the bottom
  * - Swipe up             -> dragging up past the fully-open position expands
@@ -25,6 +25,10 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 const CLOSE_VELOCITY_PX_MS = 0.55;  // a downward release faster than this (px/ms) closes, regardless of distance
 const EXPAND_DISTANCE_PX   = 24;    // dragging up past this many px (beyond fully-open) expands the panel
 const QUICK_CLOSE_MS       = 220;   // duration of the "fly down and disappear" animation
+// QA row 49 (2026-10-12): a slow drag used to just pause the panel wherever
+// the finger lifted, so pulling the bar down never actually closed it. Now a
+// slow drag released this far down closes; anything shorter snaps back open.
+const CLOSE_DISTANCE_PX    = 120;
 
 export function useMobileDragSheet({ isMobile, isOpen, close }) {
   const [dragY, setDragY] = useState(0);          // live translateY offset (px) while open
@@ -131,9 +135,13 @@ export function useMobileDragSheet({ isMobile, isOpen, close }) {
       setIsExpanded(true);
       setDragYSynced(0);
     }
-    // Otherwise (a slow drag, in either direction) the panel simply stays
-    // wherever the finger left it — already reflected in dragY from the
-    // move handler, so there's nothing further to do here.
+    else if (state.offsetRaw >= CLOSE_DISTANCE_PX) {
+      // Slow drag pulled far enough down -> dismiss (QA row 49)
+      triggerQuickClose();
+    } else {
+      // Short slow drag -> snap back to fully open instead of hanging mid-way
+      setDragYSynced(0);
+    }
   }, [isDragging, triggerQuickClose, setDragYSynced]);
 
   // Keyboard equivalent for the handle (Enter/Space closes, arrows expand/collapse)

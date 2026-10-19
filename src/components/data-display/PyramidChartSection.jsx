@@ -34,7 +34,7 @@ import CompareToCityToggle             from '@/components/data-display/CompareTo
 // compareToCity (2026-09-28): optional controlled value. When passed, this
 // section hides its own switch and follows the parent's — used by
 // PrematureDeathChartsRow so the cause card + cancer card share one toggle.
-export default function PyramidChartSection({ charts = [], neighborhoodLabel, geoId, fillHeight = false, withDetails = false, compareToCity: controlledCompareToCity }) {
+export default function PyramidChartSection({ charts = [], neighborhoodLabel, geoId, fillHeight = false, withDetails = false, withExpand = false, compareToCity: controlledCompareToCity }) {
   const { comparisonNeighborhood } = useComparison();
   const [ownCompareToCity, setCompareToCity] = useState(false);
   const isControlled = typeof controlledCompareToCity === 'boolean';
@@ -83,6 +83,7 @@ export default function PyramidChartSection({ charts = [], neighborhoodLabel, ge
             valueSuffix={chart.valueSuffix}
             fillHeight={fillHeight}
             withDetails={withDetails}
+            withExpand={withExpand}
             indicatorKey={chart.indicatorKey}
             subtitle={chart.subtitle}
             narrative={chart.narrative}

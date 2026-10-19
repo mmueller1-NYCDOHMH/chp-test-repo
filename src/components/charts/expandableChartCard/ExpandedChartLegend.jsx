@@ -13,7 +13,10 @@
 import { buildLegendItems } from './chartCardUtils';
 
 export default function ExpandedChartLegend({ indicatorData, geoId, comparisonNeighborhood, className = 'px-7 pb-3' }) {
-  const items = buildLegendItems(indicatorData, geoId, comparisonNeighborhood);
+  // 2026-10-13 (per Morgan): Citywide / Borough / Selected / Comparison are
+  // now labeled inline on the chart (same as the card), so this key lists
+  // ONLY suppressed geographies — they have no bar to label.
+  const items = buildLegendItems(indicatorData, geoId, comparisonNeighborhood).filter(i => i.suppressed);
   if (!items.length) return null;
 
   return (

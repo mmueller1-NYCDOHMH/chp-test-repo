@@ -27,7 +27,7 @@ export default function CompareToCityToggle({ checked, onChange }) {
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 ${
-          checked ? 'bg-[var(--color-brand)] border-[var(--color-brand)]' : 'bg-gray-200 border-gray-400'
+          checked ? 'bg-[var(--color-brand)] border-[var(--color-brand)]' : 'bg-gray-200 border-gray-600' /* A11Y #10: off-state outline ≥3:1 (was gray-400 ≈1.5:1) */
         }`}
       >
         <span

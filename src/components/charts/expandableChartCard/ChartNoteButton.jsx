@@ -14,6 +14,7 @@
 
 import { useState } from 'react';
 import NotesModal from './NotesModal';
+import IconHint from './IconHint';
 
 export default function ChartNoteButton({ title, note = null, sourceClean = '', sourceUrl = null, description = null }) {
   const [open, setOpen] = useState(false);
@@ -21,15 +22,17 @@ export default function ChartNoteButton({ title, note = null, sourceClean = '', 
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label={`Source notes for ${title}`}
-        aria-haspopup="dialog"
-        className="flex w-9 h-9 shrink-0 items-center justify-center rounded-md border border-brand text-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-xs font-semibold"
-      >
-        ?
-      </button>
+      <IconHint label="About this data" className="inline-flex">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label={`About this data: ${title}`}
+          aria-haspopup="dialog"
+          className="flex w-9 h-9 shrink-0 items-center justify-center rounded-md border border-brand text-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-xs font-semibold"
+        >
+          ?
+        </button>
+      </IconHint>
       <NotesModal
         open={open}
         title={title}

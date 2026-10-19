@@ -30,17 +30,35 @@ export default function MobileCategoryPager({ children }) {
     const container = containerRef.current;
     if (!container) return;
 
-    const nodes = container.querySelectorAll('[data-chp-category]');
-    nodes.forEach((el) => {
-      const cat = el.getAttribute('data-chp-category');
-      const shouldShow = !isMobile || cat === 'always' || cat === pagedCategoryId;
-      el.hidden = !shouldShow;
-      if (shouldShow) {
-        el.removeAttribute('aria-hidden');
-      } else {
-        el.setAttribute('aria-hidden', 'true');
-      }
+    function apply() {
+      const nodes = container.querySelectorAll('[data-chp-category]');
+      nodes.forEach((el) => {
+        const cat = el.getAttribute('data-chp-category');
+        const shouldShow = !isMobile || cat === 'always' || cat === pagedCategoryId;
+        // `hidden` alone removes the element from the accessibility tree, so
+        // aria-hidden is deliberately NOT touched here (2026-10-07). Toggling it
+        // stripped the static aria-hidden="true" off CHPBuilder's category
+        // spacers before React hydrated them, causing a hydration mismatch.
+        if (el.hidden !== !shouldShow) el.hidden = !shouldShow;
+      });
+    }
+    apply();
+
+    // QA row 38 (2026-10-12): sections that arrive AFTER this effect runs
+    // (streamed server content, a neighborhood change swapping the page)
+    // were never hidden, so on a phone the page sometimes scrolled through
+    // every category continuously — with a "Continue to…" button only at
+    // the end of the paged one. Re-apply whenever sections are added.
+    // (childList only: toggling `hidden` is an attribute change, so this
+    // can't loop.)
+    // rAF-coalesced: chart rendering inserts lots of nodes, and one pass per
+    // frame is plenty.
+    let raf = null;
+    const mo = new MutationObserver(() => {
+      if (raf == null) raf = requestAnimationFrame(() => { raf = null; apply(); });
     });
+    mo.observe(container, { childList: true, subtree: true });
+    return () => { mo.disconnect(); if (raf != null) cancelAnimationFrame(raf); };
   }, [isMobile, pagedCategoryId, children]);
 
   return <div ref={containerRef}>{children}</div>;

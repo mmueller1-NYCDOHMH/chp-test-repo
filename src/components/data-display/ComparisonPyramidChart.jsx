@@ -51,6 +51,7 @@ import AnimatedBar from './AnimatedBar';
 import CardReadMore from '@/components/charts/expandableChartCard/CardReadMore';
 import DetailsButton from '@/components/charts/expandableChartCard/DetailsButton';
 import ChartNoteButton from '@/components/charts/expandableChartCard/ChartNoteButton';
+import IconHint from '@/components/charts/expandableChartCard/IconHint';
 import { SELECTED, COMPARISON, CITYWIDE } from '@/lib/charts/chartColors';
 import messages from '../../../content/site/messages.json';
 
@@ -71,6 +72,9 @@ export default function ComparisonPyramidChart({
   cardProps = {},   // extra props for the card root (e.g. `i` shortcut handlers)
   source = null,    // shown in the footer beside the time period (fill mode)
   note = null,      // chart note (content/site/chartNotes.json) → "?" button in the footer (2026-09-30)
+  onExpand = null,  // 2026-10-14: At a Glance — expand button in the footer (opens CustomExpandedChartModal)
+  expandBtnRef = null,
+  large = false,    // bigger bars/labels — used for the bare chart inside the expand modal
 }) {
   const rightColor = comparisonMode ? COMPARISON : CITYWIDE;
   // "Fill" mode (2026-09-28): a card stretched to match a taller neighbor
@@ -78,16 +82,21 @@ export default function ComparisonPyramidChart({
   // the card and bars/labels step up a size, instead of bunching at the top
   // over empty space. At a Glance (no fillHeight) is unchanged.
   const fill = fillHeight && !bare;
-  const barH      = fill ? 'h-6 sm:h-7' : 'h-4 sm:h-5';
-  const valueText = fill ? 'text-sm font-medium text-gray-800' : 'text-xs text-gray-600';
-  const labelText = fill ? 'text-sm text-gray-700' : 'text-xs text-gray-600';
+  const big = fill || large;
+  const barH      = big ? 'h-6 sm:h-7' : 'h-4 sm:h-5';
+  const valueText = big ? 'text-sm font-medium text-gray-800' : 'text-xs text-gray-600';
+  // Expand modal (large): bold category labels, like the other custom charts' expanded view
+  const labelText = large ? 'text-sm font-semibold text-gray-900' : big ? 'text-sm text-gray-700' : 'text-xs text-gray-600';
   const sourceClean = source ? String(source).replace(/^source:\s*/i, '') : '';
   const showNote = !!note && !bare;
+  const showExpand = !!onExpand && !bare;
 
   if (!segments.length) {
     return (
       <div id={anchorId} className="flex flex-col gap-3 min-w-0">
-        {title && <div className="text-xs font-semibold text-gray-700 leading-snug">{title}</div>}
+        {title && (onDetails
+          ? <h4 className="text-xs font-semibold text-gray-700 leading-snug">{title}</h4>
+          : <h3 className="text-xs font-semibold text-gray-700 leading-snug">{title}</h3>)}
         <div className="flex items-center justify-center h-24 rounded-lg bg-gray-50 border border-dashed border-gray-200">
           <p className="text-xs text-gray-600">{messages.chartNoData}</p>
         </div>
@@ -127,7 +136,9 @@ export default function ComparisonPyramidChart({
           <CardReadMore text={narrative} onMore={onDetails} padded={false} />
         </>
       ) : (
-        <div className="text-xs font-semibold text-gray-700 leading-snug">{title}</div>
+        // At a Glance hero: h3 under the "… at a Glance" h2 (a11y audit 2026-10-08 —
+        // was a plain div, so these titles were missing from the heading outline).
+        <h3 className="text-xs font-semibold text-gray-700 leading-snug">{title}</h3>
       )}
 
       {/* ── Legend ───────────────────────────────────────────── */}
@@ -137,20 +148,35 @@ export default function ComparisonPyramidChart({
           neighborhood name (some are long, e.g. hyphenated multi-area CD
           names) — truncate with ellipsis instead of wrapping/colliding with
           the other side at narrow widths. */}
-      <div className="flex justify-between gap-2">
-        <span className="min-w-0 truncate text-xs font-semibold leading-tight" style={{ color: SELECTED }}>
-          {neighborhoodLabel}
-        </span>
-        <span className="min-w-0 truncate text-right text-xs font-semibold leading-tight" style={{ color: rightColor }}>
-          {rightLabel}
-        </span>
-      </div>
+      {large ? (
+        // Expand modal (2026-10-14): swatch legend row, matching the other
+        // custom charts' expanded view (ComparisonBarChart's LegendItem).
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs font-medium mb-1">
+          <span className="flex items-center gap-1.5 min-w-0">
+            <span className="w-4 h-2.5 rounded-full shrink-0" style={{ background: SELECTED }} aria-hidden="true" />
+            <span style={{ color: SELECTED }}>{neighborhoodLabel} (left)</span>
+          </span>
+          <span className="flex items-center gap-1.5 min-w-0">
+            <span className="w-4 h-2.5 rounded-full shrink-0" style={{ background: rightColor }} aria-hidden="true" />
+            <span style={{ color: rightColor }}>{rightLabel} (right)</span>
+          </span>
+        </div>
+      ) : (
+        <div className="flex justify-between gap-2">
+          <span className="min-w-0 truncate text-xs font-semibold leading-tight" style={{ color: SELECTED }}>
+            {neighborhoodLabel}
+          </span>
+          <span className="min-w-0 truncate text-right text-xs font-semibold leading-tight" style={{ color: rightColor }}>
+            {rightLabel}
+          </span>
+        </div>
+      )}
 
       {/* ── Bars ─────────────────────────────────────────────── */}
       <div
         role="img"
         aria-label={`${title}: ${neighborhoodLabel} vs ${rightLabel}`}
-        className={fill ? 'flex flex-col flex-1 justify-evenly gap-3 py-2' : 'flex flex-col gap-2'}
+        className={fill ? 'flex flex-col flex-1 justify-evenly gap-3 py-2' : large ? 'flex flex-col gap-4' : 'flex flex-col gap-2'}
       >
         {segments.map((s, i) => {
           const nPct = ((s.neighborhoodValue ?? 0) / max) * 100;
@@ -160,7 +186,7 @@ export default function ComparisonPyramidChart({
             <div key={s.key} className="flex items-center gap-0 min-w-0" aria-hidden="true">
               {/* Left half — neighborhood, bar grows rightward toward center */}
               <div className="flex-1 min-w-0 flex items-center justify-end gap-1 pr-1">
-                <span className={`${valueText} tabular-nums shrink-0 w-7 sm:w-8 text-right`}>
+                <span className={`${valueText} tabular-nums shrink-0 ${large ? 'w-9 sm:w-10' : 'w-7 sm:w-8'} text-right`}>
                   {s.neighborhoodDisplayValue ?? (s.neighborhoodValue != null ? `${s.neighborhoodValue}${valueSuffix}` : '—')}
                 </span>
                 {/* Bar track — fills from right edge toward center */}
@@ -184,7 +210,7 @@ export default function ComparisonPyramidChart({
                   break-words forces a mid-word break instead, wrapping to a
                   second line within the same column rather than bleeding
                   outward. */}
-              <div className={`shrink-0 w-20 sm:w-28 px-1 text-center ${labelText} leading-tight break-words`}>
+              <div className={`shrink-0 ${large ? 'w-24 sm:w-36' : 'w-20 sm:w-28'} px-1 text-center ${labelText} leading-tight break-words`}>
                 {s.label}
               </div>
 
@@ -200,7 +226,7 @@ export default function ComparisonPyramidChart({
                     origin="left center"
                   />
                 </div>
-                <span className={`${valueText} tabular-nums shrink-0 w-7 sm:w-8 text-right`}>
+                <span className={`${valueText} tabular-nums shrink-0 ${large ? 'w-9 sm:w-10' : 'w-7 sm:w-8'} text-right`}>
                   {s.citywideDisplayValue ?? (s.citywideValue != null ? `${s.citywideValue}${valueSuffix}` : '—')}
                 </span>
               </div>
@@ -211,7 +237,11 @@ export default function ComparisonPyramidChart({
       </div>
 
       {/* ── Accessible table (screen readers) ───────────────── */}
-      <table className="sr-only table-fixed">
+      {/* FIREFOX (2026-10-12, QA row 160): sr-only lives on a wrapper div, not the
+          <table> — Firefox draws a <caption> outside the table box, so clipping
+          the table left the caption visible as large text over the chart. */}
+      <div className="sr-only">
+      <table className="table-fixed">
     <caption>{title} — {neighborhoodLabel} vs {rightLabel}</caption>
         <thead>
           <tr>
@@ -230,6 +260,7 @@ export default function ComparisonPyramidChart({
           ))}
         </tbody>
       </table>
+      </div>
 
       {/* ── Time period footnote ─────────────────────────────── */}
       {/* "?" chart note (2026-09-30) sits right of the footnote; not shown
@@ -243,10 +274,35 @@ export default function ComparisonPyramidChart({
           </div>
           {showNote && <ChartNoteButton title={title} note={note} sourceClean={sourceClean} />}
         </div>
-      ) : (timePeriod || showNote) && (
-        <div className={`flex items-center justify-between gap-3 text-xs text-gray-600 border-t border-gray-100 pt-2.5 ${fillHeight && !bare ? 'mt-auto' : ''}`}>
-          <span className="min-w-0">{timePeriod}</span>
-          {showNote && <ChartNoteButton title={title} note={note} sourceClean={sourceClean} />}
+      ) : (timePeriod || sourceClean || showNote || showExpand) && (
+        <div className={`flex items-start justify-between gap-3 text-xs text-gray-600 leading-snug border-t border-gray-100 pt-2.5 ${fillHeight && !bare ? 'mt-auto' : ''}`}>
+          {/* Source shown when passed (At a Glance, 2026-10-14); else time period only */}
+          <div className="min-w-0">
+            {sourceClean ? (
+              <><span className="font-semibold text-gray-800">Source:</span> {sourceClean}{timePeriod && !sourceClean.includes(timePeriod) ? ` (${timePeriod})` : ''}</>
+            ) : timePeriod}
+          </div>
+          {(showNote || showExpand) && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              {showNote && <ChartNoteButton title={title} note={note} sourceClean={sourceClean} />}
+              {showExpand && (
+                <IconHint label="Expand chart" className="hidden sm:inline-flex">
+                  <button
+                    ref={expandBtnRef}
+                    type="button"
+                    onClick={onExpand}
+                    aria-label={`Expand chart: ${title}`}
+                    aria-haspopup="dialog"
+                    className="hidden sm:flex w-9 h-9 items-center justify-center rounded-md border border-brand text-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                  </button>
+                </IconHint>
+              )}
+            </div>
+          )}
         </div>
       )}
 

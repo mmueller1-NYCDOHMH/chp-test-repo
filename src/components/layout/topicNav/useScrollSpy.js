@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { siteNav } from '@/config/nav/siteNav';
 import { scrollToSection as scrollUtil } from '@/lib/utils/scrollToSection';
 import { watchSections } from '@/lib/utils/watchSections';
+import { resolveLegacyAnchor } from '@/config/nav/legacyAnchors';
 
 /**
  * FILE: useScrollSpy.js
@@ -26,11 +27,23 @@ export function useScrollSpy() {
   // "bounces back to the previously active tab" bug.
   const suppressSpyRef    = useRef(false);
   const spySettleTimerRef = useRef(null);
+  const spyRef            = useRef(null); // watchSections cleanup (has .recheck)
 
-  const realSectionIds = siteNav
-    .flatMap(cat => cat.subcategories)
-    .filter(sub => !sub.dummy)
-    .map(sub => sub.id);
+  // End of a suppression window: report the position we actually landed on
+  // (anything the spy saw while suppressed was dropped).
+  function endSuppression() {
+    suppressSpyRef.current = false;
+    spyRef.current?.recheck?.();
+  }
+
+  // Category headers (`cat-${id}`) are watched too, in page order, so while
+  // a category's own header is what's on screen its tab is active — not the
+  // previous category's last subsection (QA rows 35/119, 2026-10-12).
+  // TopicNav already maps `cat-${id}` back to its category.
+  const realSectionIds = siteNav.flatMap(cat => [
+    `cat-${cat.id}`,
+    ...cat.subcategories.filter(sub => !sub.dummy).map(sub => sub.id),
+  ]);
 
   // ── Tap/programmatic navigation → activeId, with scroll-spy suppressed ───
   // Sets activeId immediately (so the tapped tab highlights right away) and
@@ -43,7 +56,7 @@ export function useScrollSpy() {
     suppressSpyRef.current = true;
     setActiveId(id);
     clearTimeout(spySettleTimerRef.current);
-    spySettleTimerRef.current = setTimeout(() => { suppressSpyRef.current = false; }, 200);
+    spySettleTimerRef.current = setTimeout(endSuppression, 200);
   }
 
   // Re-arms the suppression window on each scroll tick while it's active,
@@ -52,7 +65,7 @@ export function useScrollSpy() {
     function handleScrollSettle() {
       if (!suppressSpyRef.current) return;
       clearTimeout(spySettleTimerRef.current);
-      spySettleTimerRef.current = setTimeout(() => { suppressSpyRef.current = false; }, 150);
+      spySettleTimerRef.current = setTimeout(endSuppression, 150);
     }
     window.addEventListener('scroll', handleScrollSettle, { passive: true });
     return () => window.removeEventListener('scroll', handleScrollSettle);
@@ -64,13 +77,15 @@ export function useScrollSpy() {
   // reports null when the reader is above the first section (At a Glance),
   // so no tab stays highlighted there.
   useEffect(() => {
-    return watchSections(realSectionIds, {
+    const stop = watchSections(realSectionIds, {
       topOffset: NAV_HEIGHT,
       onActive: (id) => {
         if (suppressSpyRef.current) return;
         setActiveId(id);
       },
     });
+    spyRef.current = stop;
+    return () => { spyRef.current = null; stop(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -111,8 +126,9 @@ export function useScrollSpy() {
 
     // Defer until after first paint so sections are in the DOM.
     const raf = requestAnimationFrame(() => {
-      scrollUtil(hash);
-      const id = hash.replace(/^#/, '');
+      // Old shared links (pre-2026-10-12 anchor names) → current section id
+      const id = resolveLegacyAnchor(hash);
+      scrollUtil(`#${id}`);
       navigateToSection(id);
     });
     return () => cancelAnimationFrame(raf);

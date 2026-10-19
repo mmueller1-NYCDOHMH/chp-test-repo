@@ -10,30 +10,24 @@
  *
  *   [Copy] [PNG] [CSV]  |  [Embed]
  *
- * What gets exported — same output as the expanded modal, not the flyout's
- * compact mini bar:
- *   - Standard (Vega) cards: the card passes `expandedSpecOptions` in the
- *     flyout payload. The expanded spec is built on demand and rendered
- *     offscreen (renderSpecToImage), then composited with title / subtitle /
- *     legend by the same composeExportCanvas() the modal uses.
- *   - Custom cards (Avertable Deaths, causes, cancer types): no Vega spec, so
- *     the flyout's own chart slot ([data-flyout-chart]) is rasterized with
- *     domToCanvas — the same technique CustomExpandedChartModal uses.
+ * What gets exported (2026-10-14, per Morgan): Copy / PNG capture the FULL
+ * Details content as it appears in the flyout — title, context sentence,
+ * map (with basemap tiles + legend), comparison copy, mini bar / custom
+ * chart, and source line — not the expanded modal's bar chart. The
+ * scrolling body ([data-flyout-export] in IndicatorFlyoutContent) is
+ * rasterized at full scroll height with domToCanvas; buttons, map zoom /
+ * reset controls and screen-reader-only tables are left out.
  *   - CSV: payload `csvRows` if the card supplies them, else `indicatorData`.
  *     Button hidden when there are no rows (same rule as the modals).
  *   - Embed: the same EmbedModal the cards use.
  */
 
 import { useRef, useState } from 'react';
-import { useComparison } from '@/lib/context/ComparisonContext';
-import { buildBarChartSpec } from '@/lib/charts/buildBarChartSpec';
 import EmbedModal from '@/components/charts/expandableChartCard/EmbedModal';
-import { buildLegendItems } from '@/components/charts/expandableChartCard/chartCardUtils';
 import { downloadCsv, hasCsvData } from '@/components/charts/expandableChartCard/downloadCsv';
 import { domToCanvas } from '@/components/charts/expandableChartCard/domToCanvas';
+import LiveText from '@/components/content/LiveText'; // translatable live text (checklist #34)
 import {
-  composeExportCanvas,
-  renderSpecToImage,
   downloadCanvas,
   copyCanvas,
 } from '@/components/charts/expandableChartCard/chartExport';
@@ -58,43 +52,35 @@ export function flyoutHasExports(flyout) {
 }
 
 export default function FlyoutExportTray({ id, open, flyout, panelRef }) {
-  const { comparisonNeighborhood } = useComparison();
   const embedBtnRef = useRef(null);
   const [embedOpen, setEmbedOpen] = useState(false);
   const [copyState, setCopyState] = useState('idle'); // 'idle' | 'copying' | 'copied' | 'error'
   const [pngBusy,   setPngBusy]   = useState(false);
 
   const {
-    indicatorKey, title, subtitle, indicatorData, geoId,
-    expandedSpecOptions, chart, csvRows,
+    indicatorKey, title, indicatorData, csvRows,
   } = flyout ?? {};
 
-  const hasSpec  = Boolean(expandedSpecOptions && indicatorData?.length);
-  const hasImage = hasSpec || Boolean(chart);
+  const hasImage = true; // the Details body itself is always capturable
   const rows     = csvRows ?? indicatorData;
   const hasCsv   = hasCsvData(rows);
 
   async function buildExportCanvas() {
-    const scale = 2;
-    if (hasSpec) {
-      const spec = buildBarChartSpec({ ...expandedSpecOptions, data: indicatorData, geoId, expanded: true });
-      const img  = await renderSpecToImage(spec, {
-        scale,
-        signals: { comparisonGeoId: comparisonNeighborhood?.geoId ?? null },
-      });
-      const legendItems = buildLegendItems(indicatorData, geoId, comparisonNeighborhood);
-      return composeExportCanvas({ chart: img, title, subtitle, legendItems, scale });
-    }
-    const node = panelRef?.current?.querySelector('[data-flyout-chart]');
+    const node = panelRef?.current?.querySelector('[data-flyout-export]');
     if (!node) throw new Error('nothing to capture');
-    const canvas = await domToCanvas(node, { pixelRatio: scale, backgroundColor: '#ffffff' });
-    return composeExportCanvas({ chart: canvas, title, subtitle, scale, chartInset: true });
+    return domToCanvas(node, {
+      pixelRatio: 2,
+      backgroundColor: '#ffffff',
+      fullHeight: true,
+      inlineImages: true,
+      exclude: 'button, .leaflet-control-zoom, .sr-only, [data-export-exclude]',
+    });
   }
 
   async function handleDownloadImage() {
     setPngBusy(true);
     try {
-      downloadCanvas(await buildExportCanvas(), `${indicatorKey ?? title ?? 'chart'}.png`);
+      downloadCanvas(await buildExportCanvas(), `${indicatorKey ?? title ?? 'indicator'}-details.png`);
     } catch (err) {
       console.error('[FlyoutExportTray] download error:', err);
     }
@@ -128,7 +114,7 @@ export default function FlyoutExportTray({ id, open, flyout, panelRef }) {
           <div className="flex flex-wrap items-center gap-1.5 px-5 py-2.5 bg-gray-50 border-t border-gray-100">
             {hasImage && (
               <>
-                <button type="button" onClick={handleCopyImage} disabled={copyState === 'copying'} aria-label="Copy chart as image" title="Copy image" className={BTN}>
+                <button type="button" onClick={handleCopyImage} disabled={copyState === 'copying'} aria-label="Copy details as image" title="Copy image" className={BTN}>
                   {copyState === 'copied' ? (
                     <><span className="text-green-600" aria-hidden="true">✓</span> Copied</>
                   ) : copyState === 'error' ? (
@@ -143,7 +129,7 @@ export default function FlyoutExportTray({ id, open, flyout, panelRef }) {
                   )}
                 </button>
 
-                <button type="button" onClick={handleDownloadImage} disabled={pngBusy} aria-label="Download chart as PNG" title="Download PNG" className={BTN}>
+                <button type="button" onClick={handleDownloadImage} disabled={pngBusy} aria-label="Download details as PNG" title="Download PNG" className={BTN}>
                   <DownloadIcon />
                   PNG
                 </button>
@@ -185,7 +171,7 @@ export default function FlyoutExportTray({ id, open, flyout, panelRef }) {
 
             {/* Status for screen readers — the visual ✓/✕ swap isn't announced */}
             <span className="sr-only" aria-live="polite">
-              {copyState === 'copied' ? 'Chart image copied' : copyState === 'error' ? 'Copy failed' : ''}
+              <LiveText>{copyState === 'copied' ? 'Details image copied' : copyState === 'error' ? 'Copy failed' : ''}</LiveText>
             </span>
           </div>
         </div>

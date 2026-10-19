@@ -4,8 +4,16 @@
  * FILE: KeyboardShortcutsButton.jsx
  *
  * PURPOSE:
- * Renders a `?` button that opens a popover listing all available keyboard
- * shortcuts. Previously lived in the sidebar footer; now rendered in
+ * Renders a `?` button that opens the site's help menu: a link to the About
+ * page plus the keyboard shortcuts list.
+ *
+ * HELP MENU (2026-10-09):
+ * The `?` is now the single home for help. "About this tool" moved in here
+ * (it previously sat as a text link in StickyContextBar, then briefly in
+ * PageHeader). The button shows at every width; on mobile the popover shows
+ * only the About link, since keyboard shortcuts don't apply there. Revert
+ * copies live in "Claude outputs/revert_utility_links_2026-10-09/".
+ * Previously lived in the sidebar footer; now rendered in
  * StickyContextBar's right-hand utility group, alongside About this tool and
  * the language selector.
  *
@@ -55,6 +63,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import {
   areShortcutsEnabled,
@@ -71,7 +80,7 @@ export const SHORTCUTS = [
   { keys: ['e'],   description: 'Expand chart (while hovering or focusing it)' },
   { keys: ['i'],   description: 'Open indicator details (hover or focus card)' },
   { keys: ['Esc'], description: 'Close panel / clear search'                   },
-  { keys: ['?'],   description: 'Show this shortcuts menu'                     },
+  { keys: ['?'],   description: 'Show this help menu'                          },
 ];
 
 export default function KeyboardShortcutsButton() {
@@ -82,6 +91,7 @@ export default function KeyboardShortcutsButton() {
   const btnRef                = useRef(null);
   const popoverRef            = useRef(null);
   const switchRef             = useRef(null);
+  const aboutRef              = useRef(null);
   const shortcutsOn           = useShortcutsEnabled();
 
   // Animate open/close
@@ -168,14 +178,18 @@ export default function KeyboardShortcutsButton() {
     return () => cancelAnimationFrame(raf);
   }, [isOpen, coords]);
 
+  // Tab cycles forward through the menu's controls (About link, then the
+  // shortcuts switch when visible); Tab past the last one, or Shift+Tab from
+  // anywhere, closes the menu and returns focus to the "?" button.
   function handlePopoverKeyDown(e) {
     if (e.key !== 'Tab') return;
     e.preventDefault();
-    // Forward Tab from the panel itself lands on the on/off switch — the only
-    // interactive control inside. Any other Tab / Shift+Tab closes the panel.
-    if (!e.shiftKey && e.target !== switchRef.current && switchRef.current) {
-      switchRef.current.focus();
-      return;
+    const focusables = [aboutRef.current, switchRef.current]
+      .filter(el => el && el.offsetParent !== null); // skip hidden (mobile) switch
+    if (!e.shiftKey) {
+      const idx  = focusables.indexOf(e.target);
+      const next = focusables[idx + 1];
+      if (next) { next.focus(); return; }
     }
     close();
     btnRef.current?.focus();
@@ -195,17 +209,16 @@ export default function KeyboardShortcutsButton() {
   }, [isOpen, close]);
 
   return (
-    <div ref={containerRef} className="relative hidden sm:block">
+    <div ref={containerRef} className="relative">
       <button
         ref={btnRef}
         type="button"
         onClick={() => setIsOpen(v => !v)}
-        aria-label="Keyboard shortcuts"
+        aria-label="Help: about this tool and keyboard shortcuts"
         aria-expanded={isOpen}
         aria-haspopup="dialog"
-        title={shortcutsOn ? 'Keyboard shortcuts (?)' : 'Keyboard shortcuts (off)'}
         className={[
-          'w-6 h-6 rounded-full border text-xs font-medium flex items-center justify-center shrink-0',
+          'peer w-6 h-6 rounded-full border text-xs font-medium flex items-center justify-center shrink-0',
           'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
           isOpen
             ? 'border-blue-300 bg-blue-50 text-blue-600'
@@ -215,6 +228,20 @@ export default function KeyboardShortcutsButton() {
         ?
       </button>
 
+      {/* Hover/focus hint (2026-10-09). Custom tooltip instead of title= so
+          it appears instantly and matches site styling. Right-aligned under
+          the button so it never runs past the viewport edge; hidden while
+          the menu is open. aria-hidden — the button's aria-label already
+          covers this for screen readers. */}
+      {!isOpen && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute right-0 top-full mt-1.5 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs font-medium text-white shadow opacity-0 translate-y-0.5 transition-all duration-150 peer-hover:opacity-100 peer-hover:translate-y-0 peer-focus-visible:opacity-100 peer-focus-visible:translate-y-0 z-50"
+        >
+          About this tool
+        </span>
+      )}
+
       {/* Popover — portaled to document.body so its stacking isn't capped by
           the sidebar aside's position:sticky context (see POSITIONING above).
           Opens downward and to the left, anchored to the button's right edge,
@@ -223,10 +250,10 @@ export default function KeyboardShortcutsButton() {
         <div
           ref={popoverRef}
           role="dialog"
-          aria-label="Keyboard shortcuts"
+          aria-label="Help"
           tabIndex={-1}
           onKeyDown={handlePopoverKeyDown}
-          className="fixed w-56 bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden z-[10000]"
+          className="fixed w-64 bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden z-[10000]"
           style={{
             top:        coords.top,
             right:      coords.right,
@@ -235,6 +262,21 @@ export default function KeyboardShortcutsButton() {
             transition: 'opacity 150ms ease-out, transform 150ms ease-out',
           }}
         >
+          {/* About this tool — shown at every width */}
+          <Link
+            ref={aboutRef}
+            href="/about"
+            onClick={close}
+            className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
+          >
+            About this tool
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+            </svg>
+          </Link>
+
+          {/* Keyboard shortcuts — desktop/tablet only (no keyboard on mobile) */}
+          <div className="hidden sm:block border-t border-gray-100">
           <div className="flex items-center justify-between gap-3 px-3 py-2.5 border-b border-gray-100">
             <span id="chp-shortcuts-switch-label" className="text-sm font-semibold text-gray-600">
               Keyboard shortcuts
@@ -293,6 +335,7 @@ export default function KeyboardShortcutsButton() {
               </li>
             ))}
           </ul>
+          </div>
         </div>,
         document.body
       )}

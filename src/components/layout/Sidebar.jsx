@@ -47,11 +47,13 @@
  *   live in dedicated hooks under ./sidebar/ — this file owns layout, the
  *   tab strip contents, and the JSX tree.
  */
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import { setPendingNeighborhood } from '@/lib/utils/pendingNeighborhood';
-import Link from 'next/link';
+import { pushNeighborhood } from '@/lib/utils/neighborhoodSwitch';
+import { useComparison } from '@/lib/context/ComparisonContext';
+import BackToProfileLink from '@/components/controls/BackToProfileLink';
+import PageAnchorNav from '@/components/layout/PageAnchorNav';
 import UnifiedSearch from '@/components/controls/UnifiedSearch';
 import MapHoverTooltip from '@/components/core/MapHoverTooltip';
 import IndicatorSearch from '@/components/controls/IndicatorSearch';
@@ -92,12 +94,11 @@ const TABS = [
   },
 ];
 
-export default function Sidebar({ sections, neighborhoods, indicatorSummaries, pageNav }) {
+export default function Sidebar({ sections, neighborhoods, indicatorSummaries, pageNav, sidebarContent }) {
   const router = useRouter();
 
   const handleNeighborhoodSelect = useCallback((fid) => {
-    setPendingNeighborhood(fid);
-    router.push(`/neighborhood/${fid}`);
+    pushNeighborhood(router, fid); // keeps the reader's place mid-page (neighborhoodSwitch.js)
   }, [router]);
 
   const params       = useParams();
@@ -117,6 +118,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
   // ── Mobile bottom sheet ───────────────────────────────────────────────────
   const {
     sheetRef,
+    isSheetOpen,
     isSheetMounted,
     isDragging,
     transitionMs,
@@ -125,10 +127,36 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
     getMaxTop,
     safeAreaProbeRef,
     closeSheet,
+    peekSheet,
     handleHandlePointerDown,
     handleHandlePointerMove,
     handleHandlePointerEnd,
   } = useMobileSheet();
+
+  // ── Mobile sheet: after a pick, drop to half height ───────────────────────
+  // QA rows 19/24/28 (2026-10-12, per Gretchen): the "Now showing… / Close
+  // and view profile / At a glance / Search by indicator" prompt added too
+  // much decision-making, and there was no equivalent for Compare. Now, when
+  // a neighborhood OR a comparison is picked while the sheet is open, the
+  // sheet eases down to half height so the user sees the page update behind
+  // it; they can keep going, or dismiss with X, a tap outside, or a swipe down.
+  const { comparisonNeighborhood: sheetComparison } = useComparison();
+  const sheetComparisonId = sheetComparison?.id ?? null;
+  const prevActiveIdRef   = useRef(activeId);
+  const prevCompIdRef     = useRef(sheetComparisonId);
+  const sheetSnapshotRef  = useRef(null);
+
+  useEffect(() => {
+    const picked = prevActiveIdRef.current !== activeId && !!activeId;
+    const compared = prevCompIdRef.current !== sheetComparisonId && !!sheetComparisonId;
+    prevActiveIdRef.current = activeId;
+    prevCompIdRef.current   = sheetComparisonId;
+    if (isSheetOpen && (picked || compared)) {
+      // Drop the on-screen keyboard first so the page behind is visible.
+      if (sheetRef.current?.contains(document.activeElement)) document.activeElement.blur?.();
+      peekSheet();
+    }
+  }, [activeId, sheetComparisonId, isSheetOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Shared tab strip JSX — rendered in both desktop and mobile sheet ───────
   // NOTE: This is a plain function (not a React component) so it shares
@@ -235,17 +263,12 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
     if (!isAboutPage) return null;
 
     return (
-      <div className="shrink-0 border-b border-gray-200 bg-gray-50 relative">
-        <div className="px-5 py-2 flex items-center justify-between relative">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
-          >
-            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-            </svg>
-            Browse neighborhoods
-          </Link>
+      <div className="shrink-0 border-b border-gray-200 bg-white relative">
+        <div className="px-6 py-3 flex items-center justify-between relative">
+          {/* 2026-10-09: was a plain "Browse neighborhoods" → "/" link; now the
+              same back pill as the page, and the ONLY back button visible on
+              desktop (the About page hides its in-page ones at md+). */}
+          <BackToProfileLink />
         </div>
       </div>
     );
@@ -275,6 +298,19 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
           absolutely-positioned children like the keyboard shortcuts popover.
         */}
 
+        {/* ── Static-page mode (e.g. /about, 2026-10-09) ─────────────────
+            When the page passes `sidebarContent`, the tabs, neighborhood
+            search and map are replaced by: back link (footer), the page's
+            "On this page" nav, and the page's own sidebar content
+            (keyboard shortcuts on /about). */}
+        {sidebarContent ? (<>
+        {renderFooter()}
+        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-6 px-6 py-5">
+          <PageAnchorNav items={pageNav} />
+          {pageNav?.length > 0 && <div className="border-t border-gray-200" />}
+          {sidebarContent}
+        </div>
+        </>) : (<>
         {renderTabs('desktop')}
         {renderFooter()}
 
@@ -293,10 +329,10 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
             >
               {/* Search — scrolls away as user scrolls down */}
               <div className="px-6 pt-4 pb-3 shrink-0">
-                <p className="text-sm font-semibold text-gray-600 mb-2">
+                <label htmlFor="sidebar-find-neighborhood" className="block text-sm font-semibold text-gray-600 mb-2">
                   Find neighborhood
-                </p>
-                <UnifiedSearch neighborhoods={neighborhoods} />
+                </label>
+                <UnifiedSearch neighborhoods={neighborhoods} inputId="sidebar-find-neighborhood" />
               </div>
 
               {/* Compare to — also rendered in the mobile bottom sheet below;
@@ -305,11 +341,31 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                   "Comparing: X" pill all have working mobile layouts). */}
               {neighborhood && (
                 <div className="px-6 pb-3 shrink-0">
-                  <p className="text-sm font-semibold text-gray-600 mb-2">
+                  <label htmlFor="sidebar-compare-to" className="block text-sm font-semibold text-gray-600 mb-2">
                     Compare to
-                  </p>
-                  <ComparisonNeighborhoodSelector neighborhoods={neighborhoods} />
+                  </label>
+                  <ComparisonNeighborhoodSelector neighborhoods={neighborhoods} inputId="sidebar-compare-to" />
                 </div>
+              )}
+
+              {/* Page-level anchor nav — used on static pages like /about
+                  in place of the section nav that appears on neighborhood profiles.
+                  Moved above the map 2026-10-09 (was buried below it). */}
+              {pageNav?.length > 0 && (
+                <nav aria-label="On this page" className="px-6 pb-4 shrink-0">
+                  <p className="text-sm font-semibold text-gray-600 mb-2">
+                    On this page
+                  </p>
+                  {pageNav.map(({ href, label }) => (
+                    <a
+                      key={href}
+                      href={href}
+                      className="block text-sm text-gray-600 hover:text-brand py-1.5 rounded transition-colors"
+                    >
+                      {label}
+                    </a>
+                  ))}
+                </nav>
               )}
 
               {/* Map — sticky within the scroll container so it stays visible
@@ -318,7 +374,10 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                 <NeighborhoodMap onSelect={handleNeighborhoodSelect} />
               </div>
 
-              {/* Info — scrolls beneath the sticky map */}
+              {/* Info — scrolls beneath the sticky map. Hidden on static pages
+                  (e.g. /about) with no neighborhood, where its "Select a
+                  neighborhood" empty state is just noise. */}
+              {!(pageNav?.length > 0 && !neighborhood) && (<>
               <div className="px-6 pt-3 pb-4">
                 <MapHoverTooltip
                   indicatorSummaries={indicatorSummaries}
@@ -335,25 +394,8 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
               </div>
 
               <div className="border-t border-gray-100 mx-6" />
+              </>)}
 
-              {/* Page-level anchor nav — used on static pages like /about
-                  in place of the section nav that appears on neighborhood profiles */}
-              {pageNav?.length > 0 && (
-                <nav aria-label="On this page" className="px-6 pt-4 pb-2">
-                  <p className="text-sm font-semibold text-gray-600 mb-2">
-                    On this page
-                  </p>
-                  {pageNav.map(({ href, label }) => (
-                    <a
-                      key={href}
-                      href={href}
-                      className="block text-sm text-gray-600 hover:text-blue-600 py-1.5 rounded transition-colors"
-                    >
-                      {label}
-                    </a>
-                  ))}
-                </nav>
-              )}
             </div>
           )}
 
@@ -377,6 +419,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
           )}
 
         </div>{/* end scrollable panel area */}
+        </>)}
 
         {/* ── Shortcuts toast — first-visit hint, absolute-positioned above the explorer badge ── */}
         <ShortcutsToast />
@@ -390,7 +433,9 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
           instance in a React Strict Mode double-invoke cycle causes an
           _initContainer crash. Map-based selection is available via IntroModal. */}
       {isSheetMounted && (
-        <div className="md:hidden fixed inset-0 z-50">
+        // z-[60]: above the z-50 back-to-top button, which used to show on
+        // top of the sheet (QA row 28).
+        <div className="md:hidden fixed inset-0 z-[60]">
 
           {/* Backdrop — opacity tracks how far open the sheet currently is */}
           <div
@@ -414,11 +459,15 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
             aria-label="Neighborhood panel"
             className="absolute left-0 right-0 bg-white rounded-t-2xl flex flex-col overflow-hidden"
             style={{
+              // bottom: 0 instead of a computed height (QA row 28): the height
+              // was measured from window.innerHeight, which changes when the
+              // mobile keyboard / browser bars show or hide, so the bottom of
+              // the sheet could end up cut off after picking a comparison.
               top: `${currentTop()}px`,
-              height: `${Math.max(0, getMaxTop() - currentTop())}px`,
+              bottom: 0,
               transition: isDragging
                 ? 'none'
-                : `top ${transitionMs}ms ease-out, height ${transitionMs}ms ease-out`,
+                : `top ${transitionMs}ms ease-out`,
             }}
           >
             {/* Drag handle + close row */}
@@ -472,29 +521,14 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                   className="flex flex-col flex-1 min-h-0 focus:outline-none"
                 >
                   <div className="px-6 pt-4 pb-3 shrink-0">
-                    <p className="text-sm font-semibold text-gray-600 mb-2">
+                    <label htmlFor="sheet-find-neighborhood" className="block text-sm font-semibold text-gray-600 mb-2">
                       Find neighborhood
-                    </p>
-                    <UnifiedSearch neighborhoods={neighborhoods} />
+                    </label>
+                    <UnifiedSearch neighborhoods={neighborhoods} inputId="sheet-find-neighborhood" />
 
-                    {/* Map-based picker — the only mobile entry point to this
-                        used to be a separate icon-only "browse map" button in
-                        StickyContextBar, which sat directly under TopicNav's
-                        own icon-only pin and opened a different UI (this was
-                        the mobile-ux-review.md spotlight finding). Now that
-                        TopicNav's pill always opens THIS sheet, the map view
-                        lives one tap deeper here instead of as a second
-                        top-level icon. */}
-                    <button
-                      type="button"
-                      onClick={() => { closeSheet(); window.dispatchEvent(new CustomEvent('chp:open-intro-modal')); }}
-                      className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs font-medium text-gray-600 hover:text-brand py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                      </svg>
-                      Prefer a map? Browse all neighborhoods
-                    </button>
+                    {/* "Prefer a map? Browse all neighborhoods" link removed
+                        (2026-10-07) — map-based neighborhood search isn't
+                        offered on mobile, so the sheet shouldn't point to it. */}
                   </div>
 
                   {/* Compare to — mirrors the desktop aside's section above.
@@ -504,14 +538,14 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                       mobile — not just a secondary option like on desktop. */}
                   {neighborhood && (
                     <div className="px-6 pb-3 shrink-0">
-                      <p className="text-sm font-semibold text-gray-600 mb-2">
+                      <label htmlFor="sheet-compare-to" className="block text-sm font-semibold text-gray-600 mb-2">
                         Compare to
-                      </p>
-                      <ComparisonNeighborhoodSelector neighborhoods={neighborhoods} />
+                      </label>
+                      <ComparisonNeighborhoodSelector neighborhoods={neighborhoods} inputId="sheet-compare-to" />
                     </div>
                   )}
 
-                  <div className="px-6 pt-2 pb-4">
+                  <div ref={sheetSnapshotRef} className="px-6 pt-2 pb-4">
                     <MapHoverTooltip
                       indicatorSummaries={indicatorSummaries}
                       selectedNeighborhood={neighborhood

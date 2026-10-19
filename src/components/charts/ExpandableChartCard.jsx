@@ -67,7 +67,9 @@
  *                       not removed from the data model
  * - indicatorData      Raw data rows passed to flyout for insight rendering
  * - geoId              Currently selected neighborhood geoId
- * - ariaDescription    Screen-reader description
+ * - ariaDescription    DEPRECATED (2026-10-13) — ignored; the screen-reader
+ *                       summary + data table are built here from indicatorData
+ *                       (lib/charts/chartSummary.js) so they follow the comparison
  * - sectionLabel       Section context passed to flyout
  * - dataSource, isPercent
  *                       Passed to flyout so a flagged CD row (small sample
@@ -77,7 +79,8 @@
  *                       good/bad rather than raw up/down direction
  */
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useId } from 'react';
+import { buildChartSummary } from '@/lib/charts/chartSummary';
 import VegaLiteChart from '@/components/charts/VegaLiteChart';
 import { buildBarChartSpec } from '@/lib/charts/buildBarChartSpec';
 import { useFlyout } from '@/components/core/FlyoutShell';
@@ -94,6 +97,7 @@ import { stripCdCode } from './expandableChartCard/chartCardUtils';
 import ExpandedChartModal from './expandableChartCard/ExpandedChartModal';
 import EmbedModal from './expandableChartCard/EmbedModal';
 import { areShortcutsEnabled } from '@/lib/utils/shortcutsPreference';
+import IconHint from './expandableChartCard/IconHint';
 
 export default function ExpandableChartCard({
   indicatorKey,
@@ -173,7 +177,18 @@ export default function ExpandableChartCard({
 
   const metadataLine = formatMetadataLine({ metadataOf, metadataDetail, metadataUnits });
 
-  const descId = title ? `chart-desc-${title.replace(/\s+/g, '-').toLowerCase()}` : undefined;
+  // A11Y (2026-10-13, checklist #2): the card is named by its visible title
+  // (was named by the long sr-only summary, which also sat BEFORE the title
+  // in reading order). The summary + data table now follow the chart and
+  // include the comparison neighborhood when one is active.
+  const uid       = useId();
+  const titleId   = `${uid}-title`;
+  const summaryId = `${uid}-summary`;
+  const tableHintId = `${uid}-table-hint`; // read on focus of Details / Expand (2026-10-13)
+  const chartSummary = useMemo(
+    () => buildChartSummary({ data: indicatorData, geoId, compGeoId }),
+    [indicatorData, geoId, compGeoId],
+  );
 
   function handleDetails() {
     openFlyout({
@@ -256,7 +271,7 @@ export default function ExpandableChartCard({
         id={indicatorKey ? `indicator-${indicatorKey}` : undefined}
         className="group bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col min-w-0"
         role="group"
-        aria-labelledby={descId}
+        aria-labelledby={titleId}
         aria-keyshortcuts="e i"
         onMouseEnter={handleCardMouseEnter}
         onMouseLeave={handleCardMouseLeave}
@@ -264,16 +279,13 @@ export default function ExpandableChartCard({
         onBlur={handleCardBlur}
         onKeyDown={handleCardKeyDown}
       >
-        {ariaDescription && (
-          <p id={descId} className="sr-only">{ariaDescription}</p>
-        )}
 
         {/* ── Card header ─────────────────────────────────────────────────── */}
         {/* Title left, Details right — the only top-level header action now;
             expand + notes moved down to the footer as in-place card utilities. */}
         <div className="flex items-start justify-between gap-2 sm:gap-3 px-4 sm:px-5 pt-4 sm:pt-5 pb-3">
           <div className="min-w-0 flex-1">
-            <h4 className="text-sm font-semibold text-gray-900 leading-snug">
+            <h4 id={titleId} className="text-sm font-semibold text-gray-900 leading-snug">
               {title}
             </h4>
             {metadataLine && (
@@ -282,7 +294,7 @@ export default function ExpandableChartCard({
           </div>
 
           {/* Details button — opens flyout */}
-          <DetailsButton title={title} onClick={handleDetails} />
+          <DetailsButton title={title} onClick={handleDetails} describedBy={tableHintId} />
         </div>
 
         {/* ── Context text — full width, above the chart ────────────────────── */}
@@ -318,6 +330,23 @@ export default function ExpandableChartCard({
                 </ul>
               )}
               <VegaLiteChart spec={compactSpec} />
+              {/* Screen-reader text alternative (checklist #2): the findings
+                  sentence stays on the card. The every-district table now lives
+                  in the Details flyout and the expanded chart (ChartDataTable,
+                  2026-10-13 — see that file for why), so the card just says
+                  where to find it. */}
+              <div className="sr-only">
+                {/* Keyed on content so Google Translate re-translates it when it changes (checklist #34). */}
+                {chartSummary && <p key={chartSummary} id={summaryId}>{chartSummary}</p>}
+                <p>A table of every community district is in Details{' '}<span className="hidden sm:inline">and in the expanded chart</span>.</p>
+                {/* Short form of the same hint, attached to the Details and
+                    Expand buttons via aria-describedby so it's announced when
+                    either is focused — for screen-reader users who tab or jump
+                    between buttons and never read the card text in order.
+                    aria-hidden so line-by-line reading doesn't hear it twice;
+                    aria-describedby still reads hidden targets. */}
+                <span id={tableHintId} aria-hidden="true">Includes a table of every community district.</span>
+              </div>
             </>
           )}
         </div>
@@ -342,27 +371,32 @@ export default function ExpandableChartCard({
 
           <div className="flex items-center gap-1.5 shrink-0">
             {hasNotes && (
-              <button
-                onClick={() => setNotesOpen(true)}
-                aria-label={`Source notes for ${title}`} /* A11Y: names the indicator (was identical on every card) */
-                className="flex w-9 h-9 items-center justify-center rounded-md border border-brand text-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-xs font-semibold"
-              >
-                ?
-              </button>
+              <IconHint label="About this data" className="inline-flex">
+                <button
+                  onClick={() => setNotesOpen(true)}
+                  aria-label={`About this data: ${title}`} /* A11Y: names the indicator (was identical on every card); starts with the tooltip text (WCAG 2.5.3) */
+                  className="flex w-9 h-9 items-center justify-center rounded-md border border-brand text-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-xs font-semibold"
+                >
+                  ?
+                </button>
+              </IconHint>
             )}
 
             {/* Expand icon — desktop only; on mobile the full-width chart is sufficient */}
-            <button
-              ref={expandBtnRef}
-              onClick={() => setIsExpanded(true)}
-              aria-label={`Expand chart: ${title}`}
-              aria-haspopup="dialog"
-              className="hidden sm:flex w-9 h-9 items-center justify-center rounded-md border border-brand text-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-              </svg>
-            </button>
+            <IconHint label="Expand chart" className="hidden sm:inline-flex">
+              <button
+                ref={expandBtnRef}
+                onClick={() => setIsExpanded(true)}
+                aria-label={`Expand chart: ${title}`}
+                aria-describedby={tableHintId}
+                aria-haspopup="dialog"
+                className="hidden sm:flex w-9 h-9 items-center justify-center rounded-md border border-brand text-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+              </button>
+            </IconHint>
           </div>
         </div>
       </div>

@@ -88,7 +88,9 @@ export default function CHPBuilder({ config, data }) {
   });
 
   return (
-    <div>
+    // data-chp-geo: lets neighborhoodSwitch.js see the moment the new
+    // neighborhood's content is in the DOM (React reuses the nodes).
+    <div data-chp-geo={data?.geoId ?? data?.neighborhoodName ?? ''}>
       {config.sections.map((section, idx) => {
         const blocks = section.children ?? [section];
         const catId  = sectionCategoryId(section);
@@ -101,8 +103,13 @@ export default function CHPBuilder({ config, data }) {
                 a new category from the end of the previous one. A real
                 element with an inline height, so it can't be eaten by margin
                 collapsing or depend on a Tailwind class being generated.
-                Change the height here to adjust the gap. */}
-            {section.category && <div aria-hidden="true" style={{ height: 64 }} />}
+                Change the height here to adjust the gap.
+                data-chp-category (2026-10-07): on mobile only one category is
+                shown at a time, and the spacers of the hidden categories were
+                still taking up 64px each — stacking into a large empty gap
+                between the end of the page and the footer. Tagging the spacer
+                lets MobileCategoryPager hide it along with its category. */}
+            {section.category && <div aria-hidden="true" data-chp-category={catId} style={{ height: 64 }} />}
             <SectionWrapper
               id={section.id}
               layout={section.layout}

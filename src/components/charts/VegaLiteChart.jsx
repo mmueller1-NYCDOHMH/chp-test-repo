@@ -64,7 +64,21 @@ function labelChartSvg(container, label) {
  *     the tooltip (globals.css) so it can't flash up mid-swipe; when the
  *     scroll settles the tooltip is closed for good.
  *   - Tapping/clicking anywhere outside a chart closes it.
- * A deliberate tap on a bar (no scrolling) still shows the tooltip.
+ * A deliberate tap on a bar (no scrolling) shows the tooltip — see below.
+ *
+ * TAP TO SHOW (2026-10-07, reworked 2026-10-12 — QA "Bar chart tapping
+ * on mobile"):
+ * Vega only shows a tooltip on `pointermove`, and a clean tap has none.
+ * The first fix replayed the tap as a synthetic pointermove — that worked in
+ * Chrome's device emulation but not on a real iPhone (the tooltip never
+ * appeared). Now each view gets a Vega `click` listener (Vega hands it the
+ * tapped scenegraph item) that calls the view's own tooltip handler
+ * directly with that item's tooltip — same content and styling, no event
+ * replay. Only for non-mouse pointers; mouse users already get hover. It
+ * stays until a scroll or a tap elsewhere.
+ * The light-blue "hovered bar" highlight is mouse-only now too (see the
+ * `hover` param in buildBarChartSpec.js): on touch it was set by a tap and
+ * never cleared, so tapping around left several bars highlighted.
  */
 let tooltipDismissInstalled = false;
 function installTooltipDismiss() {
@@ -84,9 +98,14 @@ function installTooltipDismiss() {
   // (expanded-chart modal, flyout).
   document.addEventListener('scroll', onScroll, { passive: true, capture: true });
   document.addEventListener('pointerdown', (e) => {
+    lastPointerType = e.pointerType || 'mouse';
     if (!e.target?.closest?.('.vega-embed')) hide();
   }, { passive: true, capture: true });
 }
+
+// Pointer type of the most recent pointerdown anywhere on the page — read
+// by each chart's tap-to-show click listener (see TAP TO SHOW above).
+let lastPointerType = 'mouse';
 
 const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onViewReady }) {
   const containerRef  = useRef(null);
@@ -216,13 +235,32 @@ const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onView
         viewRef.current = null;
       }
 
-      embed(containerRef.current, spec, {
-        actions: false,
-        renderer: 'svg',
-        tooltip,
+      // EDGE (2026-10-12, QA row 180): charts failed only in Edge with the
+      // "couldn't load" message, i.e. embed() itself rejected. The usual
+      // cause of a browser-specific embed failure is that Vega compiles its
+      // expression strings (our label-layout signals, highlight tests) with
+      // `new Function`, which managed/locked-down browsers can block. If the
+      // first embed fails, retry once with Vega's built-in expression
+      // INTERPRETER (`ast: true` — no eval, same output, a bit slower), and
+      // only show the error if that fails too. The console line names the
+      // real error + browser so a remaining failure can be diagnosed.
+      const embedOpts = { actions: false, renderer: 'svg', tooltip };
+      embed(containerRef.current, spec, embedOpts).catch((err) => {
+        if (cancelled || !containerRef.current) throw err;
+        console.warn('[VegaLiteChart] embed failed, retrying without eval:',
+          err?.message ?? err, '|', navigator.userAgent);
+        return embed(containerRef.current, spec, { ...embedOpts, ast: true });
       }).then((result) => {
         if (!cancelled) {
           viewRef.current = result.view;
+          // Tap-to-show tooltip on touch (see TAP TO SHOW above).
+          if (tooltip) {
+            const showTip = result.view.tooltip();
+            result.view.addEventListener('click', (event, item) => {
+              if (lastPointerType === 'mouse' || typeof showTip !== 'function') return;
+              try { showTip(null, event, item, item?.tooltip ?? null); } catch { /* ignore */ }
+            });
+          }
           // A11Y: one named image instead of dozens of unnamed mark groups
           const a11yLabel = spec?.description;
           labelChartSvg(containerRef.current, a11yLabel);
@@ -249,7 +287,7 @@ const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onView
         }
       }).catch((err) => {
         if (!cancelled) {
-          console.error('[VegaLiteChart] embed error:', err);
+          console.error('[VegaLiteChart] embed error:', err?.message ?? err, err, '|', navigator.userAgent);
           setEmbedError(true);
         }
       });
@@ -300,7 +338,20 @@ const VegaLiteChart = memo(function VegaLiteChart({ spec, tooltip = true, onView
           transition: 'opacity 450ms ease-out, transform 450ms ease-out',
         }}
       >
-        <div ref={containerRef} className="w-full min-w-0 overflow-hidden" />
+        {/* LANGUAGE (a11y audit 2026-10-08, WCAG 3.1.2): Google Translate can't
+            reliably translate the text Vega draws inside its <svg> (Vega redraws
+            those labels itself), and the wrapper's aria-label is an attribute,
+            which Translate never touches. So chart labels ("Citywide · 58%",
+            district names) and the chart's accessible name stay English on a
+            translated page. Marking the chart lang="en" lets screen readers
+            switch to an English voice for it; translate="no" + notranslate keep
+            Translate from half-translating some labels and not others. */}
+        <div
+          ref={containerRef}
+          lang="en"
+          translate="no"
+          className="notranslate w-full min-w-0 overflow-hidden"
+        />
       </div>
     </div>
   );
