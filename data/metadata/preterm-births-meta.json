@@ -1,0 +1,15 @@
+{
+  "IndicatorKey": "preterm-births",
+  "Title": "Preterm Births",
+  "Label": "Preterm Births",
+  "Subtitle": "Percentage of live births that are preterm (three or more weeks before the due date).",
+  "AgeAdjustment": "No",
+  "MethodsNote": null,
+  "Source": "NYC DOHMH, Bureau of Vital Statistics",
+  "DenominatorSource": "NYC DOHMH, Bureau of Vital Statistics",
+  "TimePeriod": "2022",
+  "Unit": "%",
+  "Decimals": 1,
+  "Section": "family-child-health",
+  "Subsection": "maternal"
+}
