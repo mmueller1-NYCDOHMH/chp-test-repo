@@ -1,0 +1,2803 @@
+{
+  "IndicatorKey": "edu-achievement",
+  "Label": "Educational Attainment",
+  "Section": "social",
+  "Subsection": "education",
+  "Data": [
+    {
+      "GeoType": "Citywide",
+      "GeoID": 0,
+      "Geography": "NYC",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.475185337,
+          "DisplayValue": "48%",
+          "ValueType": "estimate",
+          "LCLValue": 0.472015052,
+          "UCLValue": 0.478355622,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.16320828,
+          "DisplayValue": "16%",
+          "ValueType": "estimate",
+          "LCLValue": 0.161266122,
+          "UCLValue": 0.165150438,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.361606383,
+          "DisplayValue": "36%",
+          "ValueType": "estimate",
+          "LCLValue": 0.358567414,
+          "UCLValue": 0.364645351,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "Borough",
+      "GeoID": 1,
+      "Geography": "Manhattan",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.675074657,
+          "DisplayValue": "68%",
+          "ValueType": "estimate",
+          "LCLValue": 0.666897537,
+          "UCLValue": 0.683251777,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.108267985,
+          "DisplayValue": "11%",
+          "ValueType": "estimate",
+          "LCLValue": 0.104210006,
+          "UCLValue": 0.112325965,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.216657358,
+          "DisplayValue": "22%",
+          "ValueType": "estimate",
+          "LCLValue": 0.211611329,
+          "UCLValue": 0.221703387,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "Borough",
+      "GeoID": 2,
+      "Geography": "Bronx",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.299704764,
+          "DisplayValue": "30%",
+          "ValueType": "estimate",
+          "LCLValue": 0.293376796,
+          "UCLValue": 0.306032732,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.247003656,
+          "DisplayValue": "25%",
+          "ValueType": "estimate",
+          "LCLValue": 0.240453494,
+          "UCLValue": 0.253553819,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.45329158,
+          "DisplayValue": "45%",
+          "ValueType": "estimate",
+          "LCLValue": 0.44601582,
+          "UCLValue": 0.46056734,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "Borough",
+      "GeoID": 3,
+      "Geography": "Brooklyn",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.477457031,
+          "DisplayValue": "48%",
+          "ValueType": "estimate",
+          "LCLValue": 0.47265861,
+          "UCLValue": 0.482255453,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.158162357,
+          "DisplayValue": "16%",
+          "ValueType": "estimate",
+          "LCLValue": 0.154897913,
+          "UCLValue": 0.161426802,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.364380611,
+          "DisplayValue": "36%",
+          "ValueType": "estimate",
+          "LCLValue": 0.359869146,
+          "UCLValue": 0.368892077,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "Borough",
+      "GeoID": 4,
+      "Geography": "Queens",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.430167608,
+          "DisplayValue": "43%",
+          "ValueType": "estimate",
+          "LCLValue": 0.424350017,
+          "UCLValue": 0.435985198,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.173080309,
+          "DisplayValue": "17%",
+          "ValueType": "estimate",
+          "LCLValue": 0.169510982,
+          "UCLValue": 0.176649637,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.396752083,
+          "DisplayValue": "40%",
+          "ValueType": "estimate",
+          "LCLValue": 0.391427706,
+          "UCLValue": 0.40207646,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "Borough",
+      "GeoID": 5,
+      "Geography": "Staten Island",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.431409447,
+          "DisplayValue": "43%",
+          "ValueType": "estimate",
+          "LCLValue": 0.420436723,
+          "UCLValue": 0.442382172,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.114637013,
+          "DisplayValue": "11%",
+          "ValueType": "estimate",
+          "LCLValue": 0.107987124,
+          "UCLValue": 0.121286903,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.45395354,
+          "DisplayValue": "45%",
+          "ValueType": "estimate",
+          "LCLValue": 0.441285692,
+          "UCLValue": 0.466621388,
+          "NYCPValue": null,
+          "SegmentRank": null,
+          "NYCComparison": null,
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 101,
+      "Geography": "Financial District",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.8518567,
+          "DisplayValue": "85%",
+          "ValueType": "estimate",
+          "LCLValue": 0.833092807,
+          "UCLValue": 0.870620593,
+          "NYCPValue": null,
+          "SegmentRank": 1,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.031734474,
+          "DisplayValue": "3%",
+          "ValueType": "estimate",
+          "LCLValue": 0.024932091,
+          "UCLValue": 0.038536857,
+          "NYCPValue": null,
+          "SegmentRank": 59,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.116408826,
+          "DisplayValue": "12%",
+          "ValueType": "estimate",
+          "LCLValue": 0.103308429,
+          "UCLValue": 0.129509223,
+          "NYCPValue": null,
+          "SegmentRank": 61,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 102,
+      "Geography": "Greenwich Village and Soho",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.8518567,
+          "DisplayValue": "85%",
+          "ValueType": "estimate",
+          "LCLValue": 0.833092807,
+          "UCLValue": 0.870620593,
+          "NYCPValue": null,
+          "SegmentRank": 1,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.031734474,
+          "DisplayValue": "3%",
+          "ValueType": "estimate",
+          "LCLValue": 0.024932091,
+          "UCLValue": 0.038536857,
+          "NYCPValue": null,
+          "SegmentRank": 59,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.116408826,
+          "DisplayValue": "12%",
+          "ValueType": "estimate",
+          "LCLValue": 0.103308429,
+          "UCLValue": 0.129509223,
+          "NYCPValue": null,
+          "SegmentRank": 61,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 103,
+      "Geography": "Lower East Side and Chinatown",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.51592993,
+          "DisplayValue": "52%",
+          "ValueType": "estimate",
+          "LCLValue": 0.490680866,
+          "UCLValue": 0.541178995,
+          "NYCPValue": null,
+          "SegmentRank": 18,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.229479049,
+          "DisplayValue": "23%",
+          "ValueType": "estimate",
+          "LCLValue": 0.211591816,
+          "UCLValue": 0.247366283,
+          "NYCPValue": null,
+          "SegmentRank": 12,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.25459102,
+          "DisplayValue": "25%",
+          "ValueType": "estimate",
+          "LCLValue": 0.238912836,
+          "UCLValue": 0.270269205,
+          "NYCPValue": null,
+          "SegmentRank": 53,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 104,
+      "Geography": "Clinton and Chelsea",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.784029494,
+          "DisplayValue": "78%",
+          "ValueType": "estimate",
+          "LCLValue": 0.763140183,
+          "UCLValue": 0.804918804,
+          "NYCPValue": null,
+          "SegmentRank": 6,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.052628935,
+          "DisplayValue": "5%",
+          "ValueType": "estimate",
+          "LCLValue": 0.042460971,
+          "UCLValue": 0.0627969,
+          "NYCPValue": null,
+          "SegmentRank": 57,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.163341571,
+          "DisplayValue": "16%",
+          "ValueType": "estimate",
+          "LCLValue": 0.146085055,
+          "UCLValue": 0.180598087,
+          "NYCPValue": null,
+          "SegmentRank": 56,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 105,
+      "Geography": "Midtown",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.840023375,
+          "DisplayValue": "84%",
+          "ValueType": "estimate",
+          "LCLValue": 0.823860558,
+          "UCLValue": 0.856186193,
+          "NYCPValue": null,
+          "SegmentRank": 3,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.031713815,
+          "DisplayValue": "3%",
+          "ValueType": "estimate",
+          "LCLValue": 0.025134734,
+          "UCLValue": 0.038292897,
+          "NYCPValue": null,
+          "SegmentRank": 60,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.128262809,
+          "DisplayValue": "13%",
+          "ValueType": "estimate",
+          "LCLValue": 0.113698906,
+          "UCLValue": 0.142826713,
+          "NYCPValue": null,
+          "SegmentRank": 60,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 106,
+      "Geography": "Stuyvesant Town and Turtle Bay",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.840023375,
+          "DisplayValue": "84%",
+          "ValueType": "estimate",
+          "LCLValue": 0.823860558,
+          "UCLValue": 0.856186193,
+          "NYCPValue": null,
+          "SegmentRank": 3,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.031713815,
+          "DisplayValue": "3%",
+          "ValueType": "estimate",
+          "LCLValue": 0.025134734,
+          "UCLValue": 0.038292897,
+          "NYCPValue": null,
+          "SegmentRank": 60,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.128262809,
+          "DisplayValue": "13%",
+          "ValueType": "estimate",
+          "LCLValue": 0.113698906,
+          "UCLValue": 0.142826713,
+          "NYCPValue": null,
+          "SegmentRank": 60,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 107,
+      "Geography": "Upper West Side",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.805352265,
+          "DisplayValue": "81%",
+          "ValueType": "estimate",
+          "LCLValue": 0.791062232,
+          "UCLValue": 0.819642299,
+          "NYCPValue": null,
+          "SegmentRank": 4,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.046982148,
+          "DisplayValue": "5%",
+          "ValueType": "estimate",
+          "LCLValue": 0.039077401,
+          "UCLValue": 0.054886894,
+          "NYCPValue": null,
+          "SegmentRank": 58,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.147665587,
+          "DisplayValue": "15%",
+          "ValueType": "estimate",
+          "LCLValue": 0.134223795,
+          "UCLValue": 0.161107379,
+          "NYCPValue": null,
+          "SegmentRank": 57,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 108,
+      "Geography": "Upper East Side",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.84055567,
+          "DisplayValue": "84%",
+          "ValueType": "estimate",
+          "LCLValue": 0.833138617,
+          "UCLValue": 0.847972722,
+          "NYCPValue": null,
+          "SegmentRank": 2,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.02732628,
+          "DisplayValue": "3%",
+          "ValueType": "estimate",
+          "LCLValue": 0.020786761,
+          "UCLValue": 0.033865799,
+          "NYCPValue": null,
+          "SegmentRank": 61,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.132118051,
+          "DisplayValue": "13%",
+          "ValueType": "estimate",
+          "LCLValue": 0.119371259,
+          "UCLValue": 0.144864842,
+          "NYCPValue": null,
+          "SegmentRank": 59,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 109,
+      "Geography": "Morningside Heights and Hamilton Heights",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.520459585,
+          "DisplayValue": "52%",
+          "ValueType": "estimate",
+          "LCLValue": 0.49154782,
+          "UCLValue": 0.54937135,
+          "NYCPValue": null,
+          "SegmentRank": 16,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.179059162,
+          "DisplayValue": "18%",
+          "ValueType": "estimate",
+          "LCLValue": 0.158375796,
+          "UCLValue": 0.199742527,
+          "NYCPValue": null,
+          "SegmentRank": 25,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.300481254,
+          "DisplayValue": "30%",
+          "ValueType": "estimate",
+          "LCLValue": 0.276369499,
+          "UCLValue": 0.324593008,
+          "NYCPValue": null,
+          "SegmentRank": 49,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 110,
+      "Geography": "Central Harlem",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.473918318,
+          "DisplayValue": "47%",
+          "ValueType": "estimate",
+          "LCLValue": 0.451287865,
+          "UCLValue": 0.496548771,
+          "NYCPValue": null,
+          "SegmentRank": 27,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.150950263,
+          "DisplayValue": "15%",
+          "ValueType": "estimate",
+          "LCLValue": 0.134898729,
+          "UCLValue": 0.167001797,
+          "NYCPValue": null,
+          "SegmentRank": 34,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.375131419,
+          "DisplayValue": "38%",
+          "ValueType": "estimate",
+          "LCLValue": 0.351678314,
+          "UCLValue": 0.398584525,
+          "NYCPValue": null,
+          "SegmentRank": 32,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 111,
+      "Geography": "East Harlem",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.400877134,
+          "DisplayValue": "40%",
+          "ValueType": "estimate",
+          "LCLValue": 0.375947811,
+          "UCLValue": 0.425806458,
+          "NYCPValue": null,
+          "SegmentRank": 39,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.215231862,
+          "DisplayValue": "22%",
+          "ValueType": "estimate",
+          "LCLValue": 0.195412531,
+          "UCLValue": 0.235051193,
+          "NYCPValue": null,
+          "SegmentRank": 16,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.383891004,
+          "DisplayValue": "38%",
+          "ValueType": "estimate",
+          "LCLValue": 0.357926449,
+          "UCLValue": 0.409855559,
+          "NYCPValue": null,
+          "SegmentRank": 30,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 112,
+      "Geography": "Washington Heights and Inwood",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.447456127,
+          "DisplayValue": "45%",
+          "ValueType": "estimate",
+          "LCLValue": 0.426762048,
+          "UCLValue": 0.468150205,
+          "NYCPValue": null,
+          "SegmentRank": 30,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.227322412,
+          "DisplayValue": "23%",
+          "ValueType": "estimate",
+          "LCLValue": 0.209484784,
+          "UCLValue": 0.24516004,
+          "NYCPValue": null,
+          "SegmentRank": 13,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.325221462,
+          "DisplayValue": "33%",
+          "ValueType": "estimate",
+          "LCLValue": 0.306524592,
+          "UCLValue": 0.343918331,
+          "NYCPValue": null,
+          "SegmentRank": 44,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 201,
+      "Geography": "Mott Haven and Melrose",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.222380686,
+          "DisplayValue": "22%",
+          "ValueType": "estimate",
+          "LCLValue": 0.205058316,
+          "UCLValue": 0.239703056,
+          "NYCPValue": null,
+          "SegmentRank": 60,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.328457189,
+          "DisplayValue": "33%",
+          "ValueType": "estimate",
+          "LCLValue": 0.307791873,
+          "UCLValue": 0.349122506,
+          "NYCPValue": null,
+          "SegmentRank": 1,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.449162125,
+          "DisplayValue": "45%",
+          "ValueType": "estimate",
+          "LCLValue": 0.425706579,
+          "UCLValue": 0.472617671,
+          "NYCPValue": null,
+          "SegmentRank": 17,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 202,
+      "Geography": "Hunts Point and Longwood",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.222380686,
+          "DisplayValue": "22%",
+          "ValueType": "estimate",
+          "LCLValue": 0.205058316,
+          "UCLValue": 0.239703056,
+          "NYCPValue": null,
+          "SegmentRank": 60,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.328457189,
+          "DisplayValue": "33%",
+          "ValueType": "estimate",
+          "LCLValue": 0.307791873,
+          "UCLValue": 0.349122506,
+          "NYCPValue": null,
+          "SegmentRank": 1,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.449162125,
+          "DisplayValue": "45%",
+          "ValueType": "estimate",
+          "LCLValue": 0.425706579,
+          "UCLValue": 0.472617671,
+          "NYCPValue": null,
+          "SegmentRank": 17,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 203,
+      "Geography": "Morrisania and Crotona",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.224993939,
+          "DisplayValue": "22%",
+          "ValueType": "estimate",
+          "LCLValue": 0.204987273,
+          "UCLValue": 0.245000604,
+          "NYCPValue": null,
+          "SegmentRank": 59,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.312932465,
+          "DisplayValue": "31%",
+          "ValueType": "estimate",
+          "LCLValue": 0.294753168,
+          "UCLValue": 0.331111763,
+          "NYCPValue": null,
+          "SegmentRank": 2,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.462073596,
+          "DisplayValue": "46%",
+          "ValueType": "estimate",
+          "LCLValue": 0.439768488,
+          "UCLValue": 0.484378705,
+          "NYCPValue": null,
+          "SegmentRank": 11,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 204,
+      "Geography": "Highbridge and Concourse",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.252205867,
+          "DisplayValue": "25%",
+          "ValueType": "estimate",
+          "LCLValue": 0.23222788,
+          "UCLValue": 0.272183855,
+          "NYCPValue": null,
+          "SegmentRank": 57,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.281695908,
+          "DisplayValue": "28%",
+          "ValueType": "estimate",
+          "LCLValue": 0.262393436,
+          "UCLValue": 0.300998379,
+          "NYCPValue": null,
+          "SegmentRank": 6,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.466098225,
+          "DisplayValue": "47%",
+          "ValueType": "estimate",
+          "LCLValue": 0.443015303,
+          "UCLValue": 0.489181147,
+          "NYCPValue": null,
+          "SegmentRank": 9,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 205,
+      "Geography": "Fordham and University Heights",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.207564304,
+          "DisplayValue": "21%",
+          "ValueType": "estimate",
+          "LCLValue": 0.189290033,
+          "UCLValue": 0.225838575,
+          "NYCPValue": null,
+          "SegmentRank": 61,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.311594117,
+          "DisplayValue": "31%",
+          "ValueType": "estimate",
+          "LCLValue": 0.289504838,
+          "UCLValue": 0.333683397,
+          "NYCPValue": null,
+          "SegmentRank": 3,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.480841579,
+          "DisplayValue": "48%",
+          "ValueType": "estimate",
+          "LCLValue": 0.457227832,
+          "UCLValue": 0.504455326,
+          "NYCPValue": null,
+          "SegmentRank": 5,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 206,
+      "Geography": "Belmont and East Tremont",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.224993939,
+          "DisplayValue": "22%",
+          "ValueType": "estimate",
+          "LCLValue": 0.204987273,
+          "UCLValue": 0.245000604,
+          "NYCPValue": null,
+          "SegmentRank": 59,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.312932465,
+          "DisplayValue": "31%",
+          "ValueType": "estimate",
+          "LCLValue": 0.294753168,
+          "UCLValue": 0.331111763,
+          "NYCPValue": null,
+          "SegmentRank": 2,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.462073596,
+          "DisplayValue": "46%",
+          "ValueType": "estimate",
+          "LCLValue": 0.439768488,
+          "UCLValue": 0.484378705,
+          "NYCPValue": null,
+          "SegmentRank": 11,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 207,
+      "Geography": "Kingsbridge Heights and Bedford",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.262918105,
+          "DisplayValue": "26%",
+          "ValueType": "estimate",
+          "LCLValue": 0.24510913,
+          "UCLValue": 0.280727079,
+          "NYCPValue": null,
+          "SegmentRank": 56,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.290626339,
+          "DisplayValue": "29%",
+          "ValueType": "estimate",
+          "LCLValue": 0.268683218,
+          "UCLValue": 0.312569461,
+          "NYCPValue": null,
+          "SegmentRank": 4,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.446455556,
+          "DisplayValue": "45%",
+          "ValueType": "estimate",
+          "LCLValue": 0.42716506,
+          "UCLValue": 0.465746053,
+          "NYCPValue": null,
+          "SegmentRank": 21,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 208,
+      "Geography": "Riverdale and Fieldston",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.518963843,
+          "DisplayValue": "52%",
+          "ValueType": "estimate",
+          "LCLValue": 0.498576823,
+          "UCLValue": 0.539350864,
+          "NYCPValue": null,
+          "SegmentRank": 17,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.128248701,
+          "DisplayValue": "13%",
+          "ValueType": "estimate",
+          "LCLValue": 0.112036205,
+          "UCLValue": 0.144461196,
+          "NYCPValue": null,
+          "SegmentRank": 44,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.352787456,
+          "DisplayValue": "35%",
+          "ValueType": "estimate",
+          "LCLValue": 0.330550773,
+          "UCLValue": 0.37502414,
+          "NYCPValue": null,
+          "SegmentRank": 40,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 209,
+      "Geography": "Parkchester and Soundview",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.281497903,
+          "DisplayValue": "28%",
+          "ValueType": "estimate",
+          "LCLValue": 0.264347239,
+          "UCLValue": 0.298648568,
+          "NYCPValue": null,
+          "SegmentRank": 54,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.253728287,
+          "DisplayValue": "25%",
+          "ValueType": "estimate",
+          "LCLValue": 0.236812819,
+          "UCLValue": 0.270643755,
+          "NYCPValue": null,
+          "SegmentRank": 9,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.46477381,
+          "DisplayValue": "46%",
+          "ValueType": "estimate",
+          "LCLValue": 0.444964467,
+          "UCLValue": 0.484583153,
+          "NYCPValue": null,
+          "SegmentRank": 10,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 210,
+      "Geography": "Throgs Neck and Co-op City",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.378084777,
+          "DisplayValue": "38%",
+          "ValueType": "estimate",
+          "LCLValue": 0.357534187,
+          "UCLValue": 0.398635367,
+          "NYCPValue": null,
+          "SegmentRank": 44,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.152271954,
+          "DisplayValue": "15%",
+          "ValueType": "estimate",
+          "LCLValue": 0.136740892,
+          "UCLValue": 0.167803016,
+          "NYCPValue": null,
+          "SegmentRank": 33,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.469643269,
+          "DisplayValue": "47%",
+          "ValueType": "estimate",
+          "LCLValue": 0.446138089,
+          "UCLValue": 0.493148449,
+          "NYCPValue": null,
+          "SegmentRank": 7,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 211,
+      "Geography": "Morris Park and Bronxdale",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.371873495,
+          "DisplayValue": "37%",
+          "ValueType": "estimate",
+          "LCLValue": 0.353841922,
+          "UCLValue": 0.389905069,
+          "NYCPValue": null,
+          "SegmentRank": 45,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.186513266,
+          "DisplayValue": "19%",
+          "ValueType": "estimate",
+          "LCLValue": 0.171415694,
+          "UCLValue": 0.201610839,
+          "NYCPValue": null,
+          "SegmentRank": 21,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.441613238,
+          "DisplayValue": "44%",
+          "ValueType": "estimate",
+          "LCLValue": 0.424505506,
+          "UCLValue": 0.458720971,
+          "NYCPValue": null,
+          "SegmentRank": 22,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 212,
+      "Geography": "Williamsbridge and Baychester",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.347158345,
+          "DisplayValue": "35%",
+          "ValueType": "estimate",
+          "LCLValue": 0.332486626,
+          "UCLValue": 0.361830064,
+          "NYCPValue": null,
+          "SegmentRank": 48,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.18428759,
+          "DisplayValue": "18%",
+          "ValueType": "estimate",
+          "LCLValue": 0.170155426,
+          "UCLValue": 0.198419753,
+          "NYCPValue": null,
+          "SegmentRank": 23,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.468554065,
+          "DisplayValue": "47%",
+          "ValueType": "estimate",
+          "LCLValue": 0.447141502,
+          "UCLValue": 0.489966628,
+          "NYCPValue": null,
+          "SegmentRank": 8,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 301,
+      "Geography": "Greenpoint and Williamsburg",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.586579539,
+          "DisplayValue": "59%",
+          "ValueType": "estimate",
+          "LCLValue": 0.572445083,
+          "UCLValue": 0.600713995,
+          "NYCPValue": null,
+          "SegmentRank": 10,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.14126687,
+          "DisplayValue": "14%",
+          "ValueType": "estimate",
+          "LCLValue": 0.128367163,
+          "UCLValue": 0.154166576,
+          "NYCPValue": null,
+          "SegmentRank": 36,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.272153592,
+          "DisplayValue": "27%",
+          "ValueType": "estimate",
+          "LCLValue": 0.258145463,
+          "UCLValue": 0.28616172,
+          "NYCPValue": null,
+          "SegmentRank": 50,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 302,
+      "Geography": "Fort Greene and Brooklyn Heights",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.760226352,
+          "DisplayValue": "76%",
+          "ValueType": "estimate",
+          "LCLValue": 0.749112915,
+          "UCLValue": 0.77133979,
+          "NYCPValue": null,
+          "SegmentRank": 7,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.065707404,
+          "DisplayValue": "7%",
+          "ValueType": "estimate",
+          "LCLValue": 0.057218835,
+          "UCLValue": 0.074195973,
+          "NYCPValue": null,
+          "SegmentRank": 55,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.174066244,
+          "DisplayValue": "17%",
+          "ValueType": "estimate",
+          "LCLValue": 0.160377345,
+          "UCLValue": 0.187755143,
+          "NYCPValue": null,
+          "SegmentRank": 55,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 303,
+      "Geography": "Bedford Stuyvesant",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.505432909,
+          "DisplayValue": "51%",
+          "ValueType": "estimate",
+          "LCLValue": 0.486914604,
+          "UCLValue": 0.523951214,
+          "NYCPValue": null,
+          "SegmentRank": 21,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.132923827,
+          "DisplayValue": "13%",
+          "ValueType": "estimate",
+          "LCLValue": 0.122170644,
+          "UCLValue": 0.14367701,
+          "NYCPValue": null,
+          "SegmentRank": 41,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.361643264,
+          "DisplayValue": "36%",
+          "ValueType": "estimate",
+          "LCLValue": 0.343074172,
+          "UCLValue": 0.380212357,
+          "NYCPValue": null,
+          "SegmentRank": 35,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 304,
+      "Geography": "Bushwick",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.464069968,
+          "DisplayValue": "46%",
+          "ValueType": "estimate",
+          "LCLValue": 0.445386654,
+          "UCLValue": 0.482753282,
+          "NYCPValue": null,
+          "SegmentRank": 29,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.203280041,
+          "DisplayValue": "20%",
+          "ValueType": "estimate",
+          "LCLValue": 0.185325328,
+          "UCLValue": 0.221234753,
+          "NYCPValue": null,
+          "SegmentRank": 20,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.332649992,
+          "DisplayValue": "33%",
+          "ValueType": "estimate",
+          "LCLValue": 0.312484328,
+          "UCLValue": 0.352815655,
+          "NYCPValue": null,
+          "SegmentRank": 42,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 305,
+      "Geography": "East New York and Starrett City",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.240139306,
+          "DisplayValue": "24%",
+          "ValueType": "estimate",
+          "LCLValue": 0.225452117,
+          "UCLValue": 0.254826495,
+          "NYCPValue": null,
+          "SegmentRank": 58,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.185214739,
+          "DisplayValue": "19%",
+          "ValueType": "estimate",
+          "LCLValue": 0.171116008,
+          "UCLValue": 0.19931347,
+          "NYCPValue": null,
+          "SegmentRank": 22,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.574645955,
+          "DisplayValue": "57%",
+          "ValueType": "estimate",
+          "LCLValue": 0.552670852,
+          "UCLValue": 0.596621058,
+          "NYCPValue": null,
+          "SegmentRank": 1,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 306,
+      "Geography": "Park Slope and Carroll Gardens",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.793502344,
+          "DisplayValue": "79%",
+          "ValueType": "estimate",
+          "LCLValue": 0.780198477,
+          "UCLValue": 0.80680621,
+          "NYCPValue": null,
+          "SegmentRank": 5,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.064308538,
+          "DisplayValue": "6%",
+          "ValueType": "estimate",
+          "LCLValue": 0.054464117,
+          "UCLValue": 0.07415296,
+          "NYCPValue": null,
+          "SegmentRank": 56,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.142189118,
+          "DisplayValue": "14%",
+          "ValueType": "estimate",
+          "LCLValue": 0.128449497,
+          "UCLValue": 0.155928739,
+          "NYCPValue": null,
+          "SegmentRank": 58,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 307,
+      "Geography": "Sunset Park",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.443356925,
+          "DisplayValue": "44%",
+          "ValueType": "estimate",
+          "LCLValue": 0.424588963,
+          "UCLValue": 0.462124887,
+          "NYCPValue": null,
+          "SegmentRank": 31,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.286884276,
+          "DisplayValue": "29%",
+          "ValueType": "estimate",
+          "LCLValue": 0.26979413,
+          "UCLValue": 0.303974422,
+          "NYCPValue": null,
+          "SegmentRank": 5,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.269758799,
+          "DisplayValue": "27%",
+          "ValueType": "estimate",
+          "LCLValue": 0.252646461,
+          "UCLValue": 0.286871138,
+          "NYCPValue": null,
+          "SegmentRank": 52,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 308,
+      "Geography": "Crown Heights and Prospect Heights",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.585499038,
+          "DisplayValue": "59%",
+          "ValueType": "estimate",
+          "LCLValue": 0.564192028,
+          "UCLValue": 0.606806048,
+          "NYCPValue": null,
+          "SegmentRank": 11,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.11223429,
+          "DisplayValue": "11%",
+          "ValueType": "estimate",
+          "LCLValue": 0.097422279,
+          "UCLValue": 0.127046301,
+          "NYCPValue": null,
+          "SegmentRank": 50,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.302266671,
+          "DisplayValue": "30%",
+          "ValueType": "estimate",
+          "LCLValue": 0.280576701,
+          "UCLValue": 0.323956642,
+          "NYCPValue": null,
+          "SegmentRank": 48,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 309,
+      "Geography": "South Crown Heights and Lefferts Gardens",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.47001843,
+          "DisplayValue": "47%",
+          "ValueType": "estimate",
+          "LCLValue": 0.449823692,
+          "UCLValue": 0.490213169,
+          "NYCPValue": null,
+          "SegmentRank": 28,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.135042076,
+          "DisplayValue": "14%",
+          "ValueType": "estimate",
+          "LCLValue": 0.118391033,
+          "UCLValue": 0.151693118,
+          "NYCPValue": null,
+          "SegmentRank": 39,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.394939494,
+          "DisplayValue": "39%",
+          "ValueType": "estimate",
+          "LCLValue": 0.370246093,
+          "UCLValue": 0.419632895,
+          "NYCPValue": null,
+          "SegmentRank": 29,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 310,
+      "Geography": "Bay Ridge and Dyker Heights",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.510132361,
+          "DisplayValue": "51%",
+          "ValueType": "estimate",
+          "LCLValue": 0.498578392,
+          "UCLValue": 0.52168633,
+          "NYCPValue": null,
+          "SegmentRank": 19,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.161548483,
+          "DisplayValue": "16%",
+          "ValueType": "estimate",
+          "LCLValue": 0.149322766,
+          "UCLValue": 0.173774201,
+          "NYCPValue": null,
+          "SegmentRank": 30,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.328319156,
+          "DisplayValue": "33%",
+          "ValueType": "estimate",
+          "LCLValue": 0.308931832,
+          "UCLValue": 0.34770648,
+          "NYCPValue": null,
+          "SegmentRank": 43,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 311,
+      "Geography": "Bensonhurst",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.389478689,
+          "DisplayValue": "39%",
+          "ValueType": "estimate",
+          "LCLValue": 0.374464945,
+          "UCLValue": 0.404492433,
+          "NYCPValue": null,
+          "SegmentRank": 41,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.257233499,
+          "DisplayValue": "26%",
+          "ValueType": "estimate",
+          "LCLValue": 0.241998752,
+          "UCLValue": 0.272468245,
+          "NYCPValue": null,
+          "SegmentRank": 8,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.353287812,
+          "DisplayValue": "35%",
+          "ValueType": "estimate",
+          "LCLValue": 0.338945229,
+          "UCLValue": 0.367630395,
+          "NYCPValue": null,
+          "SegmentRank": 39,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 312,
+      "Geography": "Borough Park",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.369514818,
+          "DisplayValue": "37%",
+          "ValueType": "estimate",
+          "LCLValue": 0.356318274,
+          "UCLValue": 0.382711363,
+          "NYCPValue": null,
+          "SegmentRank": 46,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.222172565,
+          "DisplayValue": "22%",
+          "ValueType": "estimate",
+          "LCLValue": 0.206146636,
+          "UCLValue": 0.238198494,
+          "NYCPValue": null,
+          "SegmentRank": 14,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.408312617,
+          "DisplayValue": "41%",
+          "ValueType": "estimate",
+          "LCLValue": 0.394680116,
+          "UCLValue": 0.421945118,
+          "NYCPValue": null,
+          "SegmentRank": 26,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 313,
+      "Geography": "Coney Island",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.484250241,
+          "DisplayValue": "48%",
+          "ValueType": "estimate",
+          "LCLValue": 0.461951931,
+          "UCLValue": 0.506548552,
+          "NYCPValue": null,
+          "SegmentRank": 23,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.161145164,
+          "DisplayValue": "16%",
+          "ValueType": "estimate",
+          "LCLValue": 0.141372651,
+          "UCLValue": 0.180917676,
+          "NYCPValue": null,
+          "SegmentRank": 31,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.354604595,
+          "DisplayValue": "35%",
+          "ValueType": "estimate",
+          "LCLValue": 0.330665559,
+          "UCLValue": 0.378543632,
+          "NYCPValue": null,
+          "SegmentRank": 38,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 314,
+      "Geography": "Flatbush and Midwood",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.500186484,
+          "DisplayValue": "50%",
+          "ValueType": "estimate",
+          "LCLValue": 0.481584941,
+          "UCLValue": 0.518788028,
+          "NYCPValue": null,
+          "SegmentRank": 22,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.142074416,
+          "DisplayValue": "14%",
+          "ValueType": "estimate",
+          "LCLValue": 0.1279297,
+          "UCLValue": 0.156219132,
+          "NYCPValue": null,
+          "SegmentRank": 35,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.3577391,
+          "DisplayValue": "36%",
+          "ValueType": "estimate",
+          "LCLValue": 0.339631716,
+          "UCLValue": 0.375846484,
+          "NYCPValue": null,
+          "SegmentRank": 37,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 315,
+      "Geography": "Sheepshead Bay",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.506633522,
+          "DisplayValue": "51%",
+          "ValueType": "estimate",
+          "LCLValue": 0.491863404,
+          "UCLValue": 0.52140364,
+          "NYCPValue": null,
+          "SegmentRank": 20,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.1260234,
+          "DisplayValue": "13%",
+          "ValueType": "estimate",
+          "LCLValue": 0.117380772,
+          "UCLValue": 0.134666028,
+          "NYCPValue": null,
+          "SegmentRank": 46,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.367343079,
+          "DisplayValue": "37%",
+          "ValueType": "estimate",
+          "LCLValue": 0.351443337,
+          "UCLValue": 0.38324282,
+          "NYCPValue": null,
+          "SegmentRank": 33,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 316,
+      "Geography": "Brownsville",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.26458827,
+          "DisplayValue": "26%",
+          "ValueType": "estimate",
+          "LCLValue": 0.244079268,
+          "UCLValue": 0.285097272,
+          "NYCPValue": null,
+          "SegmentRank": 55,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.208471564,
+          "DisplayValue": "21%",
+          "ValueType": "estimate",
+          "LCLValue": 0.189101137,
+          "UCLValue": 0.227841991,
+          "NYCPValue": null,
+          "SegmentRank": 17,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.526940166,
+          "DisplayValue": "53%",
+          "ValueType": "estimate",
+          "LCLValue": 0.504701963,
+          "UCLValue": 0.549178368,
+          "NYCPValue": null,
+          "SegmentRank": 2,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 317,
+      "Geography": "East Flatbush",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.361410005,
+          "DisplayValue": "36%",
+          "ValueType": "estimate",
+          "LCLValue": 0.346945573,
+          "UCLValue": 0.375874438,
+          "NYCPValue": null,
+          "SegmentRank": 47,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.136081073,
+          "DisplayValue": "14%",
+          "ValueType": "estimate",
+          "LCLValue": 0.124150157,
+          "UCLValue": 0.148011989,
+          "NYCPValue": null,
+          "SegmentRank": 38,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.502508922,
+          "DisplayValue": "50%",
+          "ValueType": "estimate",
+          "LCLValue": 0.483994624,
+          "UCLValue": 0.52102322,
+          "NYCPValue": null,
+          "SegmentRank": 3,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 318,
+      "Geography": "Flatlands and Canarsie",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.435919989,
+          "DisplayValue": "44%",
+          "ValueType": "estimate",
+          "LCLValue": 0.423940701,
+          "UCLValue": 0.447899276,
+          "NYCPValue": null,
+          "SegmentRank": 32,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.116109975,
+          "DisplayValue": "12%",
+          "ValueType": "estimate",
+          "LCLValue": 0.107766025,
+          "UCLValue": 0.124453925,
+          "NYCPValue": null,
+          "SegmentRank": 48,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.447970036,
+          "DisplayValue": "45%",
+          "ValueType": "estimate",
+          "LCLValue": 0.433398857,
+          "UCLValue": 0.462541216,
+          "NYCPValue": null,
+          "SegmentRank": 18,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 401,
+      "Geography": "Long Island City and Astoria",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.581792205,
+          "DisplayValue": "58%",
+          "ValueType": "estimate",
+          "LCLValue": 0.568015274,
+          "UCLValue": 0.595569136,
+          "NYCPValue": null,
+          "SegmentRank": 12,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.109299257,
+          "DisplayValue": "11%",
+          "ValueType": "estimate",
+          "LCLValue": 0.098883596,
+          "UCLValue": 0.119714918,
+          "NYCPValue": null,
+          "SegmentRank": 51,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.308908538,
+          "DisplayValue": "31%",
+          "ValueType": "estimate",
+          "LCLValue": 0.295421447,
+          "UCLValue": 0.322395629,
+          "NYCPValue": null,
+          "SegmentRank": 47,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 402,
+      "Geography": "Woodside and Sunnyside",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.561019525,
+          "DisplayValue": "56%",
+          "ValueType": "estimate",
+          "LCLValue": 0.542106337,
+          "UCLValue": 0.579932712,
+          "NYCPValue": null,
+          "SegmentRank": 13,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.128939262,
+          "DisplayValue": "13%",
+          "ValueType": "estimate",
+          "LCLValue": 0.115874652,
+          "UCLValue": 0.142003871,
+          "NYCPValue": null,
+          "SegmentRank": 43,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.310041214,
+          "DisplayValue": "31%",
+          "ValueType": "estimate",
+          "LCLValue": 0.291510364,
+          "UCLValue": 0.328572064,
+          "NYCPValue": null,
+          "SegmentRank": 46,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 403,
+      "Geography": "Jackson Heights",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.326629102,
+          "DisplayValue": "33%",
+          "ValueType": "estimate",
+          "LCLValue": 0.309843695,
+          "UCLValue": 0.34341451,
+          "NYCPValue": null,
+          "SegmentRank": 49,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.244294378,
+          "DisplayValue": "24%",
+          "ValueType": "estimate",
+          "LCLValue": 0.228634376,
+          "UCLValue": 0.25995438,
+          "NYCPValue": null,
+          "SegmentRank": 11,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.429076519,
+          "DisplayValue": "43%",
+          "ValueType": "estimate",
+          "LCLValue": 0.406866589,
+          "UCLValue": 0.45128645,
+          "NYCPValue": null,
+          "SegmentRank": 24,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 404,
+      "Geography": "Elmhurst and Corona",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.31380346,
+          "DisplayValue": "31%",
+          "ValueType": "estimate",
+          "LCLValue": 0.294564451,
+          "UCLValue": 0.333042468,
+          "NYCPValue": null,
+          "SegmentRank": 52,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.278644654,
+          "DisplayValue": "28%",
+          "ValueType": "estimate",
+          "LCLValue": 0.25814873,
+          "UCLValue": 0.299140577,
+          "NYCPValue": null,
+          "SegmentRank": 7,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.407551887,
+          "DisplayValue": "41%",
+          "ValueType": "estimate",
+          "LCLValue": 0.387120888,
+          "UCLValue": 0.427982885,
+          "NYCPValue": null,
+          "SegmentRank": 27,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 405,
+      "Geography": "Ridgewood and Maspeth",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.405053387,
+          "DisplayValue": "41%",
+          "ValueType": "estimate",
+          "LCLValue": 0.391015892,
+          "UCLValue": 0.419090883,
+          "NYCPValue": null,
+          "SegmentRank": 37,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.163053817,
+          "DisplayValue": "16%",
+          "ValueType": "estimate",
+          "LCLValue": 0.152299097,
+          "UCLValue": 0.173808537,
+          "NYCPValue": null,
+          "SegmentRank": 29,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.431892796,
+          "DisplayValue": "43%",
+          "ValueType": "estimate",
+          "LCLValue": 0.418047658,
+          "UCLValue": 0.445737934,
+          "NYCPValue": null,
+          "SegmentRank": 23,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 406,
+      "Geography": "Rego Park and Forest Hills",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.645241266,
+          "DisplayValue": "65%",
+          "ValueType": "estimate",
+          "LCLValue": 0.621610646,
+          "UCLValue": 0.668871886,
+          "NYCPValue": null,
+          "SegmentRank": 9,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.08272435,
+          "DisplayValue": "8%",
+          "ValueType": "estimate",
+          "LCLValue": 0.070952136,
+          "UCLValue": 0.094496563,
+          "NYCPValue": null,
+          "SegmentRank": 53,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.272034385,
+          "DisplayValue": "27%",
+          "ValueType": "estimate",
+          "LCLValue": 0.258087152,
+          "UCLValue": 0.285981617,
+          "NYCPValue": null,
+          "SegmentRank": 51,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 407,
+      "Geography": "Flushing and Whitestone",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.399200424,
+          "DisplayValue": "40%",
+          "ValueType": "estimate",
+          "LCLValue": 0.386841974,
+          "UCLValue": 0.411558874,
+          "NYCPValue": null,
+          "SegmentRank": 40,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.219594861,
+          "DisplayValue": "22%",
+          "ValueType": "estimate",
+          "LCLValue": 0.203913499,
+          "UCLValue": 0.235276222,
+          "NYCPValue": null,
+          "SegmentRank": 15,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.381204716,
+          "DisplayValue": "38%",
+          "ValueType": "estimate",
+          "LCLValue": 0.366746017,
+          "UCLValue": 0.395663415,
+          "NYCPValue": null,
+          "SegmentRank": 31,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 408,
+      "Geography": "Hillcrest and Fresh Meadows",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.528439925,
+          "DisplayValue": "53%",
+          "ValueType": "estimate",
+          "LCLValue": 0.503495505,
+          "UCLValue": 0.553384345,
+          "NYCPValue": null,
+          "SegmentRank": 15,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.133466689,
+          "DisplayValue": "13%",
+          "ValueType": "estimate",
+          "LCLValue": 0.120132589,
+          "UCLValue": 0.146800789,
+          "NYCPValue": null,
+          "SegmentRank": 40,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.338093386,
+          "DisplayValue": "34%",
+          "ValueType": "estimate",
+          "LCLValue": 0.320518728,
+          "UCLValue": 0.355668044,
+          "NYCPValue": null,
+          "SegmentRank": 41,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 409,
+      "Geography": "Kew Gardens and Woodhaven",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.38447011,
+          "DisplayValue": "38%",
+          "ValueType": "estimate",
+          "LCLValue": 0.371517248,
+          "UCLValue": 0.397422973,
+          "NYCPValue": null,
+          "SegmentRank": 42,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.203889116,
+          "DisplayValue": "20%",
+          "ValueType": "estimate",
+          "LCLValue": 0.191778047,
+          "UCLValue": 0.216000185,
+          "NYCPValue": null,
+          "SegmentRank": 19,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.411640774,
+          "DisplayValue": "41%",
+          "ValueType": "estimate",
+          "LCLValue": 0.39206821,
+          "UCLValue": 0.431213338,
+          "NYCPValue": null,
+          "SegmentRank": 25,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 410,
+      "Geography": "South Ozone Park and Howard Beach",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.322112393,
+          "DisplayValue": "32%",
+          "ValueType": "estimate",
+          "LCLValue": 0.303524335,
+          "UCLValue": 0.340700451,
+          "NYCPValue": null,
+          "SegmentRank": 50,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.207485387,
+          "DisplayValue": "21%",
+          "ValueType": "estimate",
+          "LCLValue": 0.191738129,
+          "UCLValue": 0.223232646,
+          "NYCPValue": null,
+          "SegmentRank": 18,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.47040222,
+          "DisplayValue": "47%",
+          "ValueType": "estimate",
+          "LCLValue": 0.451988706,
+          "UCLValue": 0.488815733,
+          "NYCPValue": null,
+          "SegmentRank": 6,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 411,
+      "Geography": "Bayside and Little Neck",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.554235322,
+          "DisplayValue": "55%",
+          "ValueType": "estimate",
+          "LCLValue": 0.535756791,
+          "UCLValue": 0.572713854,
+          "NYCPValue": null,
+          "SegmentRank": 14,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.129598022,
+          "DisplayValue": "13%",
+          "ValueType": "estimate",
+          "LCLValue": 0.118615967,
+          "UCLValue": 0.140580077,
+          "NYCPValue": null,
+          "SegmentRank": 42,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.316166656,
+          "DisplayValue": "32%",
+          "ValueType": "estimate",
+          "LCLValue": 0.300431307,
+          "UCLValue": 0.331902004,
+          "NYCPValue": null,
+          "SegmentRank": 45,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 412,
+      "Geography": "Jamaica and Hollis",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.317742248,
+          "DisplayValue": "32%",
+          "ValueType": "estimate",
+          "LCLValue": 0.30457115,
+          "UCLValue": 0.330913347,
+          "NYCPValue": null,
+          "SegmentRank": 51,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.183175769,
+          "DisplayValue": "18%",
+          "ValueType": "estimate",
+          "LCLValue": 0.173821371,
+          "UCLValue": 0.192530167,
+          "NYCPValue": null,
+          "SegmentRank": 24,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.499081983,
+          "DisplayValue": "50%",
+          "ValueType": "estimate",
+          "LCLValue": 0.488832057,
+          "UCLValue": 0.509331909,
+          "NYCPValue": null,
+          "SegmentRank": 4,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 413,
+      "Geography": "Queens Village",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.426538254,
+          "DisplayValue": "43%",
+          "ValueType": "estimate",
+          "LCLValue": 0.411902192,
+          "UCLValue": 0.441174316,
+          "NYCPValue": null,
+          "SegmentRank": 35,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.126039895,
+          "DisplayValue": "13%",
+          "ValueType": "estimate",
+          "LCLValue": 0.116289062,
+          "UCLValue": 0.135790728,
+          "NYCPValue": null,
+          "SegmentRank": 45,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.447421851,
+          "DisplayValue": "45%",
+          "ValueType": "estimate",
+          "LCLValue": 0.431240778,
+          "UCLValue": 0.463602925,
+          "NYCPValue": null,
+          "SegmentRank": 19,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 414,
+      "Geography": "Rockaway and Broad Channel",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.378738467,
+          "DisplayValue": "38%",
+          "ValueType": "estimate",
+          "LCLValue": 0.359292209,
+          "UCLValue": 0.398184725,
+          "NYCPValue": null,
+          "SegmentRank": 43,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.172088435,
+          "DisplayValue": "17%",
+          "ValueType": "estimate",
+          "LCLValue": 0.156992764,
+          "UCLValue": 0.187184106,
+          "NYCPValue": null,
+          "SegmentRank": 27,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.449173098,
+          "DisplayValue": "45%",
+          "ValueType": "estimate",
+          "LCLValue": 0.425679215,
+          "UCLValue": 0.472666982,
+          "NYCPValue": null,
+          "SegmentRank": 16,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 501,
+      "Geography": "St. George and Stapleton",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.401124686,
+          "DisplayValue": "40%",
+          "ValueType": "estimate",
+          "LCLValue": 0.384884024,
+          "UCLValue": 0.417365349,
+          "NYCPValue": null,
+          "SegmentRank": 38,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.140505547,
+          "DisplayValue": "14%",
+          "ValueType": "estimate",
+          "LCLValue": 0.129495099,
+          "UCLValue": 0.151515995,
+          "NYCPValue": null,
+          "SegmentRank": 37,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.458369767,
+          "DisplayValue": "46%",
+          "ValueType": "estimate",
+          "LCLValue": 0.439890215,
+          "UCLValue": 0.476849318,
+          "NYCPValue": null,
+          "SegmentRank": 12,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 502,
+      "Geography": "South Beach and Willowbrook",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.416930751,
+          "DisplayValue": "42%",
+          "ValueType": "estimate",
+          "LCLValue": 0.400441106,
+          "UCLValue": 0.433420396,
+          "NYCPValue": null,
+          "SegmentRank": 36,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.125997653,
+          "DisplayValue": "13%",
+          "ValueType": "estimate",
+          "LCLValue": 0.113287079,
+          "UCLValue": 0.138708226,
+          "NYCPValue": null,
+          "SegmentRank": 47,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.457071596,
+          "DisplayValue": "46%",
+          "ValueType": "estimate",
+          "LCLValue": 0.43617384,
+          "UCLValue": 0.477969353,
+          "NYCPValue": null,
+          "SegmentRank": 13,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    },
+    {
+      "GeoType": "CD",
+      "GeoID": 503,
+      "Geography": "Tottenville and Great Kills",
+      "Segments": [
+        {
+          "SegmentKey": "edu-college-degree-and-higher",
+          "Value": 0.475754124,
+          "DisplayValue": "48%",
+          "ValueType": "estimate",
+          "LCLValue": 0.459174738,
+          "UCLValue": 0.49233351,
+          "NYCPValue": null,
+          "SegmentRank": 25,
+          "NYCComparison": "similar",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-did-not-complete-hs",
+          "Value": 0.077627305,
+          "DisplayValue": "8%",
+          "ValueType": "estimate",
+          "LCLValue": 0.067418411,
+          "UCLValue": 0.087836198,
+          "NYCPValue": null,
+          "SegmentRank": 54,
+          "NYCComparison": "lower",
+          "ValueStatus": null
+        },
+        {
+          "SegmentKey": "edu-hsgrad-some-college",
+          "Value": 0.446618572,
+          "DisplayValue": "45%",
+          "ValueType": "estimate",
+          "LCLValue": 0.427485542,
+          "UCLValue": 0.465751601,
+          "NYCPValue": null,
+          "SegmentRank": 20,
+          "NYCComparison": "higher",
+          "ValueStatus": null
+        }
+      ]
+    }
+  ]
+}
