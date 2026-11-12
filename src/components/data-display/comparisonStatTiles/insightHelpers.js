@@ -39,18 +39,3 @@ export function getInsightBadgeClass(direction, higherIsBetter) {
     ? 'bg-green-50 text-green-700 border-green-200'
     : 'bg-red-50 text-red-700 border-red-200';
 }
-
-// Delta badge styles use CSS custom properties defined in globals.css.
-// To change health-direction colors, update --color-health-* vars there.
-//
-// 2026-09-03: StatTileSingle now always renders `.neutral`, regardless of
-// the indicator's computed direction — see the note at its `deltaStyle`
-// line. `.better` / `.worse` are kept here (unused in this file for now)
-// since computeDelta() still computes a real direction and some other
-// consumer may want the colored version later; this file just doesn't
-// render it.
-export const DELTA_STYLES = {
-  better:  { color: 'var(--color-health-better)',  background: 'var(--color-health-better-bg)' },
-  worse:   { color: 'var(--color-health-worse)',   background: 'var(--color-health-worse-bg)'  },
-  neutral: { color: 'var(--color-health-neutral)', background: 'var(--color-health-neutral-bg)' },
-};

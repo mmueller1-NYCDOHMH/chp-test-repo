@@ -1,0 +1,18 @@
+{
+  "_note": "Settings for scripts/validate-content.js. Safe to edit — no code change needed. Thresholds are placeholders until the data team sets real ones.",
+  "expectedGeographies": { "Citywide": 1, "Borough": 5, "CD": 59 },
+  "valueStatuses": ["suppressed", "na", "flagged"],
+  "noValueStatuses": ["suppressed", "na"],
+  "requiredMetaFields": ["Title", "Source", "TimePeriod", "Decimals"],
+  "largeChange": {
+    "_note": "A neighborhood's value is flagged for review when it moves by more than `relative` (0.25 = 25%) from the live version. Override per indicator key in byKey, e.g. { \"overall-pop\": { \"relative\": 0.1 } }.",
+    "default": { "relative": 0.25 },
+    "byKey": {}
+  },
+  "maxContextChars": 260,
+  "acronyms": ["NYC", "BMI", "HPV", "HIV", "SPD", "PM2", "HVI", "CDC", "DOHMH", "ACS", "CHS", "NYCHA", "MTA", "DOE", "COVID", "AIDS", "STI", "SNAP", "WIC", "EMS", "ZIP", "GED", "LGBTQ"],
+  "copyDirFiles": ["measure-copy.csv", "sections.csv", "indicatorCopy.json", "structure.json"],
+  "ignoredFiles": [".gitkeep", ".DS_Store", "README.md"],
+  "maxRowIssuesPerFile": 5,
+  "maxBiggestChanges": 10
+}

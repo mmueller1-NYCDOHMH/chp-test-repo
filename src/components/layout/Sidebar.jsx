@@ -47,11 +47,13 @@
  *   live in dedicated hooks under ./sidebar/ — this file owns layout, the
  *   tab strip contents, and the JSX tree.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import { setPendingNeighborhood } from '@/lib/utils/pendingNeighborhood';
-import Link from 'next/link';
+import { pushNeighborhood } from '@/lib/utils/neighborhoodSwitch';
+import { useComparison } from '@/lib/context/ComparisonContext';
+import BackToProfileLink from '@/components/controls/BackToProfileLink';
+import PageAnchorNav from '@/components/layout/PageAnchorNav';
 import UnifiedSearch from '@/components/controls/UnifiedSearch';
 import MapHoverTooltip from '@/components/core/MapHoverTooltip';
 import IndicatorSearch from '@/components/controls/IndicatorSearch';
@@ -92,12 +94,11 @@ const TABS = [
   },
 ];
 
-export default function Sidebar({ sections, neighborhoods, indicatorSummaries, pageNav }) {
+export default function Sidebar({ sections, neighborhoods, indicatorSummaries, pageNav, sidebarContent }) {
   const router = useRouter();
 
   const handleNeighborhoodSelect = useCallback((fid) => {
-    setPendingNeighborhood(fid);
-    router.push(`/neighborhood/${fid}`);
+    pushNeighborhood(router, fid); // keeps the reader's place mid-page (neighborhoodSwitch.js)
   }, [router]);
 
   const params       = useParams();
@@ -126,39 +127,36 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
     getMaxTop,
     safeAreaProbeRef,
     closeSheet,
+    peekSheet,
     handleHandlePointerDown,
     handleHandlePointerMove,
     handleHandlePointerEnd,
   } = useMobileSheet();
 
-  // ── Mobile sheet: "what next?" prompt after picking a neighborhood ────────
-  // (2026-10-07) The sheet stays open after a selection. Rather than guessing,
-  // offer the choice: close and read the profile, or stay in the sheet for the
-  // at-a-glance snapshot / indicator search. Keyed off the committed route id
-  // (not the optimistic pending id) so "View profile" always closes onto the
-  // page that has actually loaded.
-  const [pickedId, setPickedId] = useState(null);
+  // ── Mobile sheet: after a pick, drop to half height ───────────────────────
+  // QA rows 19/24/28 (2026-10-12, per Gretchen): the "Now showing… / Close
+  // and view profile / At a glance / Search by indicator" prompt added too
+  // much decision-making, and there was no equivalent for Compare. Now, when
+  // a neighborhood OR a comparison is picked while the sheet is open, the
+  // sheet eases down to half height so the user sees the page update behind
+  // it; they can keep going, or dismiss with X, a tap outside, or a swipe down.
+  const { comparisonNeighborhood: sheetComparison } = useComparison();
+  const sheetComparisonId = sheetComparison?.id ?? null;
   const prevActiveIdRef   = useRef(activeId);
-  const viewProfileBtnRef = useRef(null);
+  const prevCompIdRef     = useRef(sheetComparisonId);
   const sheetSnapshotRef  = useRef(null);
 
   useEffect(() => {
-    if (prevActiveIdRef.current === activeId) return;
+    const picked = prevActiveIdRef.current !== activeId && !!activeId;
+    const compared = prevCompIdRef.current !== sheetComparisonId && !!sheetComparisonId;
     prevActiveIdRef.current = activeId;
-    if (isSheetOpen && activeId) setPickedId(activeId);
-  }, [activeId, isSheetOpen]);
-
-  // Prompt never outlives the sheet.
-  useEffect(() => {
-    if (!isSheetOpen) setPickedId(null);
-  }, [isSheetOpen]);
-
-  // A11Y: move focus to the primary action when the prompt appears.
-  useEffect(() => {
-    if (pickedId) viewProfileBtnRef.current?.focus({ preventScroll: true });
-  }, [pickedId]);
-
-  const showPickedPrompt = !!pickedId && pickedId === activeId && !!neighborhood;
+    prevCompIdRef.current   = sheetComparisonId;
+    if (isSheetOpen && (picked || compared)) {
+      // Drop the on-screen keyboard first so the page behind is visible.
+      if (sheetRef.current?.contains(document.activeElement)) document.activeElement.blur?.();
+      peekSheet();
+    }
+  }, [activeId, sheetComparisonId, isSheetOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Shared tab strip JSX — rendered in both desktop and mobile sheet ───────
   // NOTE: This is a plain function (not a React component) so it shares
@@ -265,17 +263,12 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
     if (!isAboutPage) return null;
 
     return (
-      <div className="shrink-0 border-b border-gray-200 bg-gray-50 relative">
-        <div className="px-5 py-2 flex items-center justify-between relative">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
-          >
-            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-            </svg>
-            Browse neighborhoods
-          </Link>
+      <div className="shrink-0 border-b border-gray-200 bg-white relative">
+        <div className="px-6 py-3 flex items-center justify-between relative">
+          {/* 2026-10-09: was a plain "Browse neighborhoods" → "/" link; now the
+              same back pill as the page, and the ONLY back button visible on
+              desktop (the About page hides its in-page ones at md+). */}
+          <BackToProfileLink />
         </div>
       </div>
     );
@@ -305,6 +298,19 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
           absolutely-positioned children like the keyboard shortcuts popover.
         */}
 
+        {/* ── Static-page mode (e.g. /about, 2026-10-09) ─────────────────
+            When the page passes `sidebarContent`, the tabs, neighborhood
+            search and map are replaced by: back link (footer), the page's
+            "On this page" nav, and the page's own sidebar content
+            (keyboard shortcuts on /about). */}
+        {sidebarContent ? (<>
+        {renderFooter()}
+        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-6 px-6 py-5">
+          <PageAnchorNav items={pageNav} />
+          {pageNav?.length > 0 && <div className="border-t border-gray-200" />}
+          {sidebarContent}
+        </div>
+        </>) : (<>
         {renderTabs('desktop')}
         {renderFooter()}
 
@@ -342,13 +348,36 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                 </div>
               )}
 
+              {/* Page-level anchor nav — used on static pages like /about
+                  in place of the section nav that appears on neighborhood profiles.
+                  Moved above the map 2026-10-09 (was buried below it). */}
+              {pageNav?.length > 0 && (
+                <nav aria-label="On this page" className="px-6 pb-4 shrink-0">
+                  <p className="text-sm font-semibold text-gray-600 mb-2">
+                    On this page
+                  </p>
+                  {pageNav.map(({ href, label }) => (
+                    <a
+                      key={href}
+                      href={href}
+                      className="block text-sm text-gray-600 hover:text-brand py-1.5 rounded transition-colors"
+                    >
+                      {label}
+                    </a>
+                  ))}
+                </nav>
+              )}
+
               {/* Map — sticky within the scroll container so it stays visible
                   as the user scrolls through the info below it */}
               <div className="sticky top-0 z-10 w-full h-[300px] shrink-0 overflow-hidden bg-white">
                 <NeighborhoodMap onSelect={handleNeighborhoodSelect} />
               </div>
 
-              {/* Info — scrolls beneath the sticky map */}
+              {/* Info — scrolls beneath the sticky map. Hidden on static pages
+                  (e.g. /about) with no neighborhood, where its "Select a
+                  neighborhood" empty state is just noise. */}
+              {!(pageNav?.length > 0 && !neighborhood) && (<>
               <div className="px-6 pt-3 pb-4">
                 <MapHoverTooltip
                   indicatorSummaries={indicatorSummaries}
@@ -365,25 +394,8 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
               </div>
 
               <div className="border-t border-gray-100 mx-6" />
+              </>)}
 
-              {/* Page-level anchor nav — used on static pages like /about
-                  in place of the section nav that appears on neighborhood profiles */}
-              {pageNav?.length > 0 && (
-                <nav aria-label="On this page" className="px-6 pt-4 pb-2">
-                  <p className="text-sm font-semibold text-gray-600 mb-2">
-                    On this page
-                  </p>
-                  {pageNav.map(({ href, label }) => (
-                    <a
-                      key={href}
-                      href={href}
-                      className="block text-sm text-gray-600 hover:text-blue-600 py-1.5 rounded transition-colors"
-                    >
-                      {label}
-                    </a>
-                  ))}
-                </nav>
-              )}
             </div>
           )}
 
@@ -407,6 +419,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
           )}
 
         </div>{/* end scrollable panel area */}
+        </>)}
 
         {/* ── Shortcuts toast — first-visit hint, absolute-positioned above the explorer badge ── */}
         <ShortcutsToast />
@@ -420,7 +433,9 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
           instance in a React Strict Mode double-invoke cycle causes an
           _initContainer crash. Map-based selection is available via IntroModal. */}
       {isSheetMounted && (
-        <div className="md:hidden fixed inset-0 z-50">
+        // z-[60]: above the z-50 back-to-top button, which used to show on
+        // top of the sheet (QA row 28).
+        <div className="md:hidden fixed inset-0 z-[60]">
 
           {/* Backdrop — opacity tracks how far open the sheet currently is */}
           <div
@@ -444,11 +459,15 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
             aria-label="Neighborhood panel"
             className="absolute left-0 right-0 bg-white rounded-t-2xl flex flex-col overflow-hidden"
             style={{
+              // bottom: 0 instead of a computed height (QA row 28): the height
+              // was measured from window.innerHeight, which changes when the
+              // mobile keyboard / browser bars show or hide, so the bottom of
+              // the sheet could end up cut off after picking a comparison.
               top: `${currentTop()}px`,
-              height: `${Math.max(0, getMaxTop() - currentTop())}px`,
+              bottom: 0,
               transition: isDragging
                 ? 'none'
-                : `top ${transitionMs}ms ease-out, height ${transitionMs}ms ease-out`,
+                : `top ${transitionMs}ms ease-out`,
             }}
           >
             {/* Drag handle + close row */}
@@ -506,53 +525,6 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
                       Find neighborhood
                     </label>
                     <UnifiedSearch neighborhoods={neighborhoods} inputId="sheet-find-neighborhood" />
-
-                    {/* Post-selection choice — close the picker or keep it
-                        open (see the pickedId note above). */}
-                    {showPickedPrompt && (
-                      <div
-                        role="status"
-                        className="mt-3 rounded-lg border border-brand bg-brand-tint p-3"
-                      >
-                        <p className="text-sm text-gray-900">
-                          Now showing <span className="font-semibold">{neighborhood.name}</span>
-                        </p>
-                        <button
-                          ref={viewProfileBtnRef}
-                          type="button"
-                          onClick={() => closeSheet()}
-                          className="mt-2 w-full min-h-[44px] rounded-md bg-brand px-3 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
-                        >
-                          Close and view profile
-                        </button>
-                        <p className="mt-3 text-xs text-gray-600">Or keep this open:</p>
-                        <div className="mt-1.5 flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPickedId(null);
-                              requestAnimationFrame(() =>
-                                sheetSnapshotRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                              );
-                            }}
-                            className="flex-1 min-h-[44px] rounded-md border border-gray-300 bg-white px-2 text-sm font-medium text-gray-800 hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                          >
-                            At a glance
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPickedId(null);
-                              focusPanelOnNextChange.current = 'sheet';
-                              setActiveTab('search');
-                            }}
-                            className="flex-1 min-h-[44px] rounded-md border border-gray-300 bg-white px-2 text-sm font-medium text-gray-800 hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                          >
-                            Search by indicator
-                          </button>
-                        </div>
-                      </div>
-                    )}
 
                     {/* "Prefer a map? Browse all neighborhoods" link removed
                         (2026-10-07) — map-based neighborhood search isn't

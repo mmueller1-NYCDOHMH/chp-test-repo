@@ -45,6 +45,7 @@ import { BOROUGH_ORDER } from '@/lib/utils/constants';
 import { byCdNumber, matchesNeighborhoodQuery } from '@/lib/utils/formatGeography';
 import NeighborhoodGroups from '@/components/controls/NeighborhoodGroups';
 
+import LiveText from '@/components/content/LiveText'; // translatable live text (checklist #34)
 // ── Pill — shown when a comparison neighborhood is selected ───────────────────
 function ComparisonPill({ neighborhood, onClear, onEdit }) {
   const [visible, setVisible] = useState(false);
@@ -229,7 +230,7 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [], inp
       {/* Input */}
       <div className="relative">
         <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-comparison-text pointer-events-none"
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-comparison pointer-events-none"
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
           aria-hidden="true"
         >
@@ -253,6 +254,8 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [], inp
           aria-controls={listboxId}
           aria-activedescendant={focusedIndex >= 0 ? `${optPrefix}-${focusedIndex}` : undefined}
           role="combobox"
+          /* Search icon is solid rust (2026-10-09, per Morgan) to draw the eye to
+             the compare feature; the box itself stays neutral. */
           className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white placeholder-gray-600 text-gray-800 focus:outline-none focus:ring-2 focus:ring-comparison focus:border-transparent"
         />
         {isEditing && query && (
@@ -272,11 +275,11 @@ export default function ComparisonNeighborhoodSelector({ neighborhoods = [], inp
           results state — the visual "no matches" <li> inside the listbox
           was never announced. Always mounted so updates are picked up. */}
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-        {!isOpen || !query.trim()
+        <LiveText>{!isOpen || !query.trim()
           ? ''
           : flat.length === 0
             ? `No neighborhood matches “${query.trim()}”. Try a borough or community district number.`
-            : `${flat.length} neighborhood${flat.length === 1 ? '' : 's'} available. Use up and down arrows to choose.`}
+            : `${flat.length} neighborhood${flat.length === 1 ? '' : 's'} available. Use up and down arrows to choose.`}</LiveText>
       </div>
 
       {/* Dropdown */}

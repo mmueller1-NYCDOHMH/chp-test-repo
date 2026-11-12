@@ -63,6 +63,7 @@
 
 import ComparisonStatTilesClient    from '@/components/data-display/ComparisonStatTilesClient';
 import AtAGlanceTitle               from '@/components/data-display/AtAGlanceTitle';
+import PrintReportLink              from '@/components/layout/PrintReportLink';
 import PyramidChartSection          from '@/components/data-display/PyramidChartSection';
 import ComparisonPyramidChartClient from '@/components/data-display/ComparisonPyramidChartClient';
 import { loadIndicatorData }        from '@/lib/data/loadIndicatorData';
@@ -71,9 +72,7 @@ import {
   buildStatTile,
   buildPyramidChart,
 } from '@/lib/data/resolveOverviewData';
-import overviewSectionsCopy from '../../../content/site/overviewSections.json';
 
-const { sourceFootnoteSuffix: HERO_FOOTNOTE_SUFFIX } = overviewSectionsCopy.neighborhoodOverviewHero;
 
 // ─── Sub-components moved to ComparisonStatTilesClient.jsx ───────────────────
 // StatTile is now rendered by the client component so it can read comparison
@@ -85,7 +84,6 @@ const { sourceFootnoteSuffix: HERO_FOOTNOTE_SUFFIX } = overviewSectionsCopy.neig
 export default function NeighborhoodOverviewHero({
   statTiles     = [],
   pyramidCharts = [],
-  sourceFootnote = '',
   context,
 }) {
   const { geoId, neighborhood } = context ?? {};
@@ -129,14 +127,21 @@ export default function NeighborhoodOverviewHero({
     // Carry raw data + segment config so the client wrapper can resolve comparison segments
     rawData:    loadIndicatorData(cfg.indicatorKey),
     segmentCfg: cfg.segments,
+    // Source footer + expand modal (2026-10-14)
+    subtitle:    cfg.subtitle    ?? null,
+    source:      cfg.source      ?? null,
+    sourceUrl:   cfg.sourceUrl   ?? null,
+    description: cfg.description ?? null,
   }));
 
   return (
     <div className="flex flex-col gap-6">
 
       {/* ── Identity header ─────────────────────────────────── */}
-      <div>
+      {/* Print link sits beside the title (moved from StickyContextBar 2026-10-09) */}
+      <div className="flex items-baseline justify-between gap-4">
         <AtAGlanceTitle neighborhood={neighborhood ?? 'Neighborhood'} />
+        <PrintReportLink />
       </div>
 
       {/* ── Stat tiles (population, nativity, language) ──────── */}
@@ -153,18 +158,12 @@ export default function NeighborhoodOverviewHero({
         charts={resolvedPyramids}
         neighborhoodLabel={neighborhood ?? 'Neighborhood'}
         geoId={geoId}
+        withExpand
       />
 
-      {/* ── Source footnote ─────────────────────────────────── */}
-      {/* Sources + years are built from each tile's data/metadata file
-          (loadOverviewHeroConfig → buildSourceFootnote), so they update with
-          the data. The closing sentence lives in
-          /content/site/overviewSections.json (sourceFootnoteSuffix). */}
-      {/* text-gray-700 (#4B5563), not 600: gray-600 on the page bg (#F0F4F9) is
-          4.38:1, below the 4.5:1 AA minimum for small text (a11y audit 2026-10-08). */}
-      <p className="text-xs text-gray-700 border-t border-gray-100 pt-4">
-        {[sourceFootnote, HERO_FOOTNOTE_SUFFIX].filter(Boolean).join(' ')}
-      </p>
+      {/* Source footnote paragraph removed 2026-10-14 per Morgan — each At a
+          Glance card now carries its own source. Footnote is still built
+          (loadOverviewHeroConfig → sourceFootnote) if it needs restoring. */}
 
     </div>
   );

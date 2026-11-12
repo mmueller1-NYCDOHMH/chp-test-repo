@@ -24,10 +24,10 @@
     {
       "id": "social",
       "label": "Social",
-      "intro": "Social and economic factors shape the conditions in which people live, work, and age. Indicators in this category reflect the economic pressures, safety, and educational opportunities available to residents across NYC neighborhoods.",
+      "intro": "Social determinants of health – broadly defined as the conditions in which people are born, grow, live, work, and age, and people’s access to power, money, and resources – have a powerful influence on the distribution of opportunities, risks and resources that affect individual and community health.",
       "sections": [
         {
-          "id": "community-safety",
+          "id": "community-conditions",
           "label": "Community conditions",
           "rows": [
             {
@@ -43,7 +43,7 @@
           "bespokeSections": []
         },
         {
-          "id": "economic-conditions",
+          "id": "economic",
           "label": "Economic",
           "rows": [
             {
@@ -98,7 +98,7 @@
     {
       "id": "neighborhood",
       "label": "Neighborhood",
-      "intro": "The physical and built environment of a neighborhood has a direct impact on the health of its residents. These indicators reflect environmental quality, food access, housing conditions, and transportation infrastructure across NYC community districts.",
+      "intro": "The environment we live in can make it easier or more difficult for New Yorkers to lead healthy lives. These indicators reflect environmental quality, food access, housing conditions, and transportation infrastructure across NYC community districts.",
       "sections": [
         {
           "id": "environmental-risk",
@@ -114,7 +114,7 @@
           "bespokeSections": []
         },
         {
-          "id": "food-environment",
+          "id": "food",
           "label": "Food",
           "rows": [
             {
@@ -122,8 +122,8 @@
             },
             {
               "planned": true,
-              "measure": "Fruits and veggies",
-              "flag": "NOT IN SITE"
+              "measure": "Food Insecurity",
+              "flag": ""
             },
             {
               "key": "sugary-drink"
@@ -151,7 +151,7 @@
           "bespokeSections": []
         },
         {
-          "id": "transportation-safety",
+          "id": "transport-and-safety",
           "label": "Transport & safety",
           "rows": [
             {
@@ -167,11 +167,11 @@
     },
     {
       "id": "health-care",
-      "label": "Health care",
-      "intro": "Access to affordable, high-quality health care is essential to keeping communities healthy. These indicators measure insurance coverage, unmet need, health care utilization patterns, and preventive service uptake across NYC neighborhoods.",
+      "label": "Healthcare",
+      "intro": "Access to affordable, high-quality healthcare is essential to preventing and treating illness and keeping communities healthy. Gaps in access to healthcare often reflect broader inequities in income, insurance coverage, and the availability of services in a neighborhood.",
       "sections": [
         {
-          "id": "health-care-access",
+          "id": "access-to-care",
           "label": "Access to care",
           "rows": [
             {
@@ -184,7 +184,7 @@
           "bespokeSections": []
         },
         {
-          "id": "injury-hospitalizations",
+          "id": "injury-and-hospitalization",
           "label": "Injury & hospitalization",
           "rows": [
             {
@@ -212,9 +212,9 @@
       ]
     },
     {
-      "id": "maternal-child-health",
+      "id": "family-and-child-health",
       "label": "Family & child health",
-      "intro": "The health of mothers and children reflects the quality and equity of care in a neighborhood. These indicators capture outcomes during pregnancy, birth, and early childhood across NYC community districts.",
+      "intro": "The health of mothers and children reflects the quality and equity of care for some of the vulnerable populations in our neighborhoods. These indicators capture outcomes during pregnancy, birth, and early childhood across NYC community districts.",
       "sections": [
         {
           "id": "maternal",
@@ -233,7 +233,7 @@
           "bespokeSections": []
         },
         {
-          "id": "infant-child",
+          "id": "infant-and-child",
           "label": "Infant & child",
           "rows": [
             {
@@ -251,12 +251,12 @@
       ]
     },
     {
-      "id": "mental-health-substance-use",
+      "id": "mental-health-and-substance-use",
       "label": "Mental health & substance use",
       "intro": "",
       "sections": [
         {
-          "id": "mental-wellness",
+          "id": "mental-health",
           "label": "Mental health",
           "rows": [
             {
@@ -344,12 +344,12 @@
             {
               "planned": true,
               "measure": "Top causes of premature death",
-              "flag": "design in progress"
+              "flag": ""
             },
             {
               "planned": true,
               "measure": "Top causes of cancer-related premature death",
-              "flag": "design in progress"
+              "flag": ""
             },
             {
               "key": "life-expectancy"

@@ -56,9 +56,9 @@ export default function MicroStrip({ rows = [], geoId, compGeoId = null }) {
   return (
     <>
       {/* ── Compact variant — below md ──────────────────────────────────── */}
-      <div className="md:hidden relative mt-auto pt-1 shrink-0 w-full" style={{ height: 34 }}>
+      <span className="block md:hidden relative mt-auto pt-1 shrink-0 w-full" style={{ height: 34 }}>
         {/* Track */}
-        <div className="absolute inset-x-0 h-[2px] bg-gray-200 rounded" style={{ top: 6 }} />
+        <span className="absolute inset-x-0 h-[2px] bg-gray-200 rounded" style={{ top: 6 }} />
 
         {cdRows.map(row => {
           const isSelected = row.GeoID === geoId;
@@ -66,7 +66,7 @@ export default function MicroStrip({ rows = [], geoId, compGeoId = null }) {
           const isMarked   = isSelected || isComp;
           const markColor  = isSelected ? SELECTED : COMPARISON;
           return (
-            <div
+            <span
               key={row.GeoID}
               aria-hidden="true"
               className="absolute rounded-full pointer-events-none"
@@ -92,7 +92,7 @@ export default function MicroStrip({ rows = [], geoId, compGeoId = null }) {
             : { left: `${clampedPct}%`, transform: 'translateX(-50%)' };
           return (
             <>
-              <div
+              <span
                 aria-hidden="true"
                 className="absolute pointer-events-none"
                 style={{
@@ -117,18 +117,18 @@ export default function MicroStrip({ rows = [], geoId, compGeoId = null }) {
             </>
           );
         })()}
-      </div>
+      </span>
 
       {/* ── Original variant — md and up, pixel-identical to before ────── */}
-      <div className="hidden md:block relative mt-auto pt-3 shrink-0 w-full" style={{ height: 66 }}>
+      <span className="hidden md:block relative mt-auto pt-3 shrink-0 w-full" style={{ height: 66 }}>
         {/* Low / High range labels */}
-        <div className="absolute inset-x-0 top-0 flex justify-between">
+        <span className="absolute inset-x-0 top-0 flex justify-between">
           <span className="text-xs font-medium text-gray-600 leading-none">Low</span>
           <span className="text-xs font-medium text-gray-600 leading-none">High</span>
-        </div>
+        </span>
 
         {/* Track */}
-        <div className="absolute inset-x-0 h-[2px] bg-gray-200 rounded" style={{ top: 20 }} />
+        <span className="absolute inset-x-0 h-[2px] bg-gray-200 rounded" style={{ top: 20 }} />
 
         {/* All CD dots */}
         {cdRows.map(row => {
@@ -137,7 +137,7 @@ export default function MicroStrip({ rows = [], geoId, compGeoId = null }) {
           const isMarked   = isSelected || isComp;
           const markColor  = isSelected ? SELECTED : COMPARISON;
           return (
-            <div
+            <span
               key={row.GeoID}
               aria-hidden="true"
               className="absolute rounded-full pointer-events-none"
@@ -165,7 +165,7 @@ export default function MicroStrip({ rows = [], geoId, compGeoId = null }) {
 
           return (
             <>
-              <div
+              <span
                 aria-hidden="true"
                 className="absolute pointer-events-none"
                 style={{
@@ -194,7 +194,7 @@ export default function MicroStrip({ rows = [], geoId, compGeoId = null }) {
             </>
           );
         })()}
-      </div>
+      </span>
     </>
   );
 }

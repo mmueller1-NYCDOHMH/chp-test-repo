@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "copy": "node scripts/build-copy.js",
-    "predev": "node scripts/build-copy.js",
+    "validate": "node scripts/validate-content.js",
+    "validate:data-test": "CHP_DATA_DIR=data-test node scripts/validate-content.js",
+    "predev": "node scripts/build-copy.js && node scripts/publish-data-downloads.js",
     "dev": "next dev",
-    "prebuild": "node scripts/fetch-content.js && node scripts/build-copy.js",
+    "dev:data-test": "CHP_DATA_DIR=data-test npm run dev",
+    "prebuild": "node scripts/fetch-content.js && node scripts/validate-content.js && node scripts/build-copy.js && node scripts/publish-data-downloads.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

@@ -11,6 +11,8 @@ import AnimatedValue from '@/components/data-display/AnimatedValue';
 import MicroStrip from './MicroStrip';
 
 export default function StatTileSingle({ label, unit, displayValue, rows, geoId, onOpen, neighborhoodLabel }) {
+  const nycRow = (rows ?? []).find(r => r.GeoID === 0);
+  const citywideValue = nycRow ? (nycRow.DisplayValue ?? nycRow.Value) : null;
   return (
     <button
       type="button"
@@ -46,6 +48,9 @@ export default function StatTileSingle({ label, unit, displayValue, rows, geoId,
           stretch to). */}
       <MicroStrip rows={rows} geoId={geoId} />
       {/* ── END: micro distribution strip ── */}
+      {/* A11Y (2026-10-13, checklist #2): the strip is aria-hidden, so the
+          citywide value it shows was never read. Spoken here instead. */}
+      {citywideValue && <span className="sr-only">{`. Citywide: ${citywideValue}`}</span>}
       <span className="sr-only">. View details</span>
     </button>
   );

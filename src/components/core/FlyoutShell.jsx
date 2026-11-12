@@ -120,8 +120,11 @@ export default function FlyoutShell({ children }) {
   const close = useCallback(() => {
     setTrayOpen(false);
     setFlyout(null);
-    // Return focus to the element that triggered the flyout
-    requestAnimationFrame(() => triggerRef.current?.focus());
+    // Return focus to the element that triggered the flyout. preventScroll
+    // (2026-10-12, QA row 49): a plain focus() scrolled the page to reveal
+    // the trigger while the mobile scroll position was being restored, which
+    // could leave the user a section further down than where they were.
+    requestAnimationFrame(() => triggerRef.current?.focus({ preventScroll: true }));
   }, []);
 
   const value = useMemo(
@@ -264,7 +267,9 @@ export default function FlyoutShell({ children }) {
         {/* ── Drag handle (mobile only) ────────────────────────── */}
         {isMobile && (
           <div
-            className="flex justify-center pt-3 pb-1 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
+            /* 2026-10-12 (QA row 49): taller hit area (≈36px vs ≈20px) so the
+               bar is easy to grab and pull down to close. */
+            className="flex justify-center pt-4 pb-3 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
             role="button"
             tabIndex={0}
             aria-label={

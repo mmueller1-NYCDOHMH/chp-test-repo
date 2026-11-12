@@ -129,8 +129,12 @@ export default function ComparisonBarChart({
     <div className={`flex flex-col ${compact ? 'gap-2.5' : 'gap-4'} min-w-0`}>
       {showLegend && (
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs font-medium">
-          <LegendDot color={SELECTED} label={primaryLabel} />
-          <LegendDot color={referenceColor} label={rightLabel} />
+          {/* A11Y (2026-10-13, checklist #8 Use of Color): legend swatches use
+              the chart's own shapes — a mini bar for the neighborhood, a
+              vertical tick for the reference — so the two series can be told
+              apart without color (e.g. in grayscale). */}
+          <LegendItem shape="bar"  color={SELECTED}       label={primaryLabel} />
+          <LegendItem shape="tick" color={referenceColor} label={rightLabel} />
         </div>
       )}
 
@@ -227,7 +231,11 @@ export default function ComparisonBarChart({
 
       {/* ── Accessible table (screen readers) — same pattern as
           ComparisonPyramidChart.jsx. Rows in the same order as the bars. */}
-      <table className="sr-only table-fixed">
+      {/* FIREFOX (2026-10-12, QA row 160): sr-only lives on a wrapper div, not the
+          <table> — Firefox draws a <caption> outside the table box, so clipping
+          the table left the caption visible as large text over the chart. */}
+      <div className="sr-only">
+      <table className="table-fixed">
         <caption>
           {title ? `${title}: ` : ''}{primaryLabel} compared with {rightLabel}, by category
         </caption>
@@ -248,14 +256,21 @@ export default function ComparisonBarChart({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
 
-function LegendDot({ color, label }) {
+function LegendItem({ shape, color, label }) {
   return (
     <span className="flex items-center gap-1.5 min-w-0">
-      <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: color }} aria-hidden="true" />
+      {shape === 'tick' ? (
+        // Matches the reference tick: thin (2px) full-height vertical line
+        <span className="w-0.5 h-3.5 rounded-full shrink-0" style={{ background: color }} aria-hidden="true" />
+      ) : (
+        // Matches the neighborhood bar: short, rounded horizontal pill
+        <span className="w-4 h-2.5 rounded-full shrink-0" style={{ background: color }} aria-hidden="true" />
+      )}
       <span style={{ color }}>{label}</span>
     </span>
   );

@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // STATIC EXPORT (2026-11-09): every build writes a plain static site to
+  // out/ — the same files Render staging/previews serve and the static-only
+  // production host will get. trailingSlash makes each route a folder with
+  // index.html (/neighborhood/x/index.html), which any static host serves.
+  output: 'export',
+  trailingSlash: true,
   reactCompiler: true,
   // React 19 + react-leaflet 5 re-introduced a known dev-only Strict Mode
   // bug: Strict Mode's intentional double-invoke of effects races with
@@ -17,7 +23,14 @@ const nextConfig = {
   // is needed — vega-embed is dynamically imported client-side, and
   // leaflet is loaded lazily inside useEffect in NeighborhoodMap.
   turbopack: {},
+  // unoptimized (PERF / STATIC HOSTING, 2026-10-13): the image optimizer
+  // (/_next/image) is a server endpoint — it won't exist on the static-only
+  // production host, so the header/footer logos would 404 there. The only
+  // images are the two small NYC Health logos, so serving them as-is costs
+  // nothing. Better still: save the logo into /public and point src at it,
+  // which also drops the third-party request to nyc.gov.
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

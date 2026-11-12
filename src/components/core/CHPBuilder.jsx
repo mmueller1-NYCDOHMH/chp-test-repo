@@ -88,7 +88,9 @@ export default function CHPBuilder({ config, data }) {
   });
 
   return (
-    <div>
+    // data-chp-geo: lets neighborhoodSwitch.js see the moment the new
+    // neighborhood's content is in the DOM (React reuses the nodes).
+    <div data-chp-geo={data?.geoId ?? data?.neighborhoodName ?? ''}>
       {config.sections.map((section, idx) => {
         const blocks = section.children ?? [section];
         const catId  = sectionCategoryId(section);

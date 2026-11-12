@@ -1,7 +1,8 @@
 {
+  "IndicatorKey": "rent-burden",
+  "Label": "Rent Burden",
   "Section": "social",
   "Subsection": "economic",
-  "IndicatorKey": "rent-burden",
   "Data": [
     {
       "GeoType": "Citywide",
@@ -9,9 +10,13 @@
       "Geography": "NYC",
       "Value": 0.49,
       "DisplayValue": "49%",
-      "LCLValue": 48.9,
-      "UCLValue": 49.8,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.489,
+      "UCLValue": 0.498,
+      "NYCPValue": null,
+      "Rank": null,
+      "NYCComparison": null,
+      "ValueStatus": null
     },
     {
       "GeoType": "Borough",
@@ -19,9 +24,13 @@
       "Geography": "Manhattan",
       "Value": 0.45,
       "DisplayValue": "45%",
-      "LCLValue": 43.7,
-      "UCLValue": 45.6,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.437,
+      "UCLValue": 0.456,
+      "NYCPValue": null,
+      "Rank": null,
+      "NYCComparison": null,
+      "ValueStatus": null
     },
     {
       "GeoType": "Borough",
@@ -29,9 +38,13 @@
       "Geography": "Bronx",
       "Value": 0.57,
       "DisplayValue": "57%",
-      "LCLValue": 55.4,
-      "UCLValue": 57.9,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.554,
+      "UCLValue": 0.579,
+      "NYCPValue": null,
+      "Rank": null,
+      "NYCComparison": null,
+      "ValueStatus": null
     },
     {
       "GeoType": "Borough",
@@ -39,9 +52,13 @@
       "Geography": "Brooklyn",
       "Value": 0.49,
       "DisplayValue": "49%",
-      "LCLValue": 47.8,
-      "UCLValue": 49.3,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.478,
+      "UCLValue": 0.493,
+      "NYCPValue": null,
+      "Rank": null,
+      "NYCComparison": null,
+      "ValueStatus": null
     },
     {
       "GeoType": "Borough",
@@ -49,9 +66,13 @@
       "Geography": "Queens",
       "Value": 0.5,
       "DisplayValue": "50%",
-      "LCLValue": 48.6,
-      "UCLValue": 50.7,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.486,
+      "UCLValue": 0.507,
+      "NYCPValue": null,
+      "Rank": null,
+      "NYCComparison": null,
+      "ValueStatus": null
     },
     {
       "GeoType": "Borough",
@@ -59,9 +80,13 @@
       "Geography": "Staten Island",
       "Value": 0.51,
       "DisplayValue": "51%",
-      "LCLValue": 48.2,
-      "UCLValue": 53.5,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.482,
+      "UCLValue": 0.535,
+      "NYCPValue": null,
+      "Rank": null,
+      "NYCComparison": null,
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -69,9 +94,13 @@
       "Geography": "Financial District",
       "Value": 0.39,
       "DisplayValue": "39%",
-      "LCLValue": 36.5,
-      "UCLValue": 41.8,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.365,
+      "UCLValue": 0.418,
+      "NYCPValue": null,
+      "Rank": 55,
+      "NYCComparison": "lower",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -79,9 +108,13 @@
       "Geography": "Greenwich Village and Soho",
       "Value": 0.39,
       "DisplayValue": "39%",
-      "LCLValue": 36.5,
-      "UCLValue": 41.8,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.365,
+      "UCLValue": 0.418,
+      "NYCPValue": null,
+      "Rank": 55,
+      "NYCComparison": "lower",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -89,9 +122,13 @@
       "Geography": "Lower East Side and Chinatown",
       "Value": 0.47,
       "DisplayValue": "47%",
-      "LCLValue": 43.4,
-      "UCLValue": 50.0,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.434,
+      "UCLValue": 0.5,
+      "NYCPValue": null,
+      "Rank": 40,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -99,9 +136,13 @@
       "Geography": "Clinton and Chelsea",
       "Value": 0.43,
       "DisplayValue": "43%",
-      "LCLValue": 39.8,
-      "UCLValue": 47.0,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.398,
+      "UCLValue": 0.47,
+      "NYCPValue": null,
+      "Rank": 49,
+      "NYCComparison": "lower",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -109,9 +150,13 @@
       "Geography": "Midtown",
       "Value": 0.41,
       "DisplayValue": "41%",
-      "LCLValue": 37.5,
-      "UCLValue": 43.8,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.375,
+      "UCLValue": 0.438,
+      "NYCPValue": null,
+      "Rank": 53,
+      "NYCComparison": "lower",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -119,9 +164,13 @@
       "Geography": "Stuyvesant Town and Turtle Bay",
       "Value": 0.41,
       "DisplayValue": "41%",
-      "LCLValue": 37.5,
-      "UCLValue": 43.8,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.375,
+      "UCLValue": 0.438,
+      "NYCPValue": null,
+      "Rank": 53,
+      "NYCComparison": "lower",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -129,9 +178,13 @@
       "Geography": "Upper West Side",
       "Value": 0.42,
       "DisplayValue": "42%",
-      "LCLValue": 38.4,
-      "UCLValue": 44.9,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.384,
+      "UCLValue": 0.449,
+      "NYCPValue": null,
+      "Rank": 51,
+      "NYCComparison": "lower",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -139,9 +192,13 @@
       "Geography": "Upper East Side",
       "Value": 0.39,
       "DisplayValue": "39%",
-      "LCLValue": 36.4,
-      "UCLValue": 42.4,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.364,
+      "UCLValue": 0.424,
+      "NYCPValue": null,
+      "Rank": 55,
+      "NYCComparison": "lower",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -149,9 +206,13 @@
       "Geography": "Morningside Heights and Hamilton Heights",
       "Value": 0.48,
       "DisplayValue": "48%",
-      "LCLValue": 44.4,
-      "UCLValue": 52.3,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.444,
+      "UCLValue": 0.523,
+      "NYCPValue": null,
+      "Rank": 36,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -159,9 +220,13 @@
       "Geography": "Central Harlem",
       "Value": 0.48,
       "DisplayValue": "48%",
-      "LCLValue": 45.2,
-      "UCLValue": 51.3,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.452,
+      "UCLValue": 0.513,
+      "NYCPValue": null,
+      "Rank": 36,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -169,9 +234,13 @@
       "Geography": "East Harlem",
       "Value": 0.52,
       "DisplayValue": "52%",
-      "LCLValue": 48.5,
-      "UCLValue": 56.3,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.485,
+      "UCLValue": 0.563,
+      "NYCPValue": null,
+      "Rank": 23,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -179,9 +248,13 @@
       "Geography": "Washington Heights and Inwood",
       "Value": 0.51,
       "DisplayValue": "51%",
-      "LCLValue": 48.2,
-      "UCLValue": 54.3,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.482,
+      "UCLValue": 0.543,
+      "NYCPValue": null,
+      "Rank": 26,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -189,9 +262,13 @@
       "Geography": "Mott Haven and Melrose",
       "Value": 0.59,
       "DisplayValue": "59%",
-      "LCLValue": 55.4,
-      "UCLValue": 62.8,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.554,
+      "UCLValue": 0.628,
+      "NYCPValue": null,
+      "Rank": 2,
+      "NYCComparison": "higher",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -199,9 +276,13 @@
       "Geography": "Hunts Point and Longwood",
       "Value": 0.59,
       "DisplayValue": "59%",
-      "LCLValue": 55.4,
-      "UCLValue": 62.8,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.554,
+      "UCLValue": 0.628,
+      "NYCPValue": null,
+      "Rank": 2,
+      "NYCComparison": "higher",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -209,9 +290,13 @@
       "Geography": "Morrisania and Crotona",
       "Value": 0.58,
       "DisplayValue": "58%",
-      "LCLValue": 55.2,
-      "UCLValue": 61.8,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.552,
+      "UCLValue": 0.618,
+      "NYCPValue": null,
+      "Rank": 5,
+      "NYCComparison": "higher",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -219,9 +304,13 @@
       "Geography": "Highbridge and Concourse",
       "Value": 0.57,
       "DisplayValue": "57%",
-      "LCLValue": 53.3,
-      "UCLValue": 60.9,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.533,
+      "UCLValue": 0.609,
+      "NYCPValue": null,
+      "Rank": 8,
+      "NYCComparison": "higher",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -229,9 +318,13 @@
       "Geography": "Fordham and University Heights",
       "Value": 0.58,
       "DisplayValue": "58%",
-      "LCLValue": 54.3,
-      "UCLValue": 62.0,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.543,
+      "UCLValue": 0.62,
+      "NYCPValue": null,
+      "Rank": 5,
+      "NYCComparison": "higher",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -239,9 +332,13 @@
       "Geography": "Belmont and East Tremont",
       "Value": 0.58,
       "DisplayValue": "58%",
-      "LCLValue": 55.2,
-      "UCLValue": 61.8,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.552,
+      "UCLValue": 0.618,
+      "NYCPValue": null,
+      "Rank": 5,
+      "NYCComparison": "higher",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -249,9 +346,13 @@
       "Geography": "Kingsbridge Heights and Bedford",
       "Value": 0.6,
       "DisplayValue": "60%",
-      "LCLValue": 56.6,
-      "UCLValue": 63.5,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.566,
+      "UCLValue": 0.635,
+      "NYCPValue": null,
+      "Rank": 1,
+      "NYCComparison": "higher",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -259,9 +360,13 @@
       "Geography": "Riverdale and Fieldston",
       "Value": 0.5,
       "DisplayValue": "50%",
-      "LCLValue": 45.5,
-      "UCLValue": 54.9,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.455,
+      "UCLValue": 0.549,
+      "NYCPValue": null,
+      "Rank": 31,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -269,9 +374,13 @@
       "Geography": "Parkchester and Soundview",
       "Value": 0.55,
       "DisplayValue": "55%",
-      "LCLValue": 51.8,
-      "UCLValue": 58.3,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.518,
+      "UCLValue": 0.583,
+      "NYCPValue": null,
+      "Rank": 11,
+      "NYCComparison": "higher",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -279,9 +388,13 @@
       "Geography": "Throgs Neck and Co-op City",
       "Value": 0.52,
       "DisplayValue": "52%",
-      "LCLValue": 47.6,
-      "UCLValue": 56.4,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.476,
+      "UCLValue": 0.564,
+      "NYCPValue": null,
+      "Rank": 23,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -289,9 +402,13 @@
       "Geography": "Morris Park and Bronxdale",
       "Value": 0.55,
       "DisplayValue": "55%",
-      "LCLValue": 51.8,
-      "UCLValue": 59.1,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.518,
+      "UCLValue": 0.591,
+      "NYCPValue": null,
+      "Rank": 11,
+      "NYCComparison": "higher",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -299,9 +416,13 @@
       "Geography": "Williamsbridge and Baychester",
       "Value": 0.54,
       "DisplayValue": "54%",
-      "LCLValue": 50.8,
-      "UCLValue": 57.7,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.508,
+      "UCLValue": 0.577,
+      "NYCPValue": null,
+      "Rank": 16,
+      "NYCComparison": "higher",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -309,9 +430,13 @@
       "Geography": "Greenpoint and Williamsburg",
       "Value": 0.42,
       "DisplayValue": "42%",
-      "LCLValue": 39.8,
-      "UCLValue": 44.4,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.398,
+      "UCLValue": 0.444,
+      "NYCPValue": null,
+      "Rank": 51,
+      "NYCComparison": "lower",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -319,9 +444,13 @@
       "Geography": "Fort Greene and Brooklyn Heights",
       "Value": 0.39,
       "DisplayValue": "39%",
-      "LCLValue": 35.6,
-      "UCLValue": 41.7,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.356,
+      "UCLValue": 0.417,
+      "NYCPValue": null,
+      "Rank": 55,
+      "NYCComparison": "lower",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -329,9 +458,13 @@
       "Geography": "Bedford Stuyvesant",
       "Value": 0.48,
       "DisplayValue": "48%",
-      "LCLValue": 45.8,
-      "UCLValue": 51.2,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.458,
+      "UCLValue": 0.512,
+      "NYCPValue": null,
+      "Rank": 36,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -339,9 +472,13 @@
       "Geography": "Bushwick",
       "Value": 0.53,
       "DisplayValue": "53%",
-      "LCLValue": 49.3,
-      "UCLValue": 57.5,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.493,
+      "UCLValue": 0.575,
+      "NYCPValue": null,
+      "Rank": 19,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -349,9 +486,13 @@
       "Geography": "East New York and Starrett City",
       "Value": 0.51,
       "DisplayValue": "51%",
-      "LCLValue": 48.3,
-      "UCLValue": 53.9,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.483,
+      "UCLValue": 0.539,
+      "NYCPValue": null,
+      "Rank": 26,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -359,9 +500,13 @@
       "Geography": "Park Slope and Carroll Gardens",
       "Value": 0.33,
       "DisplayValue": "33%",
-      "LCLValue": 30.8,
-      "UCLValue": 35.9,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.308,
+      "UCLValue": 0.359,
+      "NYCPValue": null,
+      "Rank": 59,
+      "NYCComparison": "lower",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -369,9 +514,13 @@
       "Geography": "Sunset Park",
       "Value": 0.51,
       "DisplayValue": "51%",
-      "LCLValue": 47.2,
-      "UCLValue": 54.0,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.472,
+      "UCLValue": 0.54,
+      "NYCPValue": null,
+      "Rank": 26,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -379,9 +528,13 @@
       "Geography": "Crown Heights and Prospect Heights",
       "Value": 0.45,
       "DisplayValue": "45%",
-      "LCLValue": 42.1,
-      "UCLValue": 48.6,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.421,
+      "UCLValue": 0.486,
+      "NYCPValue": null,
+      "Rank": 45,
+      "NYCComparison": "lower",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -389,9 +542,13 @@
       "Geography": "South Crown Heights and Lefferts Gardens",
       "Value": 0.47,
       "DisplayValue": "47%",
-      "LCLValue": 43.2,
-      "UCLValue": 50.7,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.432,
+      "UCLValue": 0.507,
+      "NYCPValue": null,
+      "Rank": 40,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -399,9 +556,13 @@
       "Geography": "Bay Ridge and Dyker Heights",
       "Value": 0.46,
       "DisplayValue": "46%",
-      "LCLValue": 42.5,
-      "UCLValue": 49.3,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.425,
+      "UCLValue": 0.493,
+      "NYCPValue": null,
+      "Rank": 43,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -409,9 +570,13 @@
       "Geography": "Bensonhurst",
       "Value": 0.53,
       "DisplayValue": "53%",
-      "LCLValue": 49.8,
-      "UCLValue": 56.3,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.498,
+      "UCLValue": 0.563,
+      "NYCPValue": null,
+      "Rank": 19,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -419,9 +584,13 @@
       "Geography": "Borough Park",
       "Value": 0.56,
       "DisplayValue": "56%",
-      "LCLValue": 52.4,
-      "UCLValue": 58.6,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.524,
+      "UCLValue": 0.586,
+      "NYCPValue": null,
+      "Rank": 9,
+      "NYCComparison": "higher",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -429,9 +598,13 @@
       "Geography": "Coney Island",
       "Value": 0.59,
       "DisplayValue": "59%",
-      "LCLValue": 55.2,
-      "UCLValue": 63.2,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.552,
+      "UCLValue": 0.632,
+      "NYCPValue": null,
+      "Rank": 2,
+      "NYCComparison": "higher",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -439,9 +612,13 @@
       "Geography": "Flatbush and Midwood",
       "Value": 0.5,
       "DisplayValue": "50%",
-      "LCLValue": 47.4,
-      "UCLValue": 51.9,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.474,
+      "UCLValue": 0.519,
+      "NYCPValue": null,
+      "Rank": 31,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -449,9 +626,13 @@
       "Geography": "Sheepshead Bay",
       "Value": 0.51,
       "DisplayValue": "51%",
-      "LCLValue": 48.1,
-      "UCLValue": 53.5,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.481,
+      "UCLValue": 0.535,
+      "NYCPValue": null,
+      "Rank": 26,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -459,9 +640,13 @@
       "Geography": "Brownsville",
       "Value": 0.54,
       "DisplayValue": "54%",
-      "LCLValue": 49.3,
-      "UCLValue": 58.5,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.493,
+      "UCLValue": 0.585,
+      "NYCPValue": null,
+      "Rank": 16,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -469,9 +654,13 @@
       "Geography": "East Flatbush",
       "Value": 0.53,
       "DisplayValue": "53%",
-      "LCLValue": 49.3,
-      "UCLValue": 56.8,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.493,
+      "UCLValue": 0.568,
+      "NYCPValue": null,
+      "Rank": 19,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -479,9 +668,13 @@
       "Geography": "Flatlands and Canarsie",
       "Value": 0.47,
       "DisplayValue": "47%",
-      "LCLValue": 44.2,
-      "UCLValue": 50.6,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.442,
+      "UCLValue": 0.506,
+      "NYCPValue": null,
+      "Rank": 40,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -489,9 +682,13 @@
       "Geography": "Long Island City and Astoria",
       "Value": 0.43,
       "DisplayValue": "43%",
-      "LCLValue": 40.6,
-      "UCLValue": 44.8,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.406,
+      "UCLValue": 0.448,
+      "NYCPValue": null,
+      "Rank": 49,
+      "NYCComparison": "lower",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -499,9 +696,13 @@
       "Geography": "Woodside and Sunnyside",
       "Value": 0.44,
       "DisplayValue": "44%",
-      "LCLValue": 40.7,
-      "UCLValue": 47.0,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.407,
+      "UCLValue": 0.47,
+      "NYCPValue": null,
+      "Rank": 48,
+      "NYCComparison": "lower",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -509,9 +710,13 @@
       "Geography": "Jackson Heights",
       "Value": 0.53,
       "DisplayValue": "53%",
-      "LCLValue": 49.2,
-      "UCLValue": 56.9,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.492,
+      "UCLValue": 0.569,
+      "NYCPValue": null,
+      "Rank": 19,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -519,9 +724,13 @@
       "Geography": "Elmhurst and Corona",
       "Value": 0.55,
       "DisplayValue": "55%",
-      "LCLValue": 51.2,
-      "UCLValue": 59.0,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.512,
+      "UCLValue": 0.59,
+      "NYCPValue": null,
+      "Rank": 11,
+      "NYCComparison": "higher",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -529,9 +738,13 @@
       "Geography": "Ridgewood and Maspeth",
       "Value": 0.46,
       "DisplayValue": "46%",
-      "LCLValue": 43.5,
-      "UCLValue": 49.4,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.435,
+      "UCLValue": 0.494,
+      "NYCPValue": null,
+      "Rank": 43,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -539,9 +752,13 @@
       "Geography": "Rego Park and Forest Hills",
       "Value": 0.48,
       "DisplayValue": "48%",
-      "LCLValue": 43.7,
-      "UCLValue": 52.1,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.437,
+      "UCLValue": 0.521,
+      "NYCPValue": null,
+      "Rank": 36,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -549,9 +766,13 @@
       "Geography": "Flushing and Whitestone",
       "Value": 0.56,
       "DisplayValue": "56%",
-      "LCLValue": 52.6,
-      "UCLValue": 59.0,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.526,
+      "UCLValue": 0.59,
+      "NYCPValue": null,
+      "Rank": 9,
+      "NYCComparison": "higher",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -559,9 +780,13 @@
       "Geography": "Hillcrest and Fresh Meadows",
       "Value": 0.45,
       "DisplayValue": "45%",
-      "LCLValue": 40.7,
-      "UCLValue": 48.6,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.407,
+      "UCLValue": 0.486,
+      "NYCPValue": null,
+      "Rank": 45,
+      "NYCComparison": "lower",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -569,9 +794,13 @@
       "Geography": "Kew Gardens and Woodhaven",
       "Value": 0.51,
       "DisplayValue": "51%",
-      "LCLValue": 46.4,
-      "UCLValue": 54.7,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.464,
+      "UCLValue": 0.547,
+      "NYCPValue": null,
+      "Rank": 26,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -579,9 +808,13 @@
       "Geography": "South Ozone Park and Howard Beach",
       "Value": 0.55,
       "DisplayValue": "55%",
-      "LCLValue": 49.7,
-      "UCLValue": 59.8,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.497,
+      "UCLValue": 0.598,
+      "NYCPValue": null,
+      "Rank": 11,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -589,9 +822,13 @@
       "Geography": "Bayside and Little Neck",
       "Value": 0.45,
       "DisplayValue": "45%",
-      "LCLValue": 40.3,
-      "UCLValue": 49.1,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.403,
+      "UCLValue": 0.491,
+      "NYCPValue": null,
+      "Rank": 45,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -599,9 +836,13 @@
       "Geography": "Jamaica and Hollis",
       "Value": 0.55,
       "DisplayValue": "55%",
-      "LCLValue": 51.5,
-      "UCLValue": 58.5,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.515,
+      "UCLValue": 0.585,
+      "NYCPValue": null,
+      "Rank": 11,
+      "NYCComparison": "higher",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -609,9 +850,13 @@
       "Geography": "Queens Village",
       "Value": 0.5,
       "DisplayValue": "50%",
-      "LCLValue": 45.7,
-      "UCLValue": 55.2,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.457,
+      "UCLValue": 0.552,
+      "NYCPValue": null,
+      "Rank": 31,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -619,9 +864,13 @@
       "Geography": "Rockaway and Broad Channel",
       "Value": 0.54,
       "DisplayValue": "54%",
-      "LCLValue": 49.5,
-      "UCLValue": 58.2,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.495,
+      "UCLValue": 0.582,
+      "NYCPValue": null,
+      "Rank": 16,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -629,9 +878,13 @@
       "Geography": "St. George and Stapleton",
       "Value": 0.52,
       "DisplayValue": "52%",
-      "LCLValue": 48.4,
-      "UCLValue": 55.3,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.484,
+      "UCLValue": 0.553,
+      "NYCPValue": null,
+      "Rank": 23,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -639,9 +892,13 @@
       "Geography": "South Beach and Willowbrook",
       "Value": 0.5,
       "DisplayValue": "50%",
-      "LCLValue": 44.8,
-      "UCLValue": 54.3,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.448,
+      "UCLValue": 0.543,
+      "NYCPValue": null,
+      "Rank": 31,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     },
     {
       "GeoType": "CD",
@@ -649,9 +906,13 @@
       "Geography": "Tottenville and Great Kills",
       "Value": 0.5,
       "DisplayValue": "50%",
-      "LCLValue": 43.4,
-      "UCLValue": 56.7,
-      "ValueType": "estimate"
+      "ValueType": "estimate",
+      "LCLValue": 0.434,
+      "UCLValue": 0.567,
+      "NYCPValue": null,
+      "Rank": 31,
+      "NYCComparison": "similar",
+      "ValueStatus": null
     }
   ]
 }

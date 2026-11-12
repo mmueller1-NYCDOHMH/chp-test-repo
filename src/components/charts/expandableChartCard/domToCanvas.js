@@ -7,8 +7,21 @@
  * Tailwind classes survive outside the page's stylesheet), wrap the clone in
  * an SVG <foreignObject>, load that SVG as an image, and draw it to a canvas.
  *
- * Limits (fine for these charts, which are plain divs/spans/text):
- *   - external images/fonts inside the node aren't embedded
+ * Options added 2026-10-14 for the Details flyout PNG, which captures the
+ * whole flyout body (title, context copy, map, mini bar, source) rather than
+ * just a chart:
+ *   - fullHeight:   capture the node's full scrollHeight, not just the part
+ *                   currently scrolled into view
+ *   - inlineImages: fetch each <img> (e.g. Leaflet basemap tiles) and embed
+ *                   it as a data URL — an SVG loaded as an image can't load
+ *                   external resources, so tiles would otherwise be blank.
+ *                   <canvas> elements are swapped for a snapshot <img>.
+ *                   Anything that fails (no CORS) is dropped, not fatal.
+ *   - exclude:      CSS selector for elements to drop from the image
+ *                   (buttons, map zoom controls, screen-reader-only tables)
+ *
+ * Limits:
+ *   - web fonts inside the node aren't embedded (falls back to system font)
  *   - pseudo-elements (::before/::after) aren't copied
  */
 
@@ -27,16 +40,84 @@ function inlineStyles(source, target) {
   }
 }
 
-export async function domToCanvas(node, { pixelRatio = 2, backgroundColor = '#ffffff' } = {}) {
-  const { width, height } = node.getBoundingClientRect();
-  const w = Math.ceil(width);
-  const h = Math.ceil(height);
+const dataUrlCache = new Map();
+
+async function toDataUrl(src) {
+  if (!src || src.startsWith('data:')) return src;
+  if (dataUrlCache.has(src)) return dataUrlCache.get(src);
+  const p = fetch(src, { mode: 'cors', cache: 'force-cache' })
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); })
+    .then(blob => new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = reject;
+      fr.readAsDataURL(blob);
+    }))
+    .catch(() => null);
+  dataUrlCache.set(src, p);
+  return p;
+}
+
+async function embedImages(source, clone) {
+  // Canvases clone blank — replace each with a snapshot <img>.
+  const srcCanvases = source.querySelectorAll('canvas');
+  const cloneCanvases = clone.querySelectorAll('canvas');
+  srcCanvases.forEach((c, i) => {
+    const target = cloneCanvases[i];
+    if (!target) return;
+    try {
+      const img = document.createElement('img');
+      img.src = c.toDataURL('image/png');
+      img.setAttribute('style', target.getAttribute('style') ?? '');
+      target.replaceWith(img);
+    } catch {
+      target.remove(); // tainted canvas
+    }
+  });
+
+  // External <img> → data URL
+  const srcImgs = source.querySelectorAll('img');
+  const cloneImgs = clone.querySelectorAll('img');
+  await Promise.all(Array.from(srcImgs).map(async (img, i) => {
+    const target = cloneImgs[i];
+    if (!target) return;
+    const url = await toDataUrl(img.currentSrc || img.src);
+    if (url) {
+      target.setAttribute('src', url);
+      target.removeAttribute('srcset');
+    } else {
+      target.remove();
+    }
+  }));
+}
+
+export async function domToCanvas(node, {
+  pixelRatio = 2,
+  backgroundColor = '#ffffff',
+  fullHeight = false,
+  inlineImages = false,
+  exclude = null,
+} = {}) {
+  const rect = node.getBoundingClientRect();
+  const w = Math.ceil(fullHeight ? node.clientWidth || rect.width : rect.width);
+  const h = Math.ceil(fullHeight ? Math.max(node.scrollHeight, rect.height) : rect.height);
 
   const clone = node.cloneNode(true);
   inlineStyles(node, clone);
+  if (inlineImages) await embedImages(node, clone);
+
   // Drop things that shouldn't appear in an exported image
   clone.querySelectorAll('[role="tooltip"]').forEach(el => el.remove());
+  if (exclude) clone.querySelectorAll(exclude).forEach(el => el.remove());
   clone.style.margin = '0';
+  if (fullHeight) {
+    // Unclip the scroll container so the whole body lays out at full height
+    clone.style.height = `${h}px`;
+    clone.style.maxHeight = 'none';
+    clone.style.overflow = 'visible';
+    clone.style.border = '0';
+    clone.style.width = `${w}px`;
+  }
 
   const xhtml = new XMLSerializer().serializeToString(clone);
   const svg =

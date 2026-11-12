@@ -24,7 +24,10 @@
  * - Toggle state is owned by the parent PyramidChartSection, not this component.
  */
 
+import { useRef, useState }   from 'react';
 import { useComparison }      from '@/lib/context/ComparisonContext';
+import CustomExpandedChartModal from '@/components/charts/expandableChartCard/CustomExpandedChartModal';
+import EmbedModal from '@/components/charts/expandableChartCard/EmbedModal';
 import { useOptionalFlyout }  from '@/components/core/FlyoutShell';
 import { useCardDetailsShortcut } from '@/components/charts/expandableChartCard/useCardDetailsShortcut';
 import ComparisonPyramidChart from '@/components/data-display/ComparisonPyramidChart';
@@ -61,6 +64,8 @@ export default function ComparisonPyramidChartClient({
   // Details flyout (2026-09-27) — opt-in, so the At a Glance hero's
   // pyramids are unchanged. Used by the cancer-types card.
   withDetails = false,
+  // Expand modal (2026-10-14) — opt-in; At a Glance age + race/ethnicity cards.
+  withExpand = false,
   indicatorKey,
   subtitle,
   narrative,
@@ -70,6 +75,10 @@ export default function ComparisonPyramidChartClient({
 }) {
   const { comparisonNeighborhood } = useComparison();
   const flyout = useOptionalFlyout();
+  const [expandedOpen, setExpandedOpen] = useState(false);
+  const [embedOpen, setEmbedOpen] = useState(false);
+  const expandBtnRef = useRef(null);
+  const embedBtnRef = useRef(null);
 
   const hasComparison = !!(
     comparisonNeighborhood &&
@@ -127,17 +136,66 @@ export default function ComparisonPyramidChartClient({
   }) : null;
   const shortcutProps = useCardDetailsShortcut(handleDetails);
 
+  const sourceClean = source ? String(source).replace(/^source:\s*/i, '') : '';
+
+  // Flat rows for the expand modal's CSV download (same shape as EducationSplitBarChart).
+  const csvRows = withExpand
+    ? (rawData ?? []).map(r => ({
+        GeoID: r.GeoID,
+        Geography: r.Geography,
+        ...Object.fromEntries((segmentCfg ?? []).map(({ key, label }) => {
+          const s = r.Distribution?.find(d => d.key === key);
+          return [label, s?.displayValue ?? ''];
+        })),
+      }))
+    : null;
+
+  const hasData = (activeSegments ?? []).length > 0;
+
   return (
-    <ComparisonPyramidChart
-      {...chartProps}
-      fillHeight={fillHeight}
-      anchorId={anchorId}
-      onDetails={handleDetails}
-      subtitle={subtitle}
-      narrative={narrative}
-      cardProps={handleDetails ? shortcutProps : {}}
-      source={source}
-      note={notes.length ? notes : null}
-    />
+    <>
+      <ComparisonPyramidChart
+        {...chartProps}
+        fillHeight={fillHeight}
+        anchorId={anchorId}
+        onDetails={handleDetails}
+        subtitle={subtitle}
+        narrative={narrative}
+        cardProps={handleDetails ? shortcutProps : {}}
+        source={source}
+        note={notes.length ? notes : null}
+        onExpand={withExpand && hasData ? () => setExpandedOpen(true) : null}
+        expandBtnRef={expandBtnRef}
+      />
+
+      {withExpand && (
+        <CustomExpandedChartModal
+          open={expandedOpen}
+          indicatorKey={indicatorKey}
+          title={title}
+          subtitle={subtitle}
+          sourceClean={sourceClean ? `${sourceClean}${timePeriod && !sourceClean.includes(timePeriod) ? ` (${timePeriod})` : ''}` : ''}
+          onClose={() => setExpandedOpen(false)}
+          restoreFocusRef={expandBtnRef}
+          embedBtnRef={embedBtnRef}
+          onOpenEmbed={() => setEmbedOpen(true)}
+          csvRows={csvRows}
+          suppressionNote={suppressionNote}
+        >
+          {/* timePeriod off here — the modal's source line already carries it */}
+          <ComparisonPyramidChart {...chartProps} timePeriod={null} bare large />
+        </CustomExpandedChartModal>
+      )}
+
+      {withExpand && (
+        <EmbedModal
+          open={embedOpen}
+          indicatorKey={indicatorKey}
+          title={title}
+          onClose={() => setEmbedOpen(false)}
+          restoreFocusRef={embedBtnRef}
+        />
+      )}
+    </>
   );
 }

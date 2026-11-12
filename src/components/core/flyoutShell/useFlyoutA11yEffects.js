@@ -13,6 +13,27 @@ import { areShortcutsEnabled } from '@/lib/utils/shortcutsPreference';
  *      indicator card is currently hovered.
  * Part of the 2026-09-04 split of FlyoutShell.jsx.
  */
+// QA row 49 (2026-10-12): closing Details on mobile landed the user a
+// section further down. Three things moved the page after the restore:
+//   - html { scroll-behavior: smooth } turned the restore into an animation
+//     from the top of the page (unpinning the body resets scroll to 0), and
+//     the scroll-tracking (active nav section, mobile category pages) reacted
+//     to every section it passed on the way;
+//   - closing calls history.back() to consume the flyout's history entry,
+//     and the browser's own scroll restoration for that pop can move the page;
+//   - focus returning to the trigger (fixed in FlyoutShell with preventScroll).
+// So: restore instantly, and re-apply it after the history pop settles.
+function restoreScroll(y) {
+  const go = () => window.scrollTo({ top: y, left: 0, behavior: 'instant' });
+  go();
+  requestAnimationFrame(go);
+  // history.back()'s popstate (and any browser scroll restoration) lands
+  // after this; re-apply once it has, unless the user has started scrolling.
+  const onPop = () => requestAnimationFrame(go);
+  window.addEventListener('popstate', onPop, { once: true });
+  setTimeout(() => window.removeEventListener('popstate', onPop), 500);
+}
+
 export function useFlyoutA11yEffects({ isOpen, isMobile, close, panelRef }) {
   // Close on Escape + focus trap
   useEffect(() => {
@@ -80,7 +101,7 @@ export function useFlyoutA11yEffects({ isOpen, isMobile, close, panelRef }) {
       document.body.style.top      = '';
       document.body.style.width    = '';
       if (savedTop !== undefined) {
-        window.scrollTo(0, parseInt(savedTop, 10));
+        restoreScroll(parseInt(savedTop, 10));
         delete document.body.dataset.scrollY;
       }
       return;
@@ -99,7 +120,7 @@ export function useFlyoutA11yEffects({ isOpen, isMobile, close, panelRef }) {
       document.body.style.top      = '';
       document.body.style.width    = '';
       if (savedTop !== undefined) {
-        window.scrollTo(0, parseInt(savedTop, 10));
+        restoreScroll(parseInt(savedTop, 10));
         delete document.body.dataset.scrollY;
       }
     };

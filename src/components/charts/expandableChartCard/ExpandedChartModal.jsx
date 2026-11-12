@@ -20,6 +20,7 @@ import { useModalVisibility } from './useModalVisibility';
 import { useModalFocusTrap } from './useModalFocusTrap';
 import ExpandedChartLegend from './ExpandedChartLegend';
 import SubtitleWithGlossary from './SubtitleWithGlossary';
+import ChartDataTable from './ChartDataTable';
 import { buildLegendItems } from './chartCardUtils';
 import { downloadCsv, hasCsvData } from './downloadCsv';
 import { composeExportCanvas, loadImage, downloadCanvas, copyCanvas } from './chartExport';
@@ -66,7 +67,8 @@ export default function ExpandedChartModal({
   async function buildExportCanvas(view) {
     const scale = 2;
     const chart = await loadImage(await view.toImageURL('png', scale));
-    const legendItems = buildLegendItems(indicatorData, geoId, comparisonNeighborhood);
+    // Only suppressed rows — everything else is labeled in the chart image (2026-10-13)
+    const legendItems = buildLegendItems(indicatorData, geoId, comparisonNeighborhood).filter(i => i.suppressed);
     return composeExportCanvas({ chart, title, subtitle, legendItems, scale });
   }
 
@@ -245,6 +247,15 @@ export default function ExpandedChartModal({
             </div>
           ) : (
             <VegaLiteChart spec={expandedSpec} onViewReady={handleExpandedViewReady} />
+          )}
+          {/* Screen-reader table — built only while this modal is open (2026-10-13). */}
+          {open && (
+            <ChartDataTable
+              title={title}
+              data={indicatorData}
+              geoId={geoId}
+              compGeoId={comparisonNeighborhood?.geoId ?? null}
+            />
           )}
         </div>
 

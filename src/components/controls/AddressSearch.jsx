@@ -31,6 +31,7 @@
  */
 import { useState, useRef, useEffect, useCallback, useId } from 'react';
 import { useRouter } from 'next/navigation';
+import { pushNeighborhood } from '@/lib/utils/neighborhoodSwitch';
 import { searchAddresses } from '@/lib/geoclient/geocode';
 import { highlight } from '@/lib/utils/highlight';
 
@@ -53,6 +54,7 @@ export default function AddressSearch({
   const containerRef = useRef(null);
   const itemRefs     = useRef([]);
   const debounceRef  = useRef(null);
+  const requestSeq   = useRef(0); // drops out-of-order address responses
   const router       = useRouter();
   const inputId      = useId();
 
@@ -92,6 +94,7 @@ export default function AddressSearch({
   const runSearch = useCallback((q) => {
     clearTimeout(debounceRef.current);
     if (!q.trim() || q.trim().length < 3) {
+      requestSeq.current++;
       setResults([]);
       setIsOpen(false);
       setLoading(false);
@@ -99,8 +102,10 @@ export default function AddressSearch({
     }
 
     setLoading(true);
+    const seq = ++requestSeq.current;
     debounceRef.current = setTimeout(async () => {
       const hits = await searchAddresses(q, neighborhoods);
+      if (seq !== requestSeq.current) return; // superseded by newer typing (2026-10-12)
       setResults(hits);
       setLoading(false);
       setIsOpen(hits.length > 0);
@@ -121,7 +126,7 @@ export default function AddressSearch({
     onSelect?.(item.neighborhood);
     onHover?.(item.neighborhood.id);
     if (variant === 'sidebar') {
-      router.push(`/neighborhood/${item.neighborhood.id}`);
+      pushNeighborhood(router, item.neighborhood.id); // keeps the reader's place mid-page
     }
   }
 

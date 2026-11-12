@@ -38,8 +38,10 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { cache } from 'react';
 import { loadDistributionData } from './joinDistributionFiles';
+import { readSegmentRows } from './segmentedFiles';
+import { INDICATORS_DIR } from './dataPaths';
 
-const DATA_DIR = path.join(process.cwd(), 'data', 'indicators');
+const DATA_DIR = INDICATORS_DIR;
 
 // segment key -> data/indicators/ filename stem (no "-count"/"-rate"
 // suffix for either family — see joinDistributionFiles.js).
@@ -75,6 +77,25 @@ const DISTRIBUTION_FILE_MAPS = {
   'education-level':  EDUCATION_LEVEL_FILES,
 };
 
+// PERF (2026-10-13): the only row fields anything in the app reads. Every
+// row handed to a card is serialized into the page (twice — once in the HTML,
+// once in the RSC payload), and the source files also carry ValueType,
+// LCLValue/UCLValue, NYCPValue and NYCComparisonPValue, which nothing renders
+// — about a fifth of each neighborhood page. Those columns aren't lost: the
+// CSV download fetches the complete file from /data/indicators/{key}.json
+// (published by scripts/publish-data-downloads.js). If a component starts
+// reading another row field, add it here.
+const PAGE_ROW_FIELDS = [
+  'GeoType', 'GeoID', 'Geography', 'Value', 'DisplayValue',
+  'ValueStatus', 'NYCComparison',
+];
+
+function pickPageFields(row) {
+  const out = {};
+  for (const f of PAGE_ROW_FIELDS) if (row[f] !== undefined) out[f] = row[f];
+  return out;
+}
+
 export const loadIndicatorData = cache(function loadIndicatorData(indicatorKey) {
   const fileMap = DISTRIBUTION_FILE_MAPS[indicatorKey];
   if (fileMap) {
@@ -86,9 +107,13 @@ export const loadIndicatorData = cache(function loadIndicatorData(indicatorKey) 
   try {
     const filePath = path.join(DATA_DIR, `${indicatorKey}.json`);
     const parsed = JSON.parse(readFileSync(filePath, 'utf-8'));
-    return Array.isArray(parsed?.Data) ? parsed.Data : [];
+    return Array.isArray(parsed?.Data) ? parsed.Data.map(pickPageFields) : [];
   } catch (err) {
     if (err.code === 'ENOENT') {
+      // Oct 2026 format: e.g. premature-mort-rate now lives inside
+      // premature-mort.json as a segment — see segmentedFiles.js.
+      const segmentRows = readSegmentRows(DATA_DIR, indicatorKey);
+      if (segmentRows) return segmentRows.map(pickPageFields);
       // Data file not yet available — expected during development.
       // Suppressed in production to keep logs clean.
       if (process.env.NODE_ENV === 'development') {

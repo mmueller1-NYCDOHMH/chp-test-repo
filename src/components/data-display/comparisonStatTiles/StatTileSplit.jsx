@@ -25,8 +25,9 @@ export default function StatTileSplit({ label, unit, displayValue, delta, compVa
           every value from screen readers). The visual values row is
           aria-hidden and replaced by this sr-only line, which also says
           which value is which — visually that's carried by color only. */}
-      <span className="sr-only">
-        {`${neighborhoodLabel ?? 'Selected neighborhood'} ${displayValue ?? 'no data'}, ${compLabel ?? 'comparison'} ${compValue ?? 'no data'}. `}
+      {/* key: re-mount on change so Google Translate translates the new text (checklist #34) */}
+      <span className="sr-only" key={`${displayValue}|${compLabel}|${compValue}|${nycValue}`}>
+        {`${neighborhoodLabel ?? 'Selected neighborhood'} ${displayValue ?? 'no data'}, ${compLabel ?? 'comparison'} ${compValue ?? 'no data'}${nycValue ? `, Citywide ${nycValue}` : ''}. `}
       </span>
 
       {/* Values row — selected value flush left, comparison flush right.
@@ -36,19 +37,22 @@ export default function StatTileSplit({ label, unit, displayValue, delta, compVa
           phone emulator). Without an explicit width the row shrank to fit
           its text, so the two numbers sat squished together on real
           iPhones while looking fine in the desktop simulator. */}
-      <div className="flex w-full items-baseline justify-between gap-3" aria-hidden="true">
-        <div className="text-2xl font-semibold leading-none" style={{ color: SELECTED }}>
+      {/* A11Y (2026-10-12, checklist #41): <span className="block/flex">, not <div> —
+          a <button> may only contain phrasing content; invalid nesting is a
+          likely cause of Edge's screen reader skipping values NVDA reads. */}
+      <span className="flex w-full items-baseline justify-between gap-3" aria-hidden="true">
+        <span className="block text-2xl font-semibold leading-none" style={{ color: SELECTED }}>
           <AnimatedValue key={displayValue} value={displayValue ?? '—'} delay={0} />
-        </div>
-        <div className="ml-auto text-right text-2xl font-semibold leading-none" style={{ color: COMPARISON }}>
+        </span>
+        <span className="block ml-auto text-right text-2xl font-semibold leading-none" style={{ color: COMPARISON }}>
           <AnimatedValue key={compValue} value={compValue ?? '—'} delay={0} />
-        </div>
-      </div>
+        </span>
+      </span>
 
       {/* Shared label + unit */}
       {/* 2026-09-29: unit above label; delta pill removed (per Morgan). */}
-      {unit && <div className="w-full text-xs text-gray-600 leading-snug">{unit}</div>}
-      <div className="w-full text-xs font-semibold text-gray-700 leading-snug">{label}</div>
+      {unit && <span className="block w-full text-xs text-gray-600 leading-snug">{unit}</span>}
+      <span className="block w-full text-xs font-semibold text-gray-700 leading-snug">{label}</span>
 
       {/* ── Distribution strip (2026-10-05, per Morgan) ──────────────────
           Compare mode used to drop the dot strip entirely and show only a
@@ -61,10 +65,10 @@ export default function StatTileSplit({ label, unit, displayValue, delta, compVa
         const canStrip = (rows ?? []).some(r => r.GeoType === 'CD' && r.Value != null && r.GeoID === geoId);
         if (canStrip) return <MicroStrip rows={rows} geoId={geoId} compGeoId={compGeoId} />;
         return nycValue ? (
-          <div className="mt-auto pt-2 border-t border-gray-100 flex items-center gap-1">
+          <span className="mt-auto pt-2 border-t border-gray-100 flex items-center gap-1" aria-hidden="true" /* citywide is in the sr-only line above */>
             <span className="text-xs font-semibold text-gray-600 leading-none">Citywide</span>
             <span className="text-xs text-gray-600 leading-none">{nycValue}</span>
-          </div>
+          </span>
         ) : null;
       })()}
       <span className="sr-only">. View details</span>

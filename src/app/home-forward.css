@@ -1,0 +1,104 @@
+/* ── Root "/" forwarding interstitial (2026-10-27) ──────────────────────────
+   app/page.js. Static HTML + CSS only — must paint before any JS loads.
+   Panel fades in after 180ms so instant forwards never flash it; the manual
+   Continue link appears after 2.5s as the no-meta-refresh fallback.
+   Reduced motion: no fades or sliding bar; bar shows as a static track.   */
+.chp-forward {
+  flex: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, var(--color-brand-tint), transparent 70%),
+    var(--background);
+}
+.chp-forward__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 340px;
+  opacity: 0;
+  animation: chp-forward-in 400ms ease-out 180ms forwards;
+}
+.chp-forward__logo {
+  width: 120px;
+  height: auto;
+  margin-bottom: 14px;
+}
+.chp-forward__title {
+  margin: 0;
+  font-size: 1.375rem;
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--color-brand);
+}
+.chp-forward__sub {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-health-neutral);
+}
+.chp-forward__bar {
+  position: relative;
+  width: 100%;
+  max-width: 220px;
+  height: 3px;
+  margin-top: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(0, 57, 122, 0.12);
+}
+.chp-forward__bar > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  border-radius: inherit;
+  background: var(--color-brand);
+  animation: chp-forward-bar 1.15s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+}
+.chp-forward__link {
+  margin-top: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  color: var(--color-brand);
+  background: #fff;
+  border: 1px solid rgba(0, 57, 122, 0.18);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  text-decoration: none;
+  opacity: 0;
+  animation: chp-forward-reveal 300ms ease-out 2.5s forwards;
+  transition: background-color 150ms, border-color 150ms;
+}
+.chp-forward__link:hover { background: var(--color-brand-tint); border-color: rgba(0, 57, 122, 0.35); }
+.chp-forward__link:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  opacity: 1; /* keyboard users always see it once focused */
+}
+@keyframes chp-forward-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes chp-forward-reveal {
+  to { opacity: 1; }
+}
+@keyframes chp-forward-bar {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chp-forward__panel { animation: none; opacity: 1; }
+  .chp-forward__bar > span { animation: none; width: 100%; opacity: 0.35; }
+  .chp-forward__link { animation: none; opacity: 1; }
+}

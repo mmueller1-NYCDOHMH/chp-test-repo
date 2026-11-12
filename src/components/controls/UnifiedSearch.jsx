@@ -43,6 +43,7 @@ import { useUnifiedSearch, ADDRESS_MIN_LENGTH } from './unifiedSearch/useUnified
 import { highlight } from '@/lib/utils/highlight';
 import NeighborhoodGroups from '@/components/controls/NeighborhoodGroups';
 
+import LiveText from '@/components/content/LiveText'; // translatable live text (checklist #34)
 // Shared no-results copy (visible + announced) — says what went wrong and
 // how to fix it (WCAG 3.3.3 Error Suggestion).
 const NO_RESULTS_COPY = (q) =>
@@ -161,13 +162,13 @@ export default function UnifiedSearch({ neighborhoods = [], onSelect, onHover, i
           screen readers pick up changes. "No results" used to be only a
           visual <li> inside the listbox, which NVDA/VoiceOver never announced. */}
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-        {!isOpen || !query.trim() || isNYCEasterEgg
+        <LiveText>{!isOpen || !query.trim() || isNYCEasterEgg
           ? ''
           : addressLoading && !hasResults
             ? 'Searching addresses…'
             : hasResults
               ? `${flatNeighborhoods.length + addressResults.length} result${flatNeighborhoods.length + addressResults.length === 1 ? '' : 's'} available. Use up and down arrows to choose.`
-              : NO_RESULTS_COPY(query)}
+              : NO_RESULTS_COPY(query)}</LiveText>
       </div>
 
       {/* ── Dropdown ───────────────────────────────────────────────────────── */}

@@ -28,6 +28,7 @@ export function matchesQuery(ind, q) {
   return (
     ind.title.toLowerCase().includes(q) ||
     ind.subtitle.toLowerCase().includes(q) ||
+    (ind.keywords ?? '').toLowerCase().includes(q) ||
     ind.subcategoryLabel.toLowerCase().includes(q) ||
     ind.categoryLabel.toLowerCase().includes(q)
   );

@@ -24,6 +24,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 
+import LiveText from '@/components/content/LiveText'; // translatable live text (checklist #34)
 function prettifySlug(slug) {
   if (!slug || /^\d+$/.test(String(slug))) return null;
   return String(decodeURIComponent(slug))
@@ -49,7 +50,7 @@ export default function LoadingAnnouncer({ kind = 'neighborhood' }) {
 
   return (
     <p role="status" aria-live="polite" className="sr-only">
-      {message}
+      <LiveText>{message}</LiveText>
     </p>
   );
 }

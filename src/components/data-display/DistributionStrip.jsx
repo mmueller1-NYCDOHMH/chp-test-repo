@@ -13,7 +13,8 @@
  *   indicatorData    — full indicator data array (CD rows + citywide row)
  *   geoId            — numeric GeoID of the selected neighborhood
  *   comparisonGeoId  — optional numeric GeoID of the comparison neighborhood;
- *                      renders an amber dot at that value's position
+ *                      renders an amber dot at that value's position, with
+ *                      its value labeled above the track (2026-10-14)
  *   mapHoveredGeoId  — optional GeoID currently hovered on the choropleth map;
  *                      highlights the matching dot when no dot is directly hovered
  *   onHoverGeoId     — (geoId: number|null) => void; fired on dot hover so the
@@ -146,14 +147,30 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
   if (!cdRows.length) return null;
 
   const selectedPct  = selected ? pct(selected.Value) : null;
-  const citywidePct  = citywide ? pct(citywide.Value) : null;
+  // QA row 136 (2026-10-12): Total population's citywide value is the city
+  // TOTAL (~8.5M), far outside the 59 districts' range, so its tick/label was
+  // positioned at ~3000% — off the strip, creating a permanent horizontal
+  // scroll in the modal. Only draw citywide when it falls on the scale.
+  const rawCityPct   = citywide ? pct(citywide.Value) : null;
+  const citywidePct  = rawCityPct != null && rawCityPct >= 0 && rawCityPct <= 100 ? rawCityPct : null;
   const referencePct = referenceValue != null ? pct(referenceValue) : null;
+  const comparisonPct = comparison ? pct(comparison.Value) : null;
 
   // If the two static labels are within 12pp, drop the citywide one below
   const labelsClose =
     selectedPct != null &&
     citywidePct != null &&
     Math.abs(selectedPct - citywidePct) < 12;
+
+  // QA row 136: a selected value near the low/high end (e.g. FiDi, Hunts
+  // Point) was centered on its dot and drawn on top of the min/max label.
+  // Near an edge, anchor the label to that edge instead of centering it,
+  // and let it replace the min/max value it would collide with (the dot
+  // already sits at/next to the end of the scale).
+  const EDGE_PCT = 15;
+  const selNearMin = selectedPct != null && selectedPct < EDGE_PCT;
+  const selNearMax = selectedPct != null && selectedPct > 100 - EDGE_PCT;
+  const edgeAnchor = (p) => p < EDGE_PCT ? 'translate-x-0' : p > 100 - EDGE_PCT ? '-translate-x-full' : '-translate-x-1/2';
 
   return (
     <div>
@@ -202,6 +219,26 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
             </>
           )}
         </div>
+
+        {/* Comparison neighborhood value (2026-10-14, per Morgan) — drawn
+            ABOVE the track, in the tooltip's padding band, so it never
+            collides with the selected / citywide / min / max labels below.
+            Fades out while a hover tooltip is showing (same slot). Value
+            only, in COMPARISON rust — mirrors the selected label's style. */}
+        {comparison && comparisonPct != null && (
+          <span
+            aria-hidden="true" /* the amber dot's aria-label already carries name + value */
+            className={`absolute top-0 text-xs font-semibold leading-none whitespace-nowrap pointer-events-none ${edgeAnchor(comparisonPct)}`}
+            style={{
+              left:       `${comparisonPct}%`,
+              color:      COMPARISON,
+              opacity:    tooltipRow ? 0 : 1,
+              transition: 'opacity 50ms ease-in',
+            }}
+          >
+            {comparison.DisplayValue ?? comparison.Value}
+          </span>
+        )}
 
         {/* Strip track + dots — one keyboard group (see useRovingDots) */}
         <div className="relative h-5" {...roving.groupProps('How this neighborhood compares')}>
@@ -298,7 +335,7 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
         {/* Static labels below the track */}
         <div className="relative h-7 mt-0.5">
           {/* Min value — anchored at left edge */}
-          {minRow && (
+          {minRow && !selNearMin && (
             <span className="absolute left-0 top-0 flex flex-col items-start leading-none">
               <span className="text-xs text-gray-600 whitespace-nowrap">
                 {minRow.DisplayValue ?? minRow.Value}
@@ -308,7 +345,7 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
           )}
 
           {/* Max value — anchored at right edge */}
-          {maxRow && (
+          {maxRow && !selNearMax && (
             <span className="absolute right-0 top-0 flex flex-col items-end leading-none">
               <span className="text-xs text-gray-600 whitespace-nowrap">
                 {maxRow.DisplayValue ?? maxRow.Value}
@@ -320,17 +357,26 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
           {/* Selected neighborhood value */}
           {selected && selectedPct != null && (
             <span
-              className="absolute text-xs font-semibold whitespace-nowrap -translate-x-1/2 top-0"
+              className={`absolute flex flex-col leading-none top-0 ${edgeAnchor(selectedPct)} ${selNearMin ? 'items-start' : selNearMax ? 'items-end' : 'items-center'}`}
               style={{ left: `${selectedPct}%`, color: SELECTED }}
             >
-              {selected.DisplayValue ?? selected.Value}
+              <span className="text-xs font-semibold whitespace-nowrap">
+                {selected.DisplayValue ?? selected.Value}
+              </span>
+              {/* Keep the min/max cue when this label stands in for it */}
+              {(selNearMin && selected.GeoID === minRow?.GeoID) && (
+                <span className="text-xs text-gray-600 whitespace-nowrap mt-0.5">min</span>
+              )}
+              {(selNearMax && selected.GeoID === maxRow?.GeoID) && (
+                <span className="text-xs text-gray-600 whitespace-nowrap mt-0.5">max</span>
+              )}
             </span>
           )}
 
           {/* Citywide label — drops below row if too close to selected */}
           {citywide && citywidePct != null && (
             <span
-              className="absolute text-xs whitespace-nowrap -translate-x-1/2"
+              className={`absolute text-xs whitespace-nowrap ${edgeAnchor(citywidePct)}`}
               style={{
                 left:  `${citywidePct}%`,
                 top:   labelsClose ? 14 : 0,
@@ -343,7 +389,7 @@ export default function DistributionStrip({ indicatorData = [], geoId, compariso
         </div>
 
         {referenceCaption && (
-          <p className="mt-1 text-center text-[11px] text-gray-400">{referenceCaption}</p>
+          <p className="mt-1 text-center text-[11px] text-gray-700" /* gray-700 = #4B5563; gray-400 is #D1D5DB in this palette ≈1.5:1 (a11y checklist #9, 2026-10-13) */>{referenceCaption}</p>
         )}
       </div>
     </div>

@@ -69,7 +69,6 @@ import dynamic from 'next/dynamic';
 import AddressSearch from '@/components/controls/AddressSearch';
 import { highlight } from '@/lib/utils/highlight';
 import { cdLabel } from '@/lib/utils/formatGeography';
-import FeatureIcon from './introModal/FeatureIcon';
 import { useIntroModalLifecycle, STORAGE_KEY } from './introModal/useIntroModalLifecycle';
 import { useNeighborhoodFilter } from './introModal/useNeighborhoodFilter';
 
@@ -82,6 +81,10 @@ const ModalMap = dynamic(
 // UI copy — edit /content/site/introModal.json, no code changes needed
 import modalCopy from '../../../content/site/introModal.json';
 import { handleTablistKeyDown } from '@/lib/utils/tablistKeyDown';
+// Onboarding (2026-10-19) — guided tour callout.
+// REVERT: see "Claude outputs/revert_onboarding_2026-10-19/REVERT.md".
+import { startTour } from './onboarding/onboardingEvents';
+import onboardingCopy from '../../../content/site/onboarding.json';
 
 export default function IntroModal({ neighborhoods = [] }) {
   const [searchTab, setSearchTab] = useState('neighborhood'); // 'neighborhood' | 'address'
@@ -137,6 +140,10 @@ export default function IntroModal({ neighborhoods = [] }) {
     handleInputKeyDown,
   } = useNeighborhoodFilter({ neighborhoods, visitedIds: allVisited ? null : visitedIds, onSelect: handleSelect, onDismiss: dismiss });
 
+  // Close the modal, then start the tour once the
+  // close animation (250ms) has finished
+  const closeThen = (fn, delay = 320) => { dismiss(); setTimeout(fn, delay); };
+
   if (!isMounted) return null;
 
   // Portaled to document.body so it sits outside #chp-app-shell — required
@@ -187,7 +194,7 @@ export default function IntroModal({ neighborhoods = [] }) {
 
         {/* ── Header (full-width) ──────────────────────────────────────────── */}
         <div className="px-5 pt-5 pb-4 md:px-8 md:pt-7 md:pb-5 border-b border-gray-100 shrink-0">
-          <p className="text-base font-semibold text-brand mb-1.5">
+          <p className="text-sm font-medium text-gray-600 mb-1">
             {modalCopy.deptLabel}
           </p>
           {/* h2, not h1 — the page underneath (PageHeader) owns the page's h1.
@@ -198,6 +205,17 @@ export default function IntroModal({ neighborhoods = [] }) {
           <p className="text-gray-600 text-sm leading-relaxed max-w-2xl">
             {modalCopy.subtitle}
           </p>
+          {/* About this tool (2026-10-19) — sits under the subtitle, apart from the tour callout */}
+          <a
+            href="/about"
+            onClick={dismiss}
+            className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
+            {onboardingCopy.introModal.aboutLink}
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+            </svg>
+          </a>
 
           {/* ── About blurb ───────────────────────────────────────────────── */}
           {modalCopy.footer.aboutBlurb && (
@@ -215,22 +233,22 @@ export default function IntroModal({ neighborhoods = [] }) {
             </div>
           )}
 
-          {/* ── Feature discovery chips ────────────────────────────────────── */}
-          {/* Hidden on mobile — too much text for the smaller screen; kept on
-              desktop (md+) where there's room and it supports feature discovery. */}
-          {modalCopy.features?.length > 0 && (
-            <div className="hidden md:flex md:flex-wrap gap-2 mt-3" aria-label="What you can do">
-              {modalCopy.features.map((feature) => (
-                <div
-                  key={feature.id}
-                  className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-full px-2.5 py-0.5 select-none"
-                >
-                  <FeatureIcon id={feature.id} />
-                  {feature.label}
-                </div>
-              ))}
-            </div>
-          )}
+          {/* ── Guided tour callout (2026-10-19) — every width ─────────────── */}
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => closeThen(startTour, 350)}
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-brand text-white text-sm font-semibold hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" /><path d="M10 8.5l5 3.5-5 3.5z" />
+              </svg>
+              {onboardingCopy.introModal.tourLink}
+            </button>
+          </div>
+
+          {/* Feature discovery chips removed 2026-10-19 — the guided tour covers
+              feature discovery. Copy still in introModal.json → features. */}
         </div>
 
         {/* ── Two-column body ──────────────────────────────────────────────── */}
@@ -318,7 +336,7 @@ export default function IntroModal({ neighborhoods = [] }) {
                     </p>
                   )}
                   {(!visitedIds || (allVisited && query)) && flatFiltered.length > 0 && (
-                    <p className="text-sm text-gray-600 mt-2 text-center">
+                    <p className="hidden md:block text-sm text-gray-600 mt-2 text-center">
                       {modalCopy.search.keyboardHint}
                     </p>
                   )}

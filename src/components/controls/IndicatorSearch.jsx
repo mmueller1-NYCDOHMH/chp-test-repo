@@ -47,6 +47,7 @@ import { DEFAULT_NEIGHBORHOOD_ID } from '@/lib/utils/constants';
 import { highlight }              from '@/lib/utils/highlight';
 import { getSearchSuggestions, matchesQuery } from '@/lib/utils/searchSuggestions';
 
+import LiveText from '@/components/content/LiveText'; // translatable live text (checklist #34)
 // Matches the Tailwind `md` breakpoint used everywhere else in the app for
 // the mobile/desktop split (Sidebar's aside vs. bottom sheet), and the same
 // max-width MobileCategoryContext.jsx itself checks.
@@ -62,6 +63,20 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
   const pathname                    = usePathname();
   const router                      = useRouter();
   const isNeighborhoodPage          = pathname?.startsWith('/neighborhood/');
+
+  // Focus the input on mount (replaces the autoFocus attribute, 2026-10-12,
+  // QA row 35). Native autoFocus scrolls the page to "reveal" the input —
+  // this sidebar is sticky, so after a top-nav CATEGORY click (which opens
+  // this tab) the page jumped ~200px past where the click had scrolled it,
+  // leaving the section header below the scroll-spy line and the status bar
+  // showing the previous section. preventScroll fixes that. Also leave focus
+  // alone when it's already in the main content: a category click moves
+  // focus to that section's heading (A11Y), which this used to steal.
+  useEffect(() => {
+    if (!autoFocus) return;
+    if (document.getElementById('main-content')?.contains(document.activeElement)) return;
+    inputRef.current?.focus({ preventScroll: true });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps — mount only
 
   // ── Flat filtered results ─────────────────────────────────────────────────
   const results = useMemo(() => {
@@ -237,7 +252,6 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
           onChange={e => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Search indicators…"
-          autoFocus={autoFocus}
           id={inputId}
           aria-controls="indicator-search-results"
           aria-activedescendant={focusedIndex >= 0 ? `search-result-${focusedIndex}` : undefined}
@@ -291,14 +305,14 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
         role="status"
         aria-live="polite"
       >
-        {isFiltered
+        <LiveText>{isFiltered
           ? filteredCount === 0
             ? 'No results'
             : `${filteredCount} of ${baseCount} indicators`
           : categoryFilter
           ? `${baseCount} indicators`
           : `${totalCount} indicators`
-        }
+        }</LiveText>
       </p>
 
       {/* ── Results ─────────────────────────────────────────────── */}

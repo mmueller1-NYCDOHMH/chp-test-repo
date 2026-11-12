@@ -1,0 +1,191 @@
+{
+  "_note": "UI strings for onboarding: the intro modal's onboarding links, the 'How to read this page' explainer, and the guided tour. Edit here, no code changes needed. Added 2026-10-19 (revert notes: Claude outputs/revert_onboarding_2026-10-19/REVERT.md).",
+  "introModal": {
+    "tourLink": "Take the guided tour",
+    "aboutLink": "About this tool"
+  },
+  "howToRead": {
+    "title": "How to read a health indicator",
+    "intro": "Every indicator on a profile uses the same card. Here's what each part means.",
+    "tabs": {
+      "card": "Reading a card",
+      "symbols": "Symbols",
+      "navigation": "Finding your way around"
+    },
+    "exampleLabel": "Example card · sample values",
+    "example": {
+      "title": "Current asthma, adults",
+      "subtitle": "Adults who were told by a health professional they have asthma and still have it",
+      "value": "14.2%",
+      "delta": "4.0 pts higher than NYC",
+      "bars": [
+        {
+          "label": "This neighborhood",
+          "value": "14.2%",
+          "pct": 100
+        },
+        {
+          "label": "Borough",
+          "value": "12.1%",
+          "pct": 85
+        },
+        {
+          "label": "NYC",
+          "value": "10.2%",
+          "pct": 72
+        }
+      ],
+      "source": "[Year] · [Source]",
+      "detailsLabel": "Details"
+    },
+    "parts": [
+      {
+        "title": "What's measured.",
+        "body": "The indicator name and a plain-language description. Select \"read more\" for the full definition."
+      },
+      {
+        "title": "This neighborhood's value.",
+        "body": "The most recent estimate for the community district you're viewing."
+      },
+      {
+        "title": "Compared to NYC.",
+        "body": "How far above or below the citywide value it is. \"Pts\" means percentage points. The arrow and color show whether that's better or worse for health."
+      },
+      {
+        "title": "Neighborhood, borough, city.",
+        "body": "The same measure shown three ways, so you can see the gap at a glance."
+      },
+      {
+        "title": "Year and source.",
+        "body": "When the data was collected and where it comes from."
+      },
+      {
+        "title": "Details.",
+        "body": "Opens a panel showing where this neighborhood ranks among all 59, plus notes about the data."
+      }
+    ],
+    "symbols": [
+      {
+        "symbol": "*",
+        "title": "Interpret with caution.",
+        "body": "The estimate is based on a small sample, so it is less precise."
+      },
+      {
+        "symbol": "^",
+        "title": "Not shown.",
+        "body": "There were too few responses to report a reliable estimate."
+      }
+    ],
+    "navigation": [
+      {
+        "title": "Switch neighborhoods",
+        "body": "Use \"Find neighborhood\" to search by name or address. The whole profile updates to match."
+      },
+      {
+        "title": "Compare to another neighborhood",
+        "body": "Pick a second neighborhood under \"Compare to\" to see both side by side on every card."
+      },
+      {
+        "title": "Jump to a topic",
+        "body": "The topic menu takes you straight to a section, like chronic conditions or housing."
+      },
+      {
+        "title": "Search indicators",
+        "body": "Search for any indicator by name and go straight to its card."
+      }
+    ],
+    "tourPrompt": "Want to see it on a real profile?",
+    "tourLink": "Take the guided tour",
+    "done": "Got it"
+  },
+  "tour": {
+    "stepLabel": "Step {n} of {total}",
+    "next": "Next",
+    "back": "Back",
+    "finish": "Finish",
+    "close": "Close tour",
+    "replayHint": "Need a refresher later? Open the ? menu and choose \"Take the guided tour.\"",
+    "endedToast": "Tour closed. You can replay it anytime from the ? menu.",
+    "replay": "Replay tour",
+    "desktopSteps": [
+      {
+        "id": "find",
+        "title": "Choose a neighborhood",
+        "body": "Search any of NYC's 59 community districts by name or address. Everything on the page updates to the place you pick.",
+        "group": "around"
+      },
+      {
+        "id": "compare",
+        "title": "Compare two places",
+        "body": "Pick a second neighborhood here to see both side by side on every card.",
+        "group": "around"
+      },
+      {
+        "id": "glance",
+        "title": "Start with At a Glance",
+        "body": "Key facts about who lives here, with comparisons to the city as a whole.",
+        "group": "around"
+      },
+      {
+        "id": "topics",
+        "title": "Jump to a topic",
+        "body": "Use this menu to move between topics like chronic conditions or housing. The highlighted topic shows where you are on the page.",
+        "group": "around"
+      },
+      {
+        "id": "card",
+        "title": "Read an indicator",
+        "body": "Each card shows the neighborhood's value, how it compares to NYC, and when the data is from. The buttons on the card open more.",
+        "group": "card"
+      },
+      {
+        "id": "details",
+        "title": "Open Details",
+        "body": "Opens a side panel with more information about this indicator, plus a map.",
+        "group": "card"
+      },
+      {
+        "id": "notes",
+        "title": "About this data",
+        "body": "The ? button explains how this measure is defined, where the data comes from, and anything to keep in mind when reading it.",
+        "group": "card"
+      },
+      {
+        "id": "expand",
+        "title": "See the chart bigger",
+        "body": "Opens a larger version of the chart that you can save as an image, download as a spreadsheet, or embed on another site.",
+        "group": "card"
+      }
+    ],
+    "mobileSteps": [
+      {
+        "id": "find",
+        "title": "Find your neighborhood",
+        "body": "Search by neighborhood name or address. The whole profile updates to match."
+      },
+      {
+        "id": "topics",
+        "title": "Move between topics",
+        "body": "Open the topic menu at the top to switch topics, or use the \"Continue to\" button at the end of each one."
+      },
+      {
+        "id": "card",
+        "title": "Read an indicator",
+        "body": "Each card shows the neighborhood's value and how it compares to NYC."
+      },
+      {
+        "id": "details",
+        "title": "Get more on any indicator",
+        "body": "Tap Details for more information and a map. Tap ? to learn how the measure is defined and where the data comes from."
+      }
+    ],
+    "mobileLabel": "Quick guide",
+    "mobileFinish": "Get started",
+    "skip": "Skip",
+    "groups": {
+      "around": "Getting around",
+      "card": "Reading a card"
+    },
+    "keyHint": "to move between steps"
+  }
+}
