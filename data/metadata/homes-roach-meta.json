@@ -3,19 +3,13 @@
   "Title": "Homes Reporting Cockroaches",
   "Label": "Homes Reporting Cockroaches",
   "Subtitle": "Percentage of households that reported seeing at least one cockroach daily over the last month.",
-  "AgeAdjustment": "N/A",
-  "MethodsNote": "",
-  "ReliabilityNote": "",
+  "AgeAdjustment": null,
+  "MethodsNote": null,
   "Source": "NYC Housing and Vacancy Survey",
-  "DenominatorSource": "N/A",
+  "DenominatorSource": null,
   "TimePeriod": "2023",
   "Unit": "%",
   "Decimals": 0,
   "Section": "neighborhood",
-  "Subsection": "housing-quality",
-  "type": "Percent",
-  "of": "households",
-  "detail": "that report seeing at least one cockroach daily over the last month",
-  "units": "",
-  "indicatorDetail": ""
+  "Subsection": "housing-quality"
 }
