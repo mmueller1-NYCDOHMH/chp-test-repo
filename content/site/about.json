@@ -43,7 +43,7 @@
     "export": "Open a chart's Details panel and choose Export, or, on a larger screen, click the expand icon in the chart's bottom-right corner to open a bigger view. From either one you can copy the chart image, download it as a PNG, or get code to embed the chart on another website.",
     "data": "You can download the data behind any chart as a CSV file. Choose CSV from the Export button in the chart's Details panel, or from the chart's expanded view. The file includes every community district's value for that indicator, along with the borough and citywide values. Suppressed values have an empty value column and are marked 'suppressed'.",
     "links": "The copy-link icon in the bar under the topic navigation copies a link to the section you're viewing. The Details panel has its own Copy link button that links to that indicator.",
-    "print": "Use 'Print this report' at the top of any neighborhood profile to open a printer-friendly version of the full profile, which you can print or save as a PDF.",
+    "print": "Use 'Print' next to the neighborhood name at the top of any profile to open a printer-friendly version of the full profile, which you can print or save as a PDF.",
     "language": "Use the language menu in the page header to view the site in another language. Translations are automatic and may not be exact."
   },
 

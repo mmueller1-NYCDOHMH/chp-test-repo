@@ -61,16 +61,49 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT         = path.join(__dirname, '..');
-const CSV_PATH     = path.join(ROOT, 'content', 'copy', 'measure-copy.csv');
+// CHP_COPY_DIR points the checks at another copy folder (scripts/validate-content.js
+// uses it to check a pull request's files and its base branch side by side).
+// --check-only runs every check but writes nothing.
+const COPY_DIR     = path.resolve(ROOT, process.env.CHP_COPY_DIR || path.join('content', 'copy'));
+const CHECK_ONLY   = process.argv.includes('--check-only');
+const CSV_PATH     = path.join(COPY_DIR, 'measure-copy.csv');
 const OUT_PATH           = path.join(ROOT, 'content', 'copy', 'indicatorCopy.json');
 const SECTION_TITLES_OUT = path.join(ROOT, 'src', 'config', 'content', 'sectionTitles.json');
 const STRUCTURE_OUT      = path.join(ROOT, 'content', 'copy', 'structure.json');
 
-const SECTIONS_CSV     = path.join(ROOT, 'content', 'copy', 'sections.csv');
+const SECTIONS_CSV     = path.join(COPY_DIR, 'sections.csv');
 const SECTION_IDS_JS   = path.join(ROOT, 'src', 'config', 'registries', 'sectionIds.js');
 const DISPLAY_JS       = path.join(ROOT, 'src', 'config', 'presets', 'indicatorDisplay.js');
-const DATA_DIR         = path.join(ROOT, 'data', 'indicators');
-const DATA_META_DIR    = path.join(ROOT, 'data', 'metadata');
+// CHP_DATA_DIR (e.g. data-test) points the build at another data folder —
+// same variable src/lib/data/dataPaths.js reads.
+const DATA_ROOT        = path.resolve(ROOT, process.env.CHP_DATA_DIR || 'data');
+const DATA_DIR         = path.join(DATA_ROOT, 'indicators');
+const DATA_META_DIR    = path.join(DATA_ROOT, 'metadata');
+
+// Oct 2026 format: some keys live as segments inside a combined file
+// (premature-mort.json etc. — see src/lib/data/segmentedFiles.js).
+let SEGMENT_KEYS;
+function segmentKeys() {
+  if (SEGMENT_KEYS) return SEGMENT_KEYS;
+  SEGMENT_KEYS = new Set();
+  if (!fs.existsSync(DATA_DIR)) return SEGMENT_KEYS;
+  for (const name of fs.readdirSync(DATA_DIR)) {
+    if (!name.endsWith('.json')) continue;
+    const text = fs.readFileSync(path.join(DATA_DIR, name), 'utf8');
+    if (!text.includes('"Segments"')) continue;
+    try {
+      for (const geo of JSON.parse(text).Data ?? []) {
+        for (const seg of geo.Segments ?? []) if (seg.SegmentKey) SEGMENT_KEYS.add(seg.SegmentKey);
+      }
+    } catch { /* malformed file — the site logs it */ }
+  }
+  return SEGMENT_KEYS;
+}
+const hasDataFile = (key) =>
+  fs.existsSync(path.join(DATA_DIR, `${key}.json`)) || segmentKeys().has(key);
+const hasMetaFile = (key) =>
+  fs.existsSync(path.join(DATA_META_DIR, `${key}-meta.json`)) ||
+  fs.existsSync(path.join(DATA_META_DIR, `${key}.json`));
 
 /**
  * The "Sections" tab of the copy deck (content/copy/sections.csv) maps the
@@ -255,11 +288,11 @@ function main() {
 
     if (!entry.type || !entry.of) warnings.push(`Row ${i + 2} ("${key}"): blank type/of — its stat-tile / print sub-label will be empty.`);
     if (!DISTRIBUTION_KEYS.has(key)) {
-      if (!fs.existsSync(path.join(DATA_DIR, `${key}.json`))) {
-        warnings.push(`Row ${i + 2} ("${key}"): no data/indicators/${key}.json — card will show an empty state.`);
+      if (!hasDataFile(key)) {
+        warnings.push(`Row ${i + 2} ("${key}"): no ${path.relative(ROOT, DATA_DIR)}/${key}.json (or segment) — card will show an empty state.`);
       }
-      if (!fs.existsSync(path.join(DATA_META_DIR, `${key}-meta.json`))) {
-        warnings.push(`Row ${i + 2} ("${key}"): no data/metadata/${key}-meta.json — no source/time period/methods note.`);
+      if (!hasMetaFile(key)) {
+        warnings.push(`Row ${i + 2} ("${key}"): no ${path.relative(ROOT, DATA_META_DIR)}/${key}-meta.json (or ${key}.json) — no source/time period/methods note.`);
       }
     }
 
@@ -283,6 +316,12 @@ function main() {
     console.error(`[build-copy] ${errors.length} error(s) in measure-copy.csv — nothing written:`);
     errors.forEach(e => console.error(`[build-copy]   - ${e}`));
     process.exit(1);
+  }
+
+  if (CHECK_ONLY) {
+    console.log(`[build-copy] Check only — ${Object.keys(byKey).length} keyed rows OK, nothing written.`);
+    warnings.forEach(w => console.warn(`[build-copy]   - ${w}`));
+    return;
   }
 
   const write = (file, obj) => fs.writeFileSync(file, JSON.stringify(obj, null, 2) + '\n', 'utf8');

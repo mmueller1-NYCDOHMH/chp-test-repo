@@ -40,10 +40,11 @@ Open <http://localhost:3000> — the root route redirects to the default neighbo
 | Script | Does |
 |---|---|
 | `npm run copy` | Builds the generated copy/structure JSON from the CSVs (see below) |
-| `npm run dev` / `npm run build` | Run `copy` first automatically |
+| `npm run dev` | Runs `copy` first automatically |
+| `npm run build` | Runs `scripts/fetch-content.js` (pulls `data/` + `content/` from the data repo when `CONTENT_SOURCE=github`; no-op otherwise), then `copy`, then `next build`. See [DATA-AND-COPY-INGESTION.md](DATA-AND-COPY-INGESTION.md). |
 | `npm run lint` | ESLint |
 
-**Environment:** `NYC_GEOCLIENT_KEY` (server-only) for the `/api/geocode` address lookup. Set it in `.env.local` locally and in the Netlify dashboard for deploys (see `netlify.toml`).
+**Environment:** none required. The address search runs in the browser against NYC GeoSearch (keyless), so the site builds to static files.
 
 **Stack:** Next.js 16 (App Router, React Compiler, Turbopack) · React 19 · Tailwind 4 · Vega-Lite via `vega-embed` · Leaflet / `react-leaflet` · `react-markdown`. Deployed on Netlify with `@netlify/plugin-nextjs`.
 
@@ -133,8 +134,7 @@ Errors (unknown Section/Subsection, duplicate Key, missing column, stale section
     │   ├── neighborhood/[id]/            ← page, layout, loading, not-found
     │   ├── indicator/[key]/              ← standalone indicator page + jumpers + comparison chart
     │   ├── print/                        ← print layout + print.css + neighborhood/[id]/page.js
-    │   ├── about/                        ← page + loading
-    │   └── api/geocode/route.js          ← server proxy to NYC Geoclient
+    │   └── about/                        ← page + loading
     │
     ├── components/
     │   ├── core/          CHPBuilder, Block, FlyoutShell (+ flyoutShell/ hooks),
@@ -181,7 +181,7 @@ Errors (unknown Section/Subsection, duplicate Key, missing column, stale section
         ├── copy/      getNarrativeCopy, resolveNarrative (token substitution)
         ├── charts/    buildBarChartSpec, chartColors
         ├── context/   ComparisonContext, MobileCategoryContext (experimental)
-        ├── geoclient/ geocode (client → /api/geocode)
+        ├── geoclient/ geocode (browser → NYC GeoSearch + CD.geojson)
         ├── glossary.js
         └── utils/     compareIndicator, distributionSegments, scrollToSection, mapTiles,
                        fetchGeoJson, formatGeography, slugify, strings, highlight,
@@ -196,12 +196,11 @@ Every source file opens with a `FILE / PURPOSE` header comment — read that fir
 
 | Route | File | Notes |
 |---|---|---|
-| `/` | `app/page.js` | Redirects to `/neighborhood/{DEFAULT_NEIGHBORHOOD_ID}` |
+| `/` | `app/page.js` | Static page that immediately forwards to `/neighborhood/{DEFAULT_NEIGHBORHOOD_ID}` (meta refresh, works on any static host; Netlify also does a server-side redirect via `netlify.toml`) |
 | `/neighborhood/[id]` | `app/neighborhood/[id]/page.js` | The profile. `generateMetadata` per neighborhood; unknown id → `not-found.jsx`; `loading.jsx` skeleton |
-| `/indicator/[key]?geo=[id]` | `app/indicator/[key]/page.js` | Standalone, citable indicator page (no app shell): indicator + neighborhood pickers, insight, narrative, ranked chart with comparison, methodology, CSV/PNG download. Target of the flyout's "Full page" link. |
+| `/indicator/[key]?geo=[id]` | `app/indicator/[key]/page.js` + `IndicatorPageBody.jsx` | Pre-built per indicator; `?geo=` is read in the browser (IndicatorPageBody) so the page works as a static file. Standalone, citable indicator page (no app shell): indicator + neighborhood pickers, insight, narrative, ranked chart with comparison, methodology, CSV/PNG download. Target of the flyout's "Full page" link. |
 | `/print/neighborhood/[id]` | `app/print/neighborhood/[id]/page.js` | Printable/accessible report; own minimal layout + `print.css`; structure from the deck, print-only tweaks from `content/print/printSettings.json` |
 | `/about` | `app/about/page.js` | Content from `content/site/about.json` |
-| `/api/geocode?address=` | `app/api/geocode/route.js` | Server proxy to NYC Geoclient; keeps `NYC_GEOCLIENT_KEY` off the client |
 
 ---
 

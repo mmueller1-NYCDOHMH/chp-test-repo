@@ -1,3 +1,6 @@
+# SUPERSEDED (2026-11-07) by data-repo-template/github/workflows/publish.yml,
+# which also checks files and test-builds before calling the hook. Kept for reference.
+#
 # TEMPLATE — this file belongs in the DATA repo, not this one.
 # Copy it to .github/workflows/trigger-site-rebuild.yml in the data repo.
 #
