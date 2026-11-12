@@ -63,8 +63,30 @@ export function hasCsvData(rows) {
   return Array.isArray(rows) && rows.length > 0;
 }
 
-export function downloadCsv(rows, indicatorKey, fallbackName = 'chart-data') {
-  const csv = rowsToCsv(rows, indicatorKey);
+/**
+ * Full rows for the CSV (2026-10-13). Rows on the page are trimmed to the
+ * fields the UI reads (see PAGE_ROW_FIELDS in loadIndicatorData.js), so for a
+ * standard indicator the download fetches the complete source file —
+ * confidence intervals, p-values, ValueType and all — from the static copy
+ * scripts/publish-data-downloads.js puts in public/data/indicators/.
+ * Distribution-shaped rows (age, race, education, causes) are assembled from
+ * several files at build time and have no single source file, so they're
+ * exported as-is. Any fetch problem falls back to the on-page rows.
+ */
+async function fullRowsFor(rows, indicatorKey) {
+  if (!indicatorKey || (rows ?? []).some(r => Array.isArray(r?.Distribution))) return rows;
+  try {
+    const res = await fetch(`/data/indicators/${encodeURIComponent(indicatorKey)}.json`);
+    if (!res.ok) return rows;
+    const parsed = await res.json();
+    return Array.isArray(parsed?.Data) && parsed.Data.length ? parsed.Data : rows;
+  } catch {
+    return rows;
+  }
+}
+
+export async function downloadCsv(rows, indicatorKey, fallbackName = 'chart-data') {
+  const csv = rowsToCsv(await fullRowsFor(rows, indicatorKey), indicatorKey);
   if (!csv) return;
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
   const url  = URL.createObjectURL(blob);

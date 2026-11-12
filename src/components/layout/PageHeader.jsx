@@ -35,9 +35,8 @@
  * (e.g. /about), which meant those pages had no language access at all.
  * PageHeader has no such guard — it renders on every route — so this is
  * the one placement that's guaranteed reachable everywhere.
- * "About this tool" and the "?" shortcuts button stay in StickyContextBar:
- * both are only meaningful in the context of browsing a profile page, so
- * scoping them there is fine.
+ * "About this tool" sits beside LanguageToggle (every route) and also in
+ * the "?" help menu in StickyContextBar (KeyboardShortcutsButton.jsx).
  *
  * HOME LINKS (2026-10-07):
  * The logo and the site title both link "home". Home is the last-viewed
@@ -115,6 +114,7 @@ export default function PageHeader() {
 
   return (
     <header
+      id="page-header"
       className="text-white px-4 sm:px-10 py-2.5 w-full"
       style={{ backgroundColor: 'var(--color-brand)' }}
     >
@@ -138,8 +138,20 @@ export default function PageHeader() {
           />
         </Link>
 
-        {/* Small, right-aligned — see UTILITY CONTROLS note above */}
-        <LanguageToggle variant="onBrand" />
+        {/* Small, right-aligned — see UTILITY CONTROLS note above.
+            About this tool also appears here (2026-10-09) in addition to the
+            "?" help menu: the header renders on every route, so this is the
+            always-visible entry point; the "?" menu is the in-context one. */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/about"
+            className="px-2 py-1 text-xs font-medium text-blue-100 hover:text-white hover:underline underline-offset-4 transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 whitespace-nowrap"
+          >
+            <span className="sm:hidden">About</span>
+            <span className="hidden sm:inline">About this tool</span>
+          </Link>
+          <LanguageToggle variant="onBrand" />
+        </div>
       </div>
 
       {/* Row 2 — site title + subtitle, below the logo. Title sits at the

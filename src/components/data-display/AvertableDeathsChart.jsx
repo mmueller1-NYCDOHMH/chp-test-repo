@@ -204,11 +204,11 @@ export default function AvertableDeathsChart({
 
           <div className="flex items-center gap-1.5 shrink-0">
             {hasNotes && (
-              <IconHint label="About this data" className="inline-flex">
+              <IconHint label="About these data" className="inline-flex">
                 <button
                   type="button"
                   onClick={() => setNotesOpen(true)}
-                  aria-label={`About this data: ${title}`} /* A11Y: names the indicator (was identical on every card); starts with the tooltip text (WCAG 2.5.3) */
+                  aria-label={`About these data: ${title}`} /* A11Y: names the indicator (was identical on every card); starts with the tooltip text (WCAG 2.5.3) */
                   className="flex w-9 h-9 items-center justify-center rounded-md border border-brand text-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-xs font-semibold"
                 >
                   ?

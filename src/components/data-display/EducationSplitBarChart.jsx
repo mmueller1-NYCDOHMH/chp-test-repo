@@ -192,11 +192,11 @@ export default function EducationSplitBarChart({
 
           <div className="flex items-center gap-1.5 shrink-0">
             {hasNotes && (
-              <IconHint label="About this data" className="inline-flex">
+              <IconHint label="About these data" className="inline-flex">
                 <button
                   type="button"
                   onClick={() => setNotesOpen(true)}
-                  aria-label={`About this data: ${title}`}
+                  aria-label={`About these data: ${title}`}
                   className="flex w-9 h-9 items-center justify-center rounded-md border border-brand text-brand hover:text-white hover:bg-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-xs font-semibold"
                 >
                   ?
@@ -331,7 +331,11 @@ function SplitBars({ levels, series, title, large = false }) {
       </div>
 
       {/* Screen-reader table */}
-      <table className="sr-only">
+      {/* FIREFOX (2026-10-12, QA row 160): sr-only lives on a wrapper div, not the
+          <table> — Firefox draws a <caption> outside the table box, so clipping
+          the table left the caption visible as large text over the chart. */}
+      <div className="sr-only">
+      <table>
         <caption>{title}</caption>
         <thead>
           <tr>
@@ -348,6 +352,7 @@ function SplitBars({ levels, series, title, large = false }) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

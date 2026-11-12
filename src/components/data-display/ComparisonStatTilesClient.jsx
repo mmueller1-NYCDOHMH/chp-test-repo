@@ -50,6 +50,7 @@
  */
 import { useState } from 'react';
 import { useComparison } from '@/lib/context/ComparisonContext';
+import { displayText } from '@/lib/utils/suppression';
 import StatTilesLegend from './comparisonStatTiles/StatTilesLegend';
 import StatTileSingle from './comparisonStatTiles/StatTileSingle';
 import StatTileSplit from './comparisonStatTiles/StatTileSplit';
@@ -74,7 +75,7 @@ export default function ComparisonStatTilesClient({
 
     // Citywide reference value
     const nycRow  = rows.find(r => r.GeoID === 0);
-    const nycValue = nycRow ? `${nycRow.DisplayValue}${suffix}` : null;
+    const nycValue = nycRow ? (nycRow.Value != null ? `${displayText(nycRow)}${suffix}` : displayText(nycRow)) : null;
 
     if (!comparisonNeighborhood) {
       return { ...tile, compValue: null, compLabel: null, nycValue, rows };
@@ -83,7 +84,7 @@ export default function ComparisonStatTilesClient({
     const compRow = rows.find(r => r.GeoID === comparisonNeighborhood.geoId);
     return {
       ...tile,
-      compValue: compRow ? `${compRow.DisplayValue}${suffix}` : null,
+      compValue: compRow ? (compRow.Value != null ? `${displayText(compRow)}${suffix}` : displayText(compRow)) : null,
       compLabel: comparisonNeighborhood.name,
       nycValue,
       rows,

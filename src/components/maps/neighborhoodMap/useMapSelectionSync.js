@@ -24,7 +24,7 @@ import { baseStyle, selectedStyle, comparisonStyle, computeBounds, CD_ZOOM } fro
  *   - handleRecenter snaps the map back to the selected CD's bounds.
  * Part of the 2026-09-04 split of NeighborhoodMap.jsx.
  */
-export function useMapSelectionSync({ leaflet, geo, selectedId, comparisonId, mapRef, geoLayerRef, hoveredLayerRef }) {
+export function useMapSelectionSync({ leaflet, geo, selectedId, comparisonId, mapRef, geoLayerRef, modalGeoLayerRef, hoveredLayerRef }) {
   // Refs so event handlers (registered once on mount) always read current values
   const selectedIdRef   = useRef(selectedId);
   const comparisonIdRef = useRef(comparisonId);
@@ -85,26 +85,44 @@ export function useMapSelectionSync({ leaflet, geo, selectedId, comparisonId, ma
   }, [geo, selectedId, comparisonId, leaflet]);
 
   // ── Imperative style update ───────────────────────────────────────────────
-  useEffect(() => {
-    const layer = geoLayerRef.current;
-    if (!layer || !geo) return;
+  // QA row 43 (2026-10-12): applies to the expanded-map copy too
+  // (modalGeoLayerRef). It used to restyle only the sidebar map, so clicking
+  // districts inside the expanded map left every previously selected one
+  // purple there. Exposed as restyleAll so the expanded map can also be
+  // restyled the moment it mounts.
+  const restyleAll = useCallback(() => {
     // Clear any lingering hover ref — navigation resets the hover state.
     hoveredLayerRef.current = null;
-    layer.eachLayer(l => {
-      const fid = slugify(l.feature.properties.GEONAME);
-      if (selectedId && selectedId !== 'undefined' && fid === selectedId) {
-        l.setStyle(selectedStyle());
-      } else if (comparisonId && comparisonId !== 'undefined' && fid === comparisonId) {
-        l.setStyle(comparisonStyle());
-      } else {
-        l.setStyle(baseStyle());
-      }
+    const sid = selectedIdRef.current;
+    const cid = comparisonIdRef.current;
+    [geoLayerRef.current, modalGeoLayerRef?.current].forEach(layer => {
+      if (!layer) return;
+      layer.eachLayer(l => {
+        const fid = slugify(l.feature.properties.GEONAME);
+        if (sid && sid !== 'undefined' && fid === sid) {
+          l.setStyle(selectedStyle());
+          l.bringToFront();
+        } else if (cid && cid !== 'undefined' && fid === cid) {
+          l.setStyle(comparisonStyle());
+          l.bringToFront();
+        } else {
+          l.setStyle(baseStyle());
+        }
+      });
     });
-  }, [selectedId, comparisonId, geo]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps — reads refs only
+
+  useEffect(() => {
+    if (!geo) return;
+    selectedIdRef.current   = selectedId;
+    comparisonIdRef.current = comparisonId;
+    restyleAll();
+  }, [selectedId, comparisonId, geo, restyleAll]);
 
   // ── Re-center on selected CD ──────────────────────────────────────────────
-  function handleRecenter() {
-    const map = mapRef.current;
+  // Takes an optional map so the expanded map can re-center itself too.
+  function handleRecenter(targetMap) {
+    const map = targetMap ?? mapRef.current;
     if (!map || !geo || !selectedId) return;
     const feature = geo.features.find(f => slugify(f.properties.GEONAME) === selectedId);
     if (!feature) return;
@@ -112,5 +130,5 @@ export function useMapSelectionSync({ leaflet, geo, selectedId, comparisonId, ma
     if (bounds) map.fitBounds(bounds, { padding: [24, 24], maxZoom: CD_ZOOM });
   }
 
-  return { selectedIdRef, comparisonIdRef, initialStyle, handleRecenter };
+  return { selectedIdRef, comparisonIdRef, initialStyle, handleRecenter, restyleAll };
 }

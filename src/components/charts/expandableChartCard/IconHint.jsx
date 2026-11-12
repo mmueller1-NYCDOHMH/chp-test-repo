@@ -3,7 +3,7 @@
 /**
  * FILE: IconHint.jsx
  *
- * Visible hint for an icon-only button ("?" → "About this data", expand
+ * Visible hint for an icon-only button ("?" → "About these data", expand
  * icon → "Expand chart"). Replaces the native `title` attribute, which only
  * shows on mouse hover — keyboard users never saw it (a11y audit
  * 2026-10-08, WCAG 1.4.13 Content on Hover or Focus / 2.4.6 Labels).

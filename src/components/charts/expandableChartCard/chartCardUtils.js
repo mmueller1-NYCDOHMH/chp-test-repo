@@ -7,7 +7,7 @@
 
 import { deriveBoroughRow } from '@/lib/charts/buildBarChartSpec';
 import { SELECTED, COMPARISON, CITYWIDE, BOROUGH } from '@/lib/charts/chartColors';
-import { isSuppressedRow } from '@/lib/utils/suppression';
+import { isSuppressedRow, displayText } from '@/lib/utils/suppression';
 
 // Strip leading "Source: " prefix if already present so we can control formatting
 export function cleanSource(source) {
@@ -50,7 +50,7 @@ export function buildLegendItems(indicatorData, geoId, comparisonNeighborhood) {
   // the canvas export reads "<Name> · Suppressed".
   const item = (row, color, label) => {
     const suppressed = isSuppressedRow(row);
-    return { color, label, value: suppressed ? 'Suppressed' : row.DisplayValue, suppressed };
+    return { color, label, value: displayText(row), suppressed };
   };
   return [
     nycRow  && item(nycRow,  CITYWIDE,   'Citywide'),
