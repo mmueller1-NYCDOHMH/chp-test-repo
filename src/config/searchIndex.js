@@ -21,6 +21,7 @@
 import { indicatorCopy, indicatorCopyUnmapped } from './indicatorCopy';
 import { siteNav }       from './nav/siteNav';
 import { NEIGHBORHOOD_OVERVIEW_ID } from './registries/sectionIds';
+import structure from '../../content/copy/structure.json';
 
 // Build a flat lookup: sectionId → { categoryLabel, subcategoryLabel, anchor }
 // At a glance isn't a nav category, so it's added by hand (first, to match
@@ -51,6 +52,33 @@ const ANCHOR_ALIASES = {
   'edu-did-not-complete-hs': 'edu-college-degree-and-higher',
   'edu-hsgrad-some-college': 'edu-college-degree-and-higher',
 };
+
+// Bespoke sections (structure.json) that draw SEVERAL copy-deck keys in ONE
+// card — e.g. "Highest level of education achieved" = the three education
+// levels. Search lists the card once, under the card's own title, instead of
+// one entry per level (QA row 131, 2026-10-12). The level names stay
+// searchable via `keywords`. Single-key bespoke sections (Avertable deaths)
+// are untouched and keep their own row title.
+const bespokeLabels = {};
+structure.categories.forEach(cat => cat.sections.forEach(sec =>
+  (sec.bespokeSections ?? []).forEach(b => { bespokeLabels[b.id] = b.label; })
+));
+const rowsByTopic = {};
+Object.values(indicatorCopy).forEach(row => {
+  if (bespokeLabels[row.topic]) (rowsByTopic[row.topic] ??= []).push(row);
+});
+const sharedCardTopics = new Set(
+  Object.keys(rowsByTopic).filter(topic => rowsByTopic[topic].length > 1)
+);
+
+function toGroupEntry(topic) {
+  const rows = rowsByTopic[topic];
+  const cardKey = rows.map(r => ANCHOR_ALIASES[r.key] ?? r.key).find(Boolean);
+  const entry = toEntry({ ...rows[0], measure: bespokeLabels[topic],
+    context: rows.map(r => r.context).find(Boolean) ?? '' }, cardKey);
+  if (entry) entry.keywords = rows.map(r => r.measure).join(' ');
+  return entry;
+}
 
 function toEntry(row, key) {
   const sec = sectionMap[row.navSection ?? row.topic];
@@ -83,6 +111,10 @@ const liveUnkeyed = (indicatorCopyUnmapped ?? [])
   .map(row => toEntry(row, BESPOKE_CARD_KEYS[row.measure] ?? `planned-${slug(row.measure)}`));
 
 export const searchIndex = [
-  ...Object.values(indicatorCopy).map(ind => toEntry(ind, ind.key)),
+  ...Object.values(indicatorCopy).flatMap(ind => {
+    if (!sharedCardTopics.has(ind.topic)) return [toEntry(ind, ind.key)];
+    // one entry per shared card, at the position of its first level
+    return rowsByTopic[ind.topic][0] === ind ? [toGroupEntry(ind.topic)] : [];
+  }),
   ...liveUnkeyed,
 ].filter(Boolean);

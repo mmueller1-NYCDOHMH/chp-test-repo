@@ -152,6 +152,11 @@ export function loadOverviewHeroConfig() {
         indicatorKey: meta.key,
         title:        meta.title,
         segments:     meta.segments ?? [],
+        // For the card's source footer + expand modal (2026-10-14).
+        subtitle:     meta.subtitle    ?? null,
+        source:       meta.source      ?? null,
+        sourceUrl:    meta.sourceUrl   ?? null,
+        description:  meta.methodsNote ?? null,
       };
     })
     .filter(Boolean);

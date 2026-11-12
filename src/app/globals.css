@@ -526,3 +526,30 @@ html.chp-scrolling #vg-tooltip-element {
 @media (prefers-reduced-motion: reduce) {
   .chp-celebrate, .chp-celebrate-confetti { animation: none; }
 }
+
+/* ── Neighborhood switch "Now showing …" pill (2026-10-14) ─────────────────
+   Rendered by NeighborhoodSwitchKeeper.jsx when a mid-page neighborhood
+   switch keeps the reader's place. Fades in, holds, fades out (2.6s total,
+   matching TOAST_MS). Reduced motion: no fade, it just appears and goes.   */
+@keyframes chp-switch-toast {
+  0%   { opacity: 0; transform: translateY(-4px); }
+  10%  { opacity: 1; transform: translateY(0); }
+  85%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.chp-switch-toast {
+  animation: chp-switch-toast 2600ms ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chp-switch-toast { animation: none; }
+}
+/* While a keep-my-place switch lands, show the new sections as-is — the
+   10px reveal slide on everything in view read as the page bouncing. */
+.chp-keep-place, .chp-keep-place body {
+  overflow-anchor: none; /* our restore + correction loop owns the scroll */
+}
+.chp-keep-place [data-section-reveal] {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}

@@ -44,8 +44,9 @@ import { cache } from 'react';
 import { indicatorCopy, indicatorKeys } from '@/config/indicatorCopy';
 import { indicatorDisplay } from '@/config/presets/indicatorDisplay';
 import { normalizeDataMetaFields, formatSourceCitation } from './normalizeDataMeta';
+import { METADATA_DIR, metadataFileNames } from './dataPaths';
 
-const DATA_META_DIR = path.join(process.cwd(), 'data', 'metadata');
+const DATA_META_DIR = METADATA_DIR;
 
 function readJsonSafe(filePath) {
   try {
@@ -55,9 +56,14 @@ function readJsonSafe(filePath) {
   }
 }
 
-// Always "{key}-meta.json" — `npm run copy` warns when one is missing.
+// "{key}-meta.json", or "{key}.json" (Oct 2026 delivery) — see dataPaths.js.
+// `npm run copy` warns when neither exists.
 function readDataMeta(key) {
-  return readJsonSafe(path.join(DATA_META_DIR, `${key}-meta.json`));
+  for (const name of metadataFileNames(key)) {
+    const meta = readJsonSafe(path.join(DATA_META_DIR, name));
+    if (meta) return meta;
+  }
+  return null;
 }
 
 // Stat-tile sub-label ("of residents", "per 100,000", "people"), built from
@@ -73,6 +79,12 @@ function buildCopySubtitle({ type, of, detail, units }) {
   if (!of) return null;
   const lead = type ? `${type} of ${of}` : of;
   return [lead, detail, units].filter(Boolean).join(' ');
+}
+
+// Oct 2026 export sends Decimals as a string ('0', '1'); older files a number.
+function toDecimals(raw) {
+  const n = raw === null || raw === undefined || raw === '' ? NaN : Number(raw);
+  return Number.isInteger(n) && n >= 0 ? n : 0;
 }
 
 /**
@@ -129,7 +141,8 @@ export const getIndicatorMeta = cache(function getIndicatorMeta(key) {
     units,
     indicatorDetail:   c.indicatorDetail || null,
     deltaSuffix:       norm.unit === '%' ? ' pts' : '',
-    decimals:          dataMeta?.Decimals ?? 0,
+    // Oct 2026 export sends Decimals as a string ('0', '1').
+    decimals:          toDecimals(dataMeta?.Decimals),
     higherIsBetter:    display.higherIsBetter ?? null,
     showDelta:         display.showDelta ?? undefined,
     methodsNote:       norm.methodsNote || null,

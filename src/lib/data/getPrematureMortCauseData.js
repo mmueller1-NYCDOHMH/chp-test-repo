@@ -1,4 +1,4 @@
-import path from 'path';
+import { INDICATORS_DIR } from './dataPaths';
 import { loadDistributionData, getTopDistributionKeys } from './joinDistributionFiles';
 
 /**
@@ -45,7 +45,7 @@ import { loadDistributionData, getTopDistributionKeys } from './joinDistribution
  * joinDistributionFiles.js.
  */
 
-const DATA_DIR = path.join(process.cwd(), 'data', 'indicators');
+const DATA_DIR = INDICATORS_DIR; // see dataPaths.js (CHP_DATA_DIR)
 
 // Maps each tracked cause's key to its new-format filename stem.
 const CAUSE_FILES = {

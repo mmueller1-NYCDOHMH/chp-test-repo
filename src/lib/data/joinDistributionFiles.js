@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { readFileSync } from 'fs';
 import path from 'path';
+import { readSegmentRows } from './segmentedFiles';
 
 /**
  * FILE: joinDistributionFiles.js
@@ -22,6 +23,9 @@ import path from 'path';
  * wrapped shape), with Data rows carrying GeoType/GeoID/Geography/Value/
  * DisplayValue.
  *
+ * Oct 2026: a segment with no file of its own is looked up in the combined
+ * "Segments" files instead (segmentedFiles.js), so callers don't change.
+ *
  * Not every family splits by metric — age-distribution (age0to17.json,
  * age18to24.json, ...) and race-ethnicity (race-asian.json, ...) each ship
  * one file per segment with no "-count"/"-rate" suffix (see
@@ -41,13 +45,19 @@ import path from 'path';
  * @returns {Array<object>}
  */
 export function readDistributionSegmentFile(dataDir, fileStem, metric, loggerLabel) {
-  const fileName = metric ? `${fileStem}-${metric}.json` : `${fileStem}.json`;
+  const stem     = metric ? `${fileStem}-${metric}` : fileStem;
+  const fileName = `${stem}.json`;
   const filePath = path.join(dataDir, fileName);
   try {
     const parsed = JSON.parse(readFileSync(filePath, 'utf-8'));
     return Array.isArray(parsed.Data) ? parsed.Data : [];
   } catch (err) {
     if (err.code === 'ENOENT') {
+      // Oct 2026 format: the segment lives inside a combined file
+      // (premature-mort.json, premature-mort-cancer.json, edu-achievement.json)
+      // — see segmentedFiles.js.
+      const segmentRows = readSegmentRows(dataDir, stem);
+      if (segmentRows) return segmentRows;
       if (process.env.NODE_ENV === 'development') {
         console.warn(`${loggerLabel} No file for "${fileName}" — skipping.`);
       }
@@ -77,6 +87,9 @@ function joinDistributionRows(dataDir, fileMap, metric, loggerLabel) {
         key,
         value:        row.Value ?? null,
         displayValue: row.DisplayValue ?? null,
+        // Carried so suppression.js can still spot a suppressed segment when
+        // DisplayValue is null (Oct 2026 delivery) rather than "suppressed".
+        valueStatus:  row.ValueStatus ?? null,
       });
     }
   }

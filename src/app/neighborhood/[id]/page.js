@@ -24,12 +24,15 @@
 
 import CHPBuilder from '@/components/core/CHPBuilder';
 import IntroModal from '@/components/core/IntroModal';
+// Onboarding (2026-10-19). REVERT: "Claude outputs/revert_onboarding_2026-10-19/REVERT.md"
+import GuidedTour from '@/components/core/onboarding/GuidedTour';
 import RememberNeighborhood from '@/components/controls/RememberNeighborhood';
 import { pageRegistry } from '@/config/registries/pageRegistry';
 import { getData } from '@/lib/data/getData';
 import { getNeighborhoods } from '@/lib/data/getNeighborhoods';
 import { notFound } from 'next/navigation';
 
+import HydrationSignal from '@/components/layout/HydrationSignal';
 const SITE_NAME = 'Community Health Profiles · NYC';
 
 /**
@@ -77,10 +80,13 @@ export default async function NeighborhoodPage({ params }) {
     <>
       {/* Intro modal — shown on first visit regardless of entry point */}
       <IntroModal neighborhoods={neighborhoods} />
+      <GuidedTour />
       {/* Records this as the last-viewed neighborhood so /about and the
           header can link back to it by name (lib/utils/lastNeighborhood.js) */}
       <RememberNeighborhood id={id} name={neighborhood.name} />
       <CHPBuilder config={config} data={data} />
+      {/* Last: lets Google Translate start only after this content hydrates */}
+      <HydrationSignal />
     </>
   );
 }

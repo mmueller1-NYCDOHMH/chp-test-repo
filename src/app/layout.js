@@ -1,9 +1,9 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from 'next/script';
 import 'leaflet/dist/leaflet.css';
 import "./globals.css";
 import RouteAnnouncer from "@/components/layout/RouteAnnouncer";
 import GoogleTranslateLoader from "@/components/layout/GoogleTranslateLoader";
+import TranslatedAriaLabels from '@/components/layout/TranslatedAriaLabels';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,9 +20,14 @@ const geistMono = Geist_Mono({
   preload: false,
 });
 
+// NEXT_PUBLIC_PREVIEW=1 on staging and pull-request previews (Render):
+// keeps them out of search engines and shows a "not the live site" strip.
+const IS_PREVIEW = process.env.NEXT_PUBLIC_PREVIEW === '1';
+
 export const metadata = {
   title: "Community Health Profiles · NYC",
   description: "Health indicators for all 59 NYC community districts, from the NYC Department of Health and Mental Hygiene.",
+  ...(IS_PREVIEW && { robots: { index: false, follow: false } }),
 };
 
 // viewport-fit=cover lets env(safe-area-inset-*) values work correctly on
@@ -66,21 +71,21 @@ export default function RootLayout({ children }) {
             navigation doesn't trigger a fresh document read). */}
         <RouteAnnouncer />
 
+        {IS_PREVIEW && (
+          <div role="note" className="bg-amber-100 text-amber-900 text-sm text-center px-4 py-1.5">
+            Preview — not the live site
+          </div>
+        )}
+
         {children}
 
-        {/* Google Translate — init callback defined inline so it runs before the script */}
-        <Script id="google-translate-init" strategy="beforeInteractive">{`
-          function googleTranslateElementInit() {
-            new google.translate.TranslateElement({
-              pageLanguage: 'en',
-              includedLanguages: 'es,zh-CN,ru,it,ht,bn,yi,ko,ar,fr,pl,ur,pt',
-              autoDisplay: false,
-            }, 'google_translate_element');
-          }
-        `}</Script>
         {/* Loaded only when a non-English language is active (googtrans
             cookie) — see GoogleTranslateLoader.jsx. */}
         <GoogleTranslateLoader />
+
+        {/* Translated pages only: makes aria-labels translatable by Google
+            Translate (a11y checklist #34) — see TranslatedAriaLabels.jsx. */}
+        <TranslatedAriaLabels />
       </body>
     </html>
   );

@@ -43,6 +43,19 @@ export function isSuppressedRow(row) {
       || isSuppressedText(row.ValueStatus ?? row.valueStatus);
 }
 
+/**
+ * Text to show for a row's value. Since the Oct 2026 delivery (confirmed by
+ * Dan Dine, 2026-11-02), rows with no value have DisplayValue: null and the
+ * reason lives in ValueStatus ("suppressed", "na", or null for missing).
+ * Never returns null, so callers can safely build strings from it.
+ */
+export function displayText(row) {
+  if (!row) return '';
+  const dv = row.DisplayValue ?? row.displayValue;
+  if (dv != null && dv !== '') return String(dv);
+  return isSuppressedRow(row) ? 'Suppressed' : 'No data';
+}
+
 export function hasSuppressedValues(rows) {
   return Array.isArray(rows) && rows.some(isSuppressedRow);
 }

@@ -44,7 +44,12 @@
 // Sourced from the MethodsNote above, not inferred from ValueStatus — see
 // the data caveat: ValueStatus alone doesn't reliably distinguish the 5
 // baseline CDs (108 breaks the "na" pattern the other 4 follow).
-export const AVERTABLE_DEATHS_BASELINE_GEO_IDS = [101, 102, 106, 107, 108];
+// 2026-10-22 (per Liza): the baseline 5 are FiDi, Greenwich Village/Soho,
+// Stuy Town, UWS and Park Slope (306) — NOT Upper East Side (108), which the
+// MethodsNote still lists (stale). Matches the data: these 5 carry
+// ValueStatus "na"; the 4 negative-value CDs (104, 105, 108, 402) carry
+// "supressed" and fall through to the "not calculated" branch below.
+export const AVERTABLE_DEATHS_BASELINE_GEO_IDS = [101, 102, 106, 107, 306];
 
 /**
  * @param {{ GeoID: number, Value: number|null }|null|undefined} row — the
