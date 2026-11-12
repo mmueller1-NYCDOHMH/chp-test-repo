@@ -89,7 +89,7 @@ export default function BackToTopButton() {
         'h-9 px-3',
         'items-center justify-center gap-1.5',
         'rounded-full',
-        'bg-white text-gray-700 border border-gray-200',
+        'bg-white/55 text-gray-800 border border-gray-300/70',
         'hover:text-brand hover:border-brand hover:bg-brand-tint',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
         'shadow-sm',
@@ -129,9 +129,14 @@ export function BackToTopButtonMobile() {
         'h-14 w-14',
         'items-center justify-center',
         'rounded-full',
-        'bg-blue-600 text-gray-200 border border-gray-500',
+        // QA (2026-10-12): was a translucent bright-blue fill, which read as a
+        // primary action. Now mirrors desktop's ghost style — white fill, gray
+        // arrow, light gray border — slightly more opaque than desktop's
+        // bg-white/55 so it stays legible floating over charts.
+        'bg-white/90 text-gray-600 border border-gray-300',
+        'active:text-brand active:border-brand active:bg-brand-tint',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
-        'shadow-sm',
+        'shadow-md',
         'transition-all duration-300 ease-in-out',
         isVisible
           ? 'translate-y-0 opacity-100 pointer-events-auto'
