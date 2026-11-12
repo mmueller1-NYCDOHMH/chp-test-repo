@@ -1,0 +1,241 @@
+# .github/workflows/cleanup-unused-assets.yml
+#
+# Two-pass scan of the repository:
+#   1. Unreferenced static assets  — images, fonts, CSVs, etc. not referenced in code
+#   2. Unimported JS/TS/CSS modules — source files never imported by another file
+#
+# When unused files are found, this workflow opens a pull request so a human
+# can review and approve before anything is permanently deleted.
+#
+# Trigger: manual only  (Actions tab → "Cleanup Unused Files" → Run workflow)
+
+name: Cleanup Unused Files
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: >
+          Dry run — report unused files but do NOT open a PR or delete anything.
+        type: boolean
+        default: false
+      scan_mode:
+        description: What to scan for
+        type: choice
+        default: both
+        options:
+          - both
+          - assets-only
+          - modules-only
+      target_branch:
+        description: Base branch to scan and open the PR against (default: main)
+        type: string
+        default: main
+
+permissions:
+  contents: write       # push cleanup branch
+  pull-requests: write  # open PR
+
+jobs:
+  scan-and-cleanup:
+    name: Scan for unused files
+    runs-on: ubuntu-latest
+
+    steps:
+      # -----------------------------------------------------------------------
+      # 1. Checkout
+      # -----------------------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.target_branch }}
+          fetch-depth: 0
+
+      # -----------------------------------------------------------------------
+      # 2. Python setup
+      # -----------------------------------------------------------------------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # -----------------------------------------------------------------------
+      # 3. Build scan flags based on the scan_mode input
+      # -----------------------------------------------------------------------
+      - name: Resolve scan flags
+        id: flags
+        run: |
+          MODE="${{ github.event.inputs.scan_mode }}"
+          if [ "$MODE" = "assets-only" ]; then
+            echo "extra_flags=--skip-modules" >> "$GITHUB_OUTPUT"
+          elif [ "$MODE" = "modules-only" ]; then
+            echo "extra_flags=--skip-assets" >> "$GITHUB_OUTPUT"
+          else
+            echo "extra_flags=" >> "$GITHUB_OUTPUT"
+          fi
+
+      # -----------------------------------------------------------------------
+      # 4. Run the scanner
+      #    Exit 0 → nothing unused  |  Exit 1 → unused files found
+      # -----------------------------------------------------------------------
+      - name: Run scanner
+        id: scan
+        run: |
+          python .github/scripts/find_unused_assets.py \
+            --repo-root . \
+            --output unused_files.json \
+            ${{ steps.flags.outputs.extra_flags }}
+        continue-on-error: true
+
+      # -----------------------------------------------------------------------
+      # 5. Parse report
+      # -----------------------------------------------------------------------
+      - name: Parse scan report
+        id: report
+        run: |
+          python - <<'EOF'
+          import json, os
+
+          with open("unused_files.json") as f:
+              data = json.load(f)
+
+          total   = data.get("unreferenced_count", 0)
+          assets  = data.get("unreferenced_assets", [])
+          modules = data.get("unimported_modules", [])
+
+          def bullet(lst): return "\n".join(f"- `{f}`" for f in lst) if lst else "_none_"
+
+          env_file = os.environ["GITHUB_OUTPUT"]
+          with open(env_file, "a") as out:
+              out.write(f"unused_count={total}\n")
+              out.write(f"asset_count={len(assets)}\n")
+              out.write(f"module_count={len(modules)}\n")
+              out.write("asset_list<<DELIM\n")
+              out.write(bullet(assets) + "\n")
+              out.write("DELIM\n")
+              out.write("module_list<<DELIM\n")
+              out.write(bullet(modules) + "\n")
+              out.write("DELIM\n")
+
+          print(f"Assets:  {len(assets)}")
+          print(f"Modules: {len(modules)}")
+          print(f"Total:   {total}")
+          EOF
+
+      # -----------------------------------------------------------------------
+      # 6. Early exits
+      # -----------------------------------------------------------------------
+      - name: Nothing to clean up
+        if: steps.report.outputs.unused_count == '0'
+        run: echo "✅ No unused files found. No PR will be created."
+
+      - name: Dry-run summary
+        if: >
+          steps.report.outputs.unused_count != '0' &&
+          github.event.inputs.dry_run == 'true'
+        run: |
+          echo "🔍 Dry run complete — files identified but NOT deleted."
+          echo "Re-run with 'Dry run' unchecked to open a cleanup PR."
+          cat unused_files.json
+
+      # -----------------------------------------------------------------------
+      # 7. Delete the files
+      # -----------------------------------------------------------------------
+      - name: Delete unused files
+        if: >
+          steps.report.outputs.unused_count != '0' &&
+          github.event.inputs.dry_run == 'false'
+        run: |
+          python - <<'EOF'
+          import json, os
+          from pathlib import Path
+
+          with open("unused_files.json") as f:
+              data = json.load(f)
+
+          for filepath in data.get("all_unused_files", []):
+              p = Path(filepath)
+              if p.is_file():
+                  p.unlink()
+                  print(f"  Deleted: {filepath}")
+              else:
+                  print(f"  Skipped (not found): {filepath}")
+          EOF
+
+      # -----------------------------------------------------------------------
+      # 8. Commit and push to a new branch
+      # -----------------------------------------------------------------------
+      - name: Commit and push cleanup branch
+        if: >
+          steps.report.outputs.unused_count != '0' &&
+          github.event.inputs.dry_run == 'false'
+        id: push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="chore/cleanup-unused-files-$(date +%Y%m%d-%H%M%S)"
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+
+          git checkout -b "$BRANCH"
+          git add -A
+          git commit -m "chore: remove ${{ steps.report.outputs.unused_count }} unused file(s)
+
+          Automated cleanup by the 'Cleanup Unused Files' GitHub Action.
+          - Unreferenced static assets: ${{ steps.report.outputs.asset_count }}
+          - Unimported JS/TS modules:   ${{ steps.report.outputs.module_count }}"
+
+          git push origin "$BRANCH"
+
+      # -----------------------------------------------------------------------
+      # 9. Open a pull request
+      # -----------------------------------------------------------------------
+      - name: Open pull request
+        if: >
+          steps.report.outputs.unused_count != '0' &&
+          github.event.inputs.dry_run == 'false'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.push.outputs.branch }}
+          base: ${{ github.event.inputs.target_branch }}
+          title: "chore: remove ${{ steps.report.outputs.unused_count }} unused file(s)"
+          body: |
+            ## 🧹 Unused File Cleanup
+
+            This PR was opened automatically by the **Cleanup Unused Files** workflow.
+
+            ---
+
+            ### 🖼️ Unreferenced static assets (${{ steps.report.outputs.asset_count }})
+            > Images, fonts, CSVs, and other static files with no references found in code.
+
+            ${{ steps.report.outputs.asset_list }}
+
+            ---
+
+            ### 📦 Unimported JS/TS/CSS modules (${{ steps.report.outputs.module_count }})
+            > Source files in `components/`, `lib/`, `utils/`, `hooks/`, etc. that are
+            > never imported by any other file.
+
+            ${{ steps.report.outputs.module_list }}
+
+            ---
+
+            ### ✅ Before merging, please verify
+
+            - [ ] No file is loaded **dynamically** (e.g., via a runtime-interpolated path).
+            - [ ] No file is referenced **outside this repo** (CMS, CDN, email templates, etc.).
+            - [ ] No module is used only via **re-export barrels** (`index.ts`) that the
+                  scanner may not have traced.
+            - [ ] You are comfortable that no false positives exist for your project.
+
+            > **Safe to close without merging** if you are unsure about any file.
+            > The workflow can be re-run at any time from the Actions tab.
+
+            ---
+            *Generated by `.github/workflows/cleanup-unused-assets.yml`*
+          labels: |
+            chore
+            automated
+          draft: false

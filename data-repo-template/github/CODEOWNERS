@@ -1,0 +1,8 @@
+# Who is asked to review each kind of change. Either owner's approval satisfies
+# "Require review from Code Owners". Add people or GitHub teams as the editor
+# group grows (e.g. split /data/ and /content/ between data and content teams).
+
+*           @mmueller1-NYCDOHMH @mmontesanonyc
+/data/      @mmueller1-NYCDOHMH @mmontesanonyc
+/content/   @mmueller1-NYCDOHMH @mmontesanonyc
+/.github/   @mmueller1-NYCDOHMH

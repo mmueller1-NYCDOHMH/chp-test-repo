@@ -1,0 +1,41 @@
+name: Report a data problem
+description: A number, chart or source on the site that looks wrong
+title: "Data: "
+labels: [data-issue]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Page link
+      description: Paste the address of the page from your browser.
+    validations:
+      required: true
+  - type: input
+    id: indicator
+    attributes:
+      label: Indicator
+      placeholder: e.g. Obesity
+    validations:
+      required: true
+  - type: input
+    id: geography
+    attributes:
+      label: Neighborhood, borough or citywide
+      placeholder: e.g. Mott Haven and Melrose
+  - type: input
+    id: shown
+    attributes:
+      label: What the site shows
+      placeholder: e.g. 99%
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and where it comes from
+      description: A source, report or dataset helps the data team check quickly.
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot (optional)
+      description: Drag an image into this box.

@@ -1,0 +1,32 @@
+name: Report a copy problem
+description: Text on the site that's wrong, unclear or out of date
+title: "Copy: "
+labels: [copy-issue]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Page link
+      description: Paste the address of the page from your browser.
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where on the page?
+      placeholder: e.g. the "Obesity" card in Health conditions
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested wording (optional)
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot (optional)
+      description: Drag an image into this box.

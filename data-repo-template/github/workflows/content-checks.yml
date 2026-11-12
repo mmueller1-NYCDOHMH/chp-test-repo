@@ -1,0 +1,160 @@
+# Runs on every pull request in the data repo.
+#
+# 1. Checks the changed files with the site's scripts/validate-content.js,
+#    comparing them with main so only NEW problems count.
+# 2. Posts (and keeps updating) one comment with the report, marks problems
+#    next to the file in "Files changed", and labels the pull request.
+# 3. "Content checks" fails if anything must be fixed.
+#    "Review sign-off" fails until a reviewer adds the warnings-reviewed label,
+#    if there are items that need a look. Pushing new changes resets sign-off.
+#
+# Make both checks required: Settings → Branches → main → Require status checks.
+# Setup details: data-repo-template/README.md in the site repo.
+
+name: Content checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: content-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Content checks
+    runs-on: ubuntu-latest
+    outputs:
+      errors: ${{ steps.validate.outputs.errors }}
+      review: ${{ steps.validate.outputs.review }}
+    steps:
+      - name: Get this pull request's files
+        uses: actions/checkout@v4
+        with:
+          path: pr
+
+      - name: Get the files it replaces (main)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+
+      - name: Get the site code (for the checker)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.SITE_REPO }}
+          ref: main
+          path: site
+          # Private site repo: a read-only deploy key (preferred) or a token.
+          ssh-key: ${{ secrets.SITE_REPO_DEPLOY_KEY }}
+          token: ${{ secrets.SITE_REPO_TOKEN || github.token }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install
+        working-directory: site
+        run: npm ci --no-audit --no-fund
+
+      - name: Check files
+        id: validate
+        working-directory: site
+        run: |
+          set +e
+          node scripts/validate-content.js --content-root ../pr --base ../base \
+            --report-md ../report.md --report-json ../report.json
+          code=$?
+          set -e
+          if [ ! -f ../report.json ]; then
+            printf '## Content checks\n\n❌ The checker itself crashed — a developer needs to look at the Actions log.\n' > ../report.md
+            echo "errors=1" >> "$GITHUB_OUTPUT"; echo "review=0" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo "errors=$(jq .errors ../report.json)" >> "$GITHUB_OUTPUT"
+          echo "review=$(jq .review ../report.json)" >> "$GITHUB_OUTPUT"
+          cat ../report.md >> "$GITHUB_STEP_SUMMARY"
+          exit $code
+
+      - name: Post report on the pull request
+        if: always() && hashFiles('report.md') != ''
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: content-checks
+          path: report.md
+
+      - name: Label the pull request
+        if: always() && steps.validate.outputs.errors != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          ACTION: ${{ github.event.action }}
+          ERRORS: ${{ steps.validate.outputs.errors }}
+          REVIEW: ${{ steps.validate.outputs.review }}
+        run: |
+          mk() { gh label create "$1" --color "$2" --description "$3" -R "$REPO" --force >/dev/null; }
+          mk copy-change       1d76db "Copy deck or site text changed"
+          mk data-change       5319e7 "Indicator data or metadata changed"
+          mk blocking-error    d73a4a "Content checks found something that must be fixed"
+          mk needs-review      fbca04 "Content checks found items a reviewer should confirm"
+          mk large-change      e99695 "Some values moved a lot compared with the live site"
+          mk warnings-reviewed 0e8a16 "A reviewer has checked the needs-review items"
+          mk copy-issue        c5def5 "Problem reported with text on the site"
+          mk data-issue        bfd4f2 "Problem reported with numbers on the site"
+          mk build-failure     b60205 "Publishing failed after a merge"
+
+          files=$(gh pr diff "$PR" -R "$REPO" --name-only)
+          current=$(gh pr view "$PR" -R "$REPO" --json labels -q '.labels[].name')
+          want() { add="$add,$1"; }
+          drop() { echo "$current" | grep -qx "$1" && remove="$remove,$1" || true; }
+          add=""; remove=""
+
+          echo "$files" | grep -q '^content/' && want copy-change || drop copy-change
+          echo "$files" | grep -q '^data/'    && want data-change || drop data-change
+          [ "$ERRORS" -gt 0 ] && want blocking-error || drop blocking-error
+          [ "$REVIEW" -gt 0 ] && want needs-review   || drop needs-review
+          jq -e '[.issues[] | select(.code=="large-change" and (.preexisting|not))] | length > 0' ../report.json >/dev/null \
+            && want large-change || drop large-change
+          # New changes pushed → the old sign-off no longer covers them.
+          [ "$ACTION" = "synchronize" ] && drop warnings-reviewed
+
+          [ -n "$add" ]    && gh pr edit "$PR" -R "$REPO" --add-label "${add#,}"
+          [ -n "$remove" ] && gh pr edit "$PR" -R "$REPO" --remove-label "${remove#,}"
+          true
+
+      - name: Tell Teams a change is waiting for review
+        if: always() && github.event.action == 'opened' && vars.TEAMS_NOTIFY_PRS == 'true'
+        env:
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        run: |
+          node site/scripts/notify-teams.js --status info \
+            --title "Waiting for review: ${{ github.event.pull_request.title }}" \
+            --text "Opened by ${{ github.event.pull_request.user.login }}" \
+            --url "${{ github.event.pull_request.html_url }}" --url-title "Review it" \
+            --report report.json
+
+  sign-off:
+    name: Review sign-off
+    needs: checks
+    if: always() && needs.checks.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Needs-review items signed off?
+        env:
+          REVIEW: ${{ needs.checks.outputs.review }}
+          SIGNED: ${{ contains(github.event.pull_request.labels.*.name, 'warnings-reviewed') && github.event.action != 'synchronize' }}
+        run: |
+          if [ "$REVIEW" != "0" ] && [ "$SIGNED" != "true" ]; then
+            echo "::error::$REVIEW item(s) need review (see the Content checks comment). Once a reviewer has checked them, add the 'warnings-reviewed' label."
+            exit 1
+          fi
+          echo "Nothing waiting for sign-off."
