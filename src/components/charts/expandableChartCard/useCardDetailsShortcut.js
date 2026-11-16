@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 
 /**
  * FILE: useCardDetailsShortcut.js
@@ -11,7 +11,8 @@ import { useRef } from 'react';
  */
 export function useCardDetailsShortcut(handleDetails) {
   const latest = useRef(handleDetails);
-  latest.current = handleDetails;
+  // Synced after render, not during it (React Compiler: no ref writes in render).
+  useLayoutEffect(() => { latest.current = handleDetails; });
   const open = () => latest.current?.();
 
   return {

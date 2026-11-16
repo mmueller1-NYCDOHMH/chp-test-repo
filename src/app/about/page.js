@@ -30,6 +30,7 @@ import PageLayout from '@/components/layout/PageLayout';
 import copy from '../../../content/site/about.json';
 
 import HydrationSignal from '@/components/layout/HydrationSignal';
+import ScrollToTopOnMount from '@/components/layout/ScrollToTopOnMount';
 const SITE_NAME    = 'Community Health Profiles · NYC';
 const EMPTY_CONFIG = { sections: [] };
 
@@ -146,12 +147,11 @@ export default async function AboutPage() {
     >
       <article>
 
-        {/* ── Back link (mobile only) ───────────────────────────────────
-            On desktop the sidebar shows the back link (sticky, always in
-            view), so these in-page ones are md:hidden to keep exactly one
-            back button visible at a time (2026-10-09). Repeated at the
-            bottom of the prose for mobile. */}
-        <BackToProfileLink className="mb-6 md:hidden" />
+        {/* ── Back link (top) ───────────────────────────────────────────
+            Visible at every width again (2026-11-16, per Morgan — it had
+            been md:hidden since 2026-10-09). The bottom one stays
+            mobile-only; desktop also has the sidebar's sticky back pill. */}
+        <BackToProfileLink className="mb-6" />
 
         {/* ── Page header ────────────────────────────────────────────── */}
         <div className="mb-12 pb-10 border-b border-gray-200">
@@ -304,6 +304,7 @@ export default async function AboutPage() {
 
         </div>
       </article>
+      <ScrollToTopOnMount />
       <HydrationSignal />
     </PageLayout>
   );

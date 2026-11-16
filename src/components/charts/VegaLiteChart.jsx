@@ -86,12 +86,16 @@ function installTooltipDismiss() {
   tooltipDismissInstalled = true;
   const hide = () => document.getElementById('vg-tooltip-element')?.classList.remove('visible');
   let timer = null;
+  const root = document.documentElement;
   const onScroll = () => {
-    document.documentElement.classList.add('chp-scrolling');
+    // Only touch <html> when the class is actually missing (2026-11-16):
+    // classList.add rewrites the attribute on every call, invalidating
+    // style for the whole page on every scroll event.
+    if (!root.classList.contains('chp-scrolling')) root.classList.add('chp-scrolling');
     clearTimeout(timer);
     timer = setTimeout(() => {
       hide();
-      document.documentElement.classList.remove('chp-scrolling');
+      root.classList.remove('chp-scrolling');
     }, 200);
   };
   // capture: scroll doesn't bubble, and this also catches inner scrollers

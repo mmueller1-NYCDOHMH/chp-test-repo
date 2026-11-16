@@ -67,7 +67,7 @@ export function useMapHoverInteractions({ geoLayerRef, modalGeoLayerRef, hovered
       document.removeEventListener('visibilitychange', onVisibility);
       document.documentElement.removeEventListener('mouseleave', onDocLeave);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps — refs only
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- refs only
 
   function onEachFeature(feature, layer) {
     const fid          = slugify(feature.properties.GEONAME);

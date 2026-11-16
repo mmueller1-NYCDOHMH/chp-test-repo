@@ -121,9 +121,7 @@
               "key": "farmers-markets"
             },
             {
-              "planned": true,
-              "measure": "Food Insecurity",
-              "flag": ""
+              "key": "food-insecurity"
             },
             {
               "key": "sugary-drink"

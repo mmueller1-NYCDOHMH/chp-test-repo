@@ -37,6 +37,27 @@ export function useSidebarTabs() {
   // actually used the tab strip, not on page load or a programmatic sync.
   const panelRefs = useRef({});
   const focusPanelOnNextChange = useRef(null);
+  // Ref-callback helper (2026-11-16): Sidebar used to write
+  // panelRefs.current[...] itself, which the React Compiler rejects
+  // ("modifying a value returned from a hook") and so skipped optimizing
+  // the whole Sidebar. Writes now happen in here.
+  const setPanelRef = useCallback((key, el) => { panelRefs.current[key] = el; }, []);
+
+  // Tab setter that also syncs the URL without navigation.
+  // Clears the category filter when returning to the neighborhood tab —
+  // the filter is set by TopicNav clicks and should reset on explicit tab change.
+  const setActiveTab = useCallback((tab) => {
+    _setActiveTab(tab);
+    if (tab === DEFAULT_TAB) setCategoryFilter(null);
+    const url = new URL(window.location.href);
+    if (tab === DEFAULT_TAB) {
+      url.searchParams.delete(TAB_URL_PARAM);
+    } else {
+      url.searchParams.set(TAB_URL_PARAM, tab);
+    }
+    history.replaceState(null, '', url.toString());
+  }, []);
+
   useEffect(() => {
     const instance = focusPanelOnNextChange.current;
     if (!instance) return;
@@ -89,20 +110,6 @@ export function useSidebarTabs() {
     if (param && VALID_TABS.includes(param)) _setActiveTab(param);
   }, []);
 
-  // Tab setter that also syncs the URL without navigation.
-  // Clears the category filter when returning to the neighborhood tab —
-  // the filter is set by TopicNav clicks and should reset on explicit tab change.
-  const setActiveTab = useCallback((tab) => {
-    _setActiveTab(tab);
-    if (tab === DEFAULT_TAB) setCategoryFilter(null);
-    const url = new URL(window.location.href);
-    if (tab === DEFAULT_TAB) {
-      url.searchParams.delete(TAB_URL_PARAM);
-    } else {
-      url.searchParams.set(TAB_URL_PARAM, tab);
-    }
-    history.replaceState(null, '', url.toString());
-  }, []);
 
   // ── TopicNav → sidebar tab sync ──────────────────────────────────────────
   // chp:section-activated fires on every intentional TopicNav click (never
@@ -146,5 +153,5 @@ export function useSidebarTabs() {
     return () => window.removeEventListener('chp:section-activated', handleSectionActivated);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { activeTab, setActiveTab, categoryFilter, setCategoryFilter, panelRefs, focusPanelOnNextChange };
+  return { activeTab, setActiveTab, categoryFilter, setCategoryFilter, setPanelRef, focusPanelOnNextChange };
 }

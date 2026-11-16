@@ -28,6 +28,13 @@ export default function ShortcutsToast() {
   const [opacity, setOpacity]   = useState(0);
   const timerRef                = useRef(null);
 
+  function dismiss() {
+    clearTimeout(timerRef.current);
+    setOpacity(0);
+    setTimeout(() => setMounted(false), 250);
+    try { localStorage.setItem(STORAGE_KEY, '1'); } catch { /* ignore */ }
+  }
+
   useEffect(() => {
     try {
       if (localStorage.getItem(STORAGE_KEY)) return;
@@ -46,12 +53,6 @@ export default function ShortcutsToast() {
     return () => clearTimeout(showTimer);
   }, []);
 
-  function dismiss() {
-    clearTimeout(timerRef.current);
-    setOpacity(0);
-    setTimeout(() => setMounted(false), 250);
-    try { localStorage.setItem(STORAGE_KEY, '1'); } catch { /* ignore */ }
-  }
 
   if (!mounted) return null;
 
