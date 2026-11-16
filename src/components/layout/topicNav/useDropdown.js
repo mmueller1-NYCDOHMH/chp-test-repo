@@ -19,12 +19,45 @@ export function useDropdown(isMobile) {
   const categoryBtnRefs  = useRef([]);
   const dropdownItemRefs = useRef([]);
 
-  // ── Close dropdown on scroll ─────────────────────────────────────────────
+  // ── Scroll while open: follow the trigger; close only on USER scrolling ──
+  // FIX (2026-11-16, "nav stuck/laggy after switching neighborhood"): this
+  // used to close the dropdown on ANY window scroll event. Right after a
+  // neighborhood switch, the keep-my-place restore (neighborhoodSwitch.js /
+  // scrollToSection.js) nudges the page programmatically for a few seconds
+  // while lazy charts grow — every nudge fired 'scroll' and slammed the
+  // dropdown shut under the cursor, so the nav looked frozen until the page
+  // settled. Now: programmatic scrolls just re-measure the trigger (the nav
+  // is sticky, so it rarely moves), and only real user input — wheel or
+  // touch — outside the dropdown closes it. Listeners exist only while a
+  // dropdown is open.
   useEffect(() => {
-    function handleScroll() { setOpenCategoryId(null); }
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    if (!openCategoryId) return;
+    const idx = siteNav.findIndex(c => c.id === openCategoryId);
+    let raf = null;
+    const follow = () => {
+      if (raf != null) return;
+      raf = requestAnimationFrame(() => {
+        raf = null;
+        const rect = categoryBtnRefs.current[idx]?.getBoundingClientRect();
+        if (!rect) return;
+        setDropdownPos(p => (p.top === rect.bottom && p.left === rect.left ? p : { top: rect.bottom, left: rect.left }));
+      });
+    };
+    const closeOnUserScroll = (e) => {
+      if (e.target instanceof Element && e.target.closest(`#topic-dropdown-${openCategoryId}`)) return;
+      setOpenCategoryId(null);
+      setFocusedSubIdx(-1);
+    };
+    window.addEventListener('scroll', follow, { passive: true });
+    window.addEventListener('wheel', closeOnUserScroll, { passive: true });
+    window.addEventListener('touchmove', closeOnUserScroll, { passive: true });
+    return () => {
+      if (raf != null) cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', follow);
+      window.removeEventListener('wheel', closeOnUserScroll);
+      window.removeEventListener('touchmove', closeOnUserScroll);
+    };
+  }, [openCategoryId]);
 
   // ── Close dropdown on Escape (global) ────────────────────────────────────
   useEffect(() => {

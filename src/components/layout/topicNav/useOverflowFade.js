@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * FILE: useOverflowFade.js
@@ -9,14 +9,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * set. This tracks whether a horizontal scroller has more content to the
  * left/right so TopicNav can show an edge fade + arrow on that side.
  *
- * Returns { ref, canLeft, canRight, scrollBy(dir) } — attach `ref` to the
- * scrolling element. `ref` is a callback ref, so it also works when the
+ * Returns { attach, canLeft, canRight, scrollBy(dir) } — pass `attach` as the `ref` to the
+ * scrolling element. `attach` is a callback ref, so it also works when the
  * element mounts after the first render (TopicNav renders it conditionally).
  */
 export function useOverflowFade() {
-  const elRef = useRef(null);
+  // Callback ref → state only (2026-11-16). There used to be a mirrored
+  // useRef read inside scrollBy(); the React Compiler flags ref reads
+  // reachable from render ("Cannot access refs during render") and skipped
+  // optimizing all of TopicNav because of it. The state setter is stable,
+  // so it works as a callback ref directly.
   const [el, setEl] = useState(null);
-  const ref = useCallback((node) => { elRef.current = node; setEl(node); }, []);
+  const attach = setEl;
   const [canLeft,  setCanLeft]  = useState(false);
   const [canRight, setCanRight] = useState(false);
 
@@ -42,10 +46,10 @@ export function useOverflowFade() {
   }, [el]);
 
   function scrollBy(dir) {
-    const node = elRef.current;
+    const node = el;
     if (!node) return;
     node.scrollBy({ left: dir * Math.max(160, node.clientWidth * 0.6), behavior: 'smooth' });
   }
 
-  return { ref, canLeft, canRight, scrollBy };
+  return { attach, canLeft, canRight, scrollBy };
 }

@@ -105,6 +105,7 @@ export function scrollToSection(anchor, { focus = false, instant = false, viewpo
     ro?.disconnect();
     if (holdRaf) cancelAnimationFrame(holdRaf);
     clearTimeout(timer);
+    clearTimeout(armTimer);
     window.removeEventListener('scroll', onScroll);
     USER_INPUT_EVENTS.forEach(evt => window.removeEventListener(evt, stop));
     if (cancelPendingCorrection === stop) cancelPendingCorrection = null;
@@ -123,7 +124,13 @@ export function scrollToSection(anchor, { focus = false, instant = false, viewpo
   const onScroll = () => { clearTimeout(timer); timer = setTimeout(check, SETTLE_MS); };
 
   window.addEventListener('scroll', onScroll, { passive: true });
-  USER_INPUT_EVENTS.forEach(evt => window.addEventListener(evt, stop, { passive: true, once: true }));
+  // Armed on the next task (2026-11-16): a keyboard nav jump (Enter/Space
+  // on a TopicNav button fires its click from inside the keydown) used to
+  // register this listener while that same keydown was still bubbling to
+  // window, so it cancelled its own settle-correction immediately.
+  const armTimer = setTimeout(() => {
+    USER_INPUT_EVENTS.forEach(evt => window.addEventListener(evt, stop, { passive: true, once: true }));
+  }, 0);
   cancelPendingCorrection = stop;
   timer = setTimeout(check, SETTLE_MS);
 

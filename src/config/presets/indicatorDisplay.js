@@ -26,7 +26,7 @@
 const lowerIsBetter = [
   'air-pollution', 'assault-hosp', 'avertable-death', 'avoidable-adult-hosp',
   'binge-drink', 'child-asthma', 'child-obesity', 'diabetes',
-  'edu-did-not-complete-hs', 'falls-hosp', 'heat-vulnerability-index',
+  'edu-did-not-complete-hs', 'falls-hosp', 'food-insecurity', 'heat-vulnerability-index',
   'hepc-reports', 'hiv-diagnosis', 'homes-roach', 'hypertension', 'infant-mort',
   'jail-incarceration', 'late-no-prenatal', 'obesity', 'pedestrian-hosp',
   'poverty', 'premature-mort-count', 'premature-mort-rate', 'preterm-births',
@@ -41,7 +41,7 @@ const higherIsBetter = [
 ];
 
 const surveyIndicators = [
-  'binge-drink', 'diabetes', 'flu-vaccination', 'fruit-veg', 'homes-ac',
+  'binge-drink', 'diabetes', 'flu-vaccination', 'food-insecurity', 'fruit-veg', 'homes-ac',
   'homes-no-defects', 'homes-roach', 'obesity', 'self-rep-health', 'smoking',
   'sugary-drink', 'uninsured', 'unmet-med-care',
 ];

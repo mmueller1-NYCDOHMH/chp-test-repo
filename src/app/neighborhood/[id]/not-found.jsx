@@ -46,7 +46,7 @@ export default function NeighborhoodNotFound() {
               Neighborhood not found
             </h1>
             <p className="text-sm text-gray-600 leading-relaxed">
-              The URL you followed doesn't match any of NYC's 59 community
+              The URL you followed doesn&rsquo;t match any of NYC&rsquo;s 59 community
               districts. It may be a typo or a link that has changed.
             </p>
           </div>

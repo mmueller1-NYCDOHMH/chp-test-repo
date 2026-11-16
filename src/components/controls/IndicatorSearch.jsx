@@ -76,7 +76,7 @@ export default function IndicatorSearch({ onNavigate, categoryFilter = null, onC
     if (!autoFocus) return;
     if (document.getElementById('main-content')?.contains(document.activeElement)) return;
     inputRef.current?.focus({ preventScroll: true });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps — mount only
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- mount only
 
   // ── Flat filtered results ─────────────────────────────────────────────────
   const results = useMemo(() => {

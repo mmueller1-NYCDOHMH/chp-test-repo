@@ -335,6 +335,22 @@
     "units": "",
     "indicatorDetail": ""
   },
+  "food-insecurity": {
+    "key": "food-insecurity",
+    "topic": "food",
+    "navSection": "food",
+    "flag": "",
+    "section": "Neighborhood",
+    "subsection": "Food",
+    "measure": "Food Insecurity",
+    "context": "Food security means having consistent access to enough nutritious and desirable food to support an active and healthy life.",
+    "comparison": "In <NAME>, <VALUE> of adults are at risk of food insecurity.",
+    "type": "Percent",
+    "of": "adults age 18+",
+    "detail": "at risk of food insecurity",
+    "units": "",
+    "indicatorDetail": "Respondents reported that in the last 12 months they often or sometimes either (1) worry that food would run out before their household got money to buy more or (2) food the household bought didn’t last and there was no money to buy more."
+  },
   "sugary-drink": {
     "key": "sugary-drink",
     "topic": "food",
@@ -825,20 +841,6 @@
       "detail": "",
       "units": "",
       "indicatorDetail": ""
-    },
-    {
-      "flag": "",
-      "section": "Neighborhood",
-      "subsection": "Food",
-      "measure": "Food Insecurity",
-      "context": "Food security means having consistent access to enough nutritious and desirable food to support an active and healthy life.",
-      "comparison": "In <NAME>, <VALUE> of adults are at risk of food insecurity.",
-      "type": "Percent",
-      "of": "adults age 18+",
-      "detail": "at risk of food insecurity",
-      "units": "",
-      "indicatorDetail": "Respondents reported that in the last 12 months they often or sometimes either (1) worry that food would run out before their household got money to buy more or (2) food the household bought didn’t last and there was no money to buy more.",
-      "navSection": "food"
     },
     {
       "flag": "NOT IN SITE",

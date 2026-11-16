@@ -113,7 +113,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
   const { exploredCount, trophyEarned, showAchievement, handleExplorerBadgeClick } = useExplorerBadge(activeId);
 
   // ── Tabs, URL sync, keyboard shortcuts, TopicNav sync ────────────────────
-  const { activeTab, setActiveTab, categoryFilter, setCategoryFilter, panelRefs, focusPanelOnNextChange } = useSidebarTabs();
+  const { activeTab, setActiveTab, categoryFilter, setCategoryFilter, setPanelRef, focusPanelOnNextChange } = useSidebarTabs();
 
   // ── Mobile bottom sheet ───────────────────────────────────────────────────
   const {
@@ -320,7 +320,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
           {/* ── Neighborhood mode ──────────────────────────────────────── */}
           {activeTab === 'neighborhood' && (
             <div
-              ref={(el) => { panelRefs.current['desktop-neighborhood'] = el; }}
+              ref={(el) => setPanelRef('desktop-neighborhood', el)}
               role="tabpanel"
               id="sidebar-panel-neighborhood"
               aria-labelledby="sidebar-tab-neighborhood"
@@ -402,7 +402,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
           {/* ── Find indicator mode ────────────────────────────────────── */}
           {activeTab === 'search' && (
             <div
-              ref={(el) => { panelRefs.current['desktop-search'] = el; }}
+              ref={(el) => setPanelRef('desktop-search', el)}
               role="tabpanel"
               id="sidebar-panel-search"
               aria-labelledby="sidebar-tab-search"
@@ -513,7 +513,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
 
               {activeTab === 'neighborhood' && (
                 <div
-                  ref={(el) => { panelRefs.current['sheet-neighborhood'] = el; }}
+                  ref={(el) => setPanelRef('sheet-neighborhood', el)}
                   role="tabpanel"
                   id="sidebar-panel-neighborhood"
                   aria-labelledby="sidebar-tab-neighborhood"
@@ -564,7 +564,7 @@ export default function Sidebar({ sections, neighborhoods, indicatorSummaries, p
 
               {activeTab === 'search' && (
                 <div
-                  ref={(el) => { panelRefs.current['sheet-search'] = el; }}
+                  ref={(el) => setPanelRef('sheet-search', el)}
                   role="tabpanel"
                   id="sidebar-panel-search"
                   aria-labelledby="sidebar-tab-search"

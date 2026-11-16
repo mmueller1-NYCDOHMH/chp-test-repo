@@ -100,7 +100,9 @@ export default function TopicNav({ neighborhoods = [] }) {
   const { isMobile, stuckSide, mobileTabRowRef, mobileCategoryBtnRefs } = useMobileTabTracking(activeCategoryId);
 
   // ── Desktop overflow cue (QA row 86) ──────────────────────────────────────
-  const desktopNavFade = useOverflowFade();
+  // Destructured (2026-11-16): reading `.ref` off a returned object made the
+  // React Compiler treat the whole object as a ref and skip this component.
+  const { attach: attachNavScroller, canLeft: navCanLeft, canRight: navCanRight, scrollBy: scrollNavBy } = useOverflowFade();
 
   // ── Desktop dropdown ──────────────────────────────────────────────────────
   const {
@@ -365,7 +367,7 @@ export default function TopicNav({ neighborhoods = [] }) {
             white fade + chevron appears on the side with more to scroll to. */}
         <div className="hidden md:block relative">
         <ul
-          ref={desktopNavFade.ref}
+          ref={attachNavScroller}
           className="flex items-stretch px-4 overflow-x-auto scrollbar-none"
           aria-label="Health topics"
         >
@@ -422,7 +424,7 @@ export default function TopicNav({ neighborhoods = [] }) {
             );
           })}
         </ul>
-          {desktopNavFade.canLeft && (
+          {navCanLeft && (
             <div
               className="absolute inset-y-0 left-0 bg-gradient-to-r pl-1 w-16 from-white via-white/90 to-transparent flex items-center justify-start pointer-events-none"
             >
@@ -432,7 +434,7 @@ export default function TopicNav({ neighborhoods = [] }) {
                 type="button"
                 tabIndex={-1}
                 aria-hidden="true"
-                onClick={() => desktopNavFade.scrollBy(-1)}
+                onClick={() => scrollNavBy(-1)}
                 className="pointer-events-auto w-7 h-7 flex items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm text-gray-600 hover:text-brand hover:border-brand"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -441,7 +443,7 @@ export default function TopicNav({ neighborhoods = [] }) {
               </button>
             </div>
           )}
-          {desktopNavFade.canRight && (
+          {navCanRight && (
             <div
               className="absolute inset-y-0 right-0 bg-gradient-to-l pr-1 w-16 from-white via-white/90 to-transparent flex items-center justify-end pointer-events-none"
             >
@@ -451,7 +453,7 @@ export default function TopicNav({ neighborhoods = [] }) {
                 type="button"
                 tabIndex={-1}
                 aria-hidden="true"
-                onClick={() => desktopNavFade.scrollBy(1)}
+                onClick={() => scrollNavBy(1)}
                 className="pointer-events-auto w-7 h-7 flex items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm text-gray-600 hover:text-brand hover:border-brand"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

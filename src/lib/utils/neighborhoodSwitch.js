@@ -147,9 +147,20 @@ function watchForNewContent(p) {
     p.anchorEl = restoreSpot(p.spot);   // takes over holding from here
     p.restored = true;
   };
-  const onUserScroll = () => { p.userMoved = true; };
-  const USER_SCROLL = ['wheel', 'touchmove'];
-  USER_SCROLL.forEach(evt => window.addEventListener(evt, onUserScroll, { passive: true }));
+  // FIX (2026-11-16): any user input — not just wheel/touch — ends the
+  // hold. Clicking a TopicNav item (or pressing a key) within the first
+  // seconds after a switch used to be fought by this per-frame hold, which
+  // yanked the page back to the old card: the "nav stuck / laggy after
+  // choosing a neighborhood" bug. Stopping outright (not just flagging)
+  // also ends the per-frame layout reads as soon as the reader takes over.
+  const onUserScroll = () => { p.userMoved = true; stop(); };
+  const USER_SCROLL = ['wheel', 'touchmove', 'mousedown', 'keydown'];
+  // Attached on the next task: pushNeighborhood() is often called from the
+  // very keydown (Enter in search) or mousedown (option pick) that started
+  // the switch, and that event is still bubbling up to window.
+  const armTimer = setTimeout(() => {
+    USER_SCROLL.forEach(evt => window.addEventListener(evt, onUserScroll, { passive: true }));
+  }, 0);
   const mo = new MutationObserver(check);
   mo.observe(document.body, {
     childList: true, subtree: true, attributes: true, attributeFilter: ['data-chp-geo'],
@@ -159,6 +170,7 @@ function watchForNewContent(p) {
   function stop() {
     mo.disconnect();
     cancelAnimationFrame(raf);
+    clearTimeout(armTimer);
     USER_SCROLL.forEach(evt => window.removeEventListener(evt, onUserScroll));
     clearTimeout(timer);
     if (stopWatching === stop) stopWatching = null;

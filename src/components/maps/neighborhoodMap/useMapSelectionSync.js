@@ -110,7 +110,7 @@ export function useMapSelectionSync({ leaflet, geo, selectedId, comparisonId, ma
         }
       });
     });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps — reads refs only
+  }, [geoLayerRef, modalGeoLayerRef, hoveredLayerRef]); // refs only — stable, never re-creates
 
   useEffect(() => {
     if (!geo) return;

@@ -205,18 +205,6 @@ export default function IntroModal({ neighborhoods = [] }) {
           <p className="text-gray-600 text-sm leading-relaxed max-w-2xl">
             {modalCopy.subtitle}
           </p>
-          {/* About this tool (2026-10-19) — sits under the subtitle, apart from the tour callout */}
-          <a
-            href="/about"
-            onClick={dismiss}
-            className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-          >
-            {onboardingCopy.introModal.aboutLink}
-            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-            </svg>
-          </a>
-
           {/* ── About blurb ───────────────────────────────────────────────── */}
           {modalCopy.footer.aboutBlurb && (
             <div className="mt-2.5 flex flex-col gap-1">
@@ -233,8 +221,18 @@ export default function IntroModal({ neighborhoods = [] }) {
             </div>
           )}
 
-          {/* ── Guided tour callout (2026-10-19) — every width ─────────────── */}
-          <div className="mt-3">
+          {/* ── About link + guided tour, one row (2026-11-16, per Morgan) ── */}
+          <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+            <a
+              href="/about"
+              onClick={dismiss}
+              className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              {onboardingCopy.introModal.aboutLink}
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+              </svg>
+            </a>
             <button
               type="button"
               onClick={() => closeThen(startTour, 350)}
