@@ -96,12 +96,17 @@ export default function ExpandedChartModal({
     setTimeout(() => setCopyState('idle'), 2000);
   }
 
+  // MODAL LAYER (2026-11-17) — all modals sit above every page element
+  // (dropdowns 9999, shortcuts popover 10000, guided tour 9998):
+  //   10100 Expanded / CustomExpanded / StatTile detail / expanded map
+  //   10200 Notes (can open over Expanded)   10300 Embed (opens from Expanded)
+  //   10400 Intro modal
   if (!open) return null;
 
   return createPortal(
     <div
       role="presentation"
-      className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-8"
+      className="fixed inset-0 z-[10100] flex items-center justify-center p-3 sm:p-8 overflow-y-auto overscroll-contain"
       style={{
         backgroundColor: visible ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0)',
         transition: 'background-color 200ms ease-out',

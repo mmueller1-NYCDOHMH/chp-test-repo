@@ -45,7 +45,7 @@ export default function EmbedModal({ open, indicatorKey, title, onClose, restore
   return createPortal(
     <div
       role="presentation"
-      className="fixed inset-0 z-[3500] flex items-center justify-center p-3 sm:p-8"
+      className="fixed inset-0 z-[10300] flex items-center justify-center p-3 sm:p-8 overflow-y-auto overscroll-contain"
       style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}
       onClick={handleClose}
     >
@@ -54,7 +54,7 @@ export default function EmbedModal({ open, indicatorKey, title, onClose, restore
         role="dialog"
         aria-modal="true"
         aria-label={`Embed chart: ${title}`}
-        className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden"
+        className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-full flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-start justify-between px-6 pt-5 pb-4 border-b border-gray-100">
@@ -72,7 +72,7 @@ export default function EmbedModal({ open, indicatorKey, title, onClose, restore
             </svg>
           </button>
         </div>
-        <div className="px-6 py-5 flex flex-col gap-4">
+        <div className="px-6 py-5 flex flex-col gap-4 overflow-y-auto min-h-0 overscroll-contain">
           <p className="text-xs text-gray-600 leading-relaxed">
             Paste this code into any webpage to embed this indicator. The chart will open a detailed flyout when clicked.
           </p>

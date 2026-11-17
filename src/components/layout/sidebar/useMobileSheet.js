@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { inertOthers } from '@/lib/utils/inertOthers';
+import { lockScroll } from '@/lib/utils/scrollLock';
 
 /**
  * FILE: useMobileSheet.js
@@ -179,6 +180,9 @@ export function useMobileSheet() {
   useEffect(() => {
     if (!isSheetOpen) return;
 
+    // Page behind can't scroll while the sheet is open (2026-11-17, lib/utils/scrollLock.js)
+    const unlockScroll = lockScroll();
+
     const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
     const focusables = () => Array.from(sheetRef.current?.querySelectorAll(FOCUSABLE) ?? [])
       // skip anything not rendered (display:none tab panels, etc.)
@@ -214,6 +218,7 @@ export function useMobileSheet() {
       cancelAnimationFrame(raf);
       document.removeEventListener('keydown', onKey);
       releaseInertRef.current?.();
+      unlockScroll();
     };
   }, [isSheetOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 

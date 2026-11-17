@@ -110,7 +110,7 @@ export default function CustomExpandedChartModal({
   return createPortal(
     <div
       role="presentation"
-      className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-8"
+      className="fixed inset-0 z-[10100] flex items-center justify-center p-3 sm:p-8 overflow-y-auto overscroll-contain"
       style={{
         backgroundColor: visible ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0)',
         transition: 'background-color 200ms ease-out',

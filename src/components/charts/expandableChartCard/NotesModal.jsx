@@ -13,9 +13,11 @@
  */
 
 import { useRef, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useModalVisibility } from './useModalVisibility';
 import { useModalFocusTrap } from './useModalFocusTrap';
 import { useOverflowClamp } from './useOverflowClamp';
+import { useContentAreaInsets } from './useContentAreaInsets';
 
 // `note` (2026-09-30): short chart note from content/site/chartNotes.json,
 // shown above the description in the Notes block.
@@ -38,13 +40,22 @@ export default function NotesModal({ open, title, indicatorDetail, sourceClean, 
 
   useModalFocusTrap({ isOpen: open, dialogRef, onClose });
 
+  // Center over the scrollable content column, not the whole window (2026-11-17)
+  const insets = useContentAreaInsets(open);
+
   if (!open) return null;
 
-  return (
+  // Portaled to <body> (2026-11-17): rendered inline inside the card it was
+  // trapped in the card's stacking context, so the sticky header and
+  // neighboring cards painted over it. z-[10200] = modal layer (see
+  // ExpandedChartModal) — above every page element.
+  return createPortal(
     <div
       role="presentation"
-      className="fixed inset-0 z-[3000] flex items-center justify-center p-3 sm:p-8"
+      className="fixed inset-0 z-[10200] flex items-center justify-center p-3 sm:p-8 overflow-y-auto overscroll-contain"
       style={{
+        paddingLeft:  insets.left  ? `calc(2rem + ${insets.left}px)`  : undefined,
+        paddingRight: insets.right ? `calc(2rem + ${insets.right}px)` : undefined,
         backgroundColor: visible ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0)',
         transition: 'background-color 180ms ease-out',
       }}
@@ -141,6 +152,7 @@ export default function NotesModal({ open, title, indicatorDetail, sourceClean, 
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -155,7 +155,7 @@ export default function IntroModal({ neighborhoods = [] }) {
       role="dialog"
       aria-modal="true"
       aria-label="Welcome to Community Health Profiles"
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[10400] flex items-center justify-center p-4"
       style={{
         backgroundColor: dialogVisible ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0)',
         transition: 'background-color 250ms ease-out',

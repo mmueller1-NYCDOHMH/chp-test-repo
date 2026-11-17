@@ -223,7 +223,7 @@ export default function NeighborhoodMap({ onSelect }) {
 
       {isExpanded && createPortal(
         <div
-          className="fixed inset-0 z-[9000] bg-black/60 flex items-center justify-center p-6"
+          className="fixed inset-0 z-[10100] bg-black/60 flex items-center justify-center p-6"
           onClick={(e) => { if (e.target === e.currentTarget) setIsExpanded(false); }}
         >
           <div

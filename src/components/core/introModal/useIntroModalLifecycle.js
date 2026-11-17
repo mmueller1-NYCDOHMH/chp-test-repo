@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { lockScroll } from '@/lib/utils/scrollLock';
 
 /**
  * FILE: useIntroModalLifecycle.js
@@ -110,8 +111,10 @@ export function useIntroModalLifecycle({ inputRef }) {
   // alone isn't reliably honored by every screen reader — the background
   // stayed reachable via the virtual cursor.
   useEffect(() => {
+    // Page behind can't scroll while open (2026-11-17, lib/utils/scrollLock.js)
+    const unlockScroll = isOpen ? lockScroll() : () => {};
     const appShell = document.getElementById(APP_SHELL_ID);
-    if (!appShell) return;
+    if (!appShell) return unlockScroll;
     if (isOpen) {
       appShell.setAttribute('inert', '');
       appShell.setAttribute('aria-hidden', 'true');
@@ -120,6 +123,7 @@ export function useIntroModalLifecycle({ inputRef }) {
       appShell.removeAttribute('aria-hidden');
     }
     return () => {
+      unlockScroll();
       appShell.removeAttribute('inert');
       appShell.removeAttribute('aria-hidden');
     };

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { areShortcutsEnabled } from '@/lib/utils/shortcutsPreference';
+import { lockScroll } from '@/lib/utils/scrollLock';
 
 /**
  * FILE: useFlyoutA11yEffects.js
@@ -88,11 +89,9 @@ export function useFlyoutA11yEffects({ isOpen, isMobile, close, panelRef }) {
   // panels on iOS Safari (known bug).
   //
   // On desktop the flyout is a narrow side panel (420px from the right) and
-  // the sidebar remains visible and interactive beside it. Locking body scroll
-  // on desktop collapses the sidebar's flex-1 content area because removing the
-  // scrollbar changes the layout width and triggers a reflow that zeroes out the
-  // flex-1 min-h-0 height calculation. Desktop scroll is intentionally left
-  // unlocked so the sidebar stays fully usable while the flyout is open.
+  // the sidebar remains visible and interactive beside it. Desktop is locked
+  // separately below with lockScroll() (2026-11-17) — NOT this position:fixed
+  // pin, which collapsed the sidebar's flex-1 content area on desktop.
   useEffect(() => {
     if (!isOpen || !isMobile) {
       // Restore body if we previously pinned it (mobile close path)
@@ -124,6 +123,21 @@ export function useFlyoutA11yEffects({ isOpen, isMobile, close, panelRef }) {
         delete document.body.dataset.scrollY;
       }
     };
+  }, [isOpen, isMobile]);
+
+  // Desktop scroll lock (2026-11-17, per Morgan): the page behind the flyout
+  // no longer scrolls on desktop either. Uses the shared lockScroll()
+  // (overflow:hidden on <html> + scrollbar-width padding on <body>) rather
+  // than the mobile position:fixed pin. The old desktop attempt broke the
+  // sidebar because the disappearing scrollbar changed the layout width;
+  // lockScroll pads <body> by the scrollbar width so the layout doesn't
+  // move. The sidebar is sticky h-screen with its own overflow-y-auto panels,
+  // so it stays fully scrollable/usable beside the flyout, as does the
+  // flyout's own content. No wheel/touch blocking, so keyboard scrolling
+  // and zoom are unaffected (see lib/utils/scrollLock.js).
+  useEffect(() => {
+    if (!isOpen || isMobile) return;
+    return lockScroll();
   }, [isOpen, isMobile]);
 
   // Global 'i' shortcut — opens flyout for the currently-hovered indicator card

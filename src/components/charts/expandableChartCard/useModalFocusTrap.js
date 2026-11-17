@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect } from 'react';
 import { inertOthers } from '@/lib/utils/inertOthers';
+import { lockScroll } from '@/lib/utils/scrollLock';
 
 /**
  * FILE: useModalFocusTrap.js
@@ -34,8 +35,11 @@ export function useModalFocusTrap({ isOpen, dialogRef, onClose, autofocusSelecto
     if (!isOpen || !dialogRef.current) return;
     const trigger = document.activeElement;
     const release = inertOthers(dialogRef.current);
+    // Page behind can't scroll while open (2026-11-17, lib/utils/scrollLock.js)
+    const unlockScroll = lockScroll();
     return () => {
       release();
+      unlockScroll();
       requestAnimationFrame(() => {
         const a = document.activeElement;
         const lost = !a || a === document.body || !document.contains(a);

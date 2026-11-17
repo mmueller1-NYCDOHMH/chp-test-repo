@@ -20,6 +20,7 @@
  */
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { inertOthers } from '@/lib/utils/inertOthers';
+import { lockScroll } from '@/lib/utils/scrollLock';
 import { createPortal } from 'react-dom';
 import { useComparison } from '@/lib/context/ComparisonContext';
 import DistributionStrip from '@/components/data-display/DistributionStrip';
@@ -49,7 +50,9 @@ export default function StatTileDetailModal({ tile, geoId, onClose }) {
   // focus goes back to the tile — an inert element can't take focus.
   useLayoutEffect(() => {
     releaseInertRef.current = inertOthers(modalRef.current);
-    return () => releaseInertRef.current?.();
+    // Page behind can't scroll while open (2026-11-17, lib/utils/scrollLock.js)
+    const unlockScroll = lockScroll();
+    return () => { releaseInertRef.current?.(); unlockScroll(); };
   }, []);
 
   useEffect(() => {
@@ -107,7 +110,7 @@ export default function StatTileDetailModal({ tile, geoId, onClose }) {
   return createPortal(
     <div
       role="presentation"
-      className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-8"
+      className="fixed inset-0 z-[10100] flex items-center justify-center p-3 sm:p-8 overflow-y-auto overscroll-contain"
       style={{
         backgroundColor: visible ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0)',
         transition: 'background-color 200ms ease-out',
