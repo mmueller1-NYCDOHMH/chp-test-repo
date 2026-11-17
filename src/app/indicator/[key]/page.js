@@ -144,7 +144,7 @@ export default async function IndicatorPage({ params }) {
   const subtitle   = meta?.subtitle ?? null;
   const source     = meta?.source   ?? null;
   const timePeriod = meta?.timePeriod ?? null;
-  const isCount    = isCountDatatype(meta?.unit, data);
+  const isCount    = isCountDatatype(meta?.unit, data, meta?.type);
   const indicatorGroups = buildIndicatorOptions(getAllIndicatorMeta());
 
   // Distribution-kind indicators (age-distribution, race-ethnicity) carry a

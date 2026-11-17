@@ -124,7 +124,7 @@
     "type": "Rate",
     "of": "nonfatal assault hospitalizations",
     "detail": "",
-    "units": "per 100,000",
+    "units": "per 100,000 people",
     "indicatorDetail": ""
   },
   "jail-incarceration": {
@@ -330,7 +330,7 @@
     "context": "It is easier to make healthy choices when healthy, affordable food is readily available.",
     "comparison": "<Name> is home to <Farmer's market text 1> <Farmer's market text 2> farmers markets, a source of healthy food.",
     "type": "Number",
-    "of": "number",
+    "of": "number of farmers markets",
     "detail": "",
     "units": "",
     "indicatorDetail": ""
@@ -460,7 +460,7 @@
     "type": "Rate",
     "of": "pedestrian injury hospitalizations",
     "detail": "",
-    "units": "per 100,000",
+    "units": "per 100,000 people",
     "indicatorDetail": ""
   },
   "uninsured": {

@@ -97,7 +97,15 @@ const EXPANDED_HEIGHT = 360;
  */
 // Exported (2026-09-09) so app/indicator/[key]/page.js can apply the exact
 // same count/rate classification when building its own chart spec.
-export function isCountDatatype(unit, data) {
+//
+// 2026-11-16: the copy deck's `type` column is now checked first. The data
+// team's Nov 2026 delivery filled in count units (farmers-markets ->
+// "farmers markets", overall-pop -> "persons"), which made the unit check
+// below classify them as non-counts, so the citywide TOTAL (e.g. 126
+// farmers markets) started drawing as a reference marker against single-CD
+// counts. A copy-deck type of "Number" now always means count.
+export function isCountDatatype(unit, data, measureType) {
+  if (typeof measureType === 'string' && measureType.trim().toLowerCase() === 'number') return true;
   if (unit) return false;
   return !data.some(r => typeof r.DisplayValue === 'string' && r.DisplayValue.includes('%'));
 }
@@ -147,7 +155,10 @@ export default function IndicatorChartGrid({ charts = [], context, sectionLabel,
 
   const built = charts.map((chart) => {
     const data = loadIndicatorData(chart.indicatorKey);
-    const isCount = isCountDatatype(chart.unit, data);
+    // MethodsNote + display rules for this card. getIndicatorMeta() is
+    // request-cached, so this is the same object loadSectionIndicators built.
+    const meta = getIndicatorMeta(chart.indicatorKey);
+    const isCount = isCountDatatype(chart.unit, data, meta?.type);
     const base = {
       data,
       geoId,
@@ -155,10 +166,6 @@ export default function IndicatorChartGrid({ charts = [], context, sectionLabel,
       subtitle: chart.subtitle,
       source:   chart.source,
     };
-
-    // MethodsNote + display rules for this card. getIndicatorMeta() is
-    // request-cached, so this is the same object loadSectionIndicators built.
-    const meta = getIndicatorMeta(chart.indicatorKey);
 
     // Narrative "measure copy" — see file header. Only replaces what's shown
     // on the card and in its aria description; the chart spec below keeps
