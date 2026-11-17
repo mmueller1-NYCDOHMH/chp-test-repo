@@ -221,6 +221,10 @@ export default function PrematureDeathOverviewSection({ context }) {
       <PrematureDeathChartsRow
         causeCardProps={causeChart ? {
           title:        causeChart.title,
+          // 2026-11-17: use the data team's metadata Subtitle (was falling back
+          // to the card's hard-coded "number and rate" default, but the card
+          // only shows rates). Card default still applies if Subtitle is blank.
+          subtitle:     causeMeta?.subtitle || undefined,
           insightText:  causeMeta?.methodsNote,
           source:       causeMeta?.source,
           segments:     causeChart.segments,
