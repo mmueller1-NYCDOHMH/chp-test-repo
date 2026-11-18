@@ -104,10 +104,14 @@ import { generalNotes } from '@/config/chartNotes';
 import { isSuppressedRow, displayText } from '@/lib/utils/suppression';
 
 // Tooltip line appended to any value whose DisplayValue carries "*" (flagged
-// estimate). JSON.stringify makes it a safe Vega expression string literal.
-const UNRELIABLE_TOOLTIP_EXPR = generalNotes.unreliable
-  ? JSON.stringify(`\n*${generalNotes.unreliable}`)
-  : "''";
+// estimate). 2026-11-18: wording comes from the caller (getUnreliableNote(),
+// same text as the flyout footnote); falls back to chartNotes.json
+// general.unreliable. JSON.stringify makes it a safe Vega string literal.
+function unreliableTooltipExpr(note) {
+  const text = note ?? (generalNotes.unreliable ? `*${generalNotes.unreliable}` : null);
+  return text ? JSON.stringify(`
+${text}`) : "''";
+}
 
 // NYC community district GeoIDs follow a borough-prefix pattern:
 //   1xx = Manhattan · 2xx = Bronx · 3xx = Brooklyn · 4xx = Queens · 5xx = Staten Island
@@ -189,7 +193,7 @@ function niceTicks(max, count = 3) {
   return out;
 }
 
-export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, metadataOf, metadataDetail, metadataUnits, width = 'container', height = 160, expanded = false, isCount = false }) {
+export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, metadataOf, metadataDetail, metadataUnits, width = 'container', height = 160, expanded = false, isCount = false, unreliableNote = null }) {
   const highlightTest =
     geoId != null ? `datum.GeoID === ${geoId}` : 'false';
 
@@ -542,7 +546,7 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
           // Unreliable-estimate note (2026-09-30): copy lives in
           // content/site/chartNotes.json → general.unreliable.
           "indexof(toString(datum.valueWithUnits || ''), '*') >= 0 " +
-          `? datum.valueWithUnits + ${UNRELIABLE_TOOLTIP_EXPR} ` +
+          `? datum.valueWithUnits + ${unreliableTooltipExpr(unreliableNote)} ` +
           ": datum.valueWithUnits",
         as: 'valueWithUnits',
       },

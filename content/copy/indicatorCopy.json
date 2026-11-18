@@ -138,9 +138,9 @@
     "context": "Incarceration takes a toll on individuals, families, and communities. Black and Latino New Yorkers experience higher policing compared with non-Latino white New Yorkers. This leads to higher rates of detention, which may include long periods of time spent in jail before trial. People who have been incarcerated are more likely to experience mental and physical health problems. They may also have trouble finding employment and housing and accessing healthy food.",
     "comparison": "",
     "type": "Rate",
-    "of": "adults age 16+",
-    "detail": "admitted to local jails",
-    "units": "per 100,000",
+    "of": "local jail admissions",
+    "detail": "",
+    "units": "per 100,000 adults age 16+",
     "indicatorDetail": ""
   },
   "poverty": {
@@ -342,9 +342,9 @@
     "flag": "",
     "section": "Neighborhood",
     "subsection": "Food",
-    "measure": "Food Insecurity",
+    "measure": "Food insecurity",
     "context": "Food security means having consistent access to enough nutritious and desirable food to support an active and healthy life.",
-    "comparison": "In <NAME>, <VALUE> of adults are at risk of food insecurity.",
+    "comparison": "In <NAME>, <VALUE><Reliability> of adults are at risk of food insecurity.",
     "type": "Percent",
     "of": "adults age 18+",
     "detail": "at risk of food insecurity",
@@ -508,7 +508,7 @@
     "type": "Rate",
     "of": "avoidable hospitalizations",
     "detail": "",
-    "units": "per 100,000 adults (age 18+)",
+    "units": "per 100,000 adults age 18+",
     "indicatorDetail": ""
   },
   "falls-hosp": {
@@ -524,7 +524,7 @@
     "type": "Rate",
     "of": "fall-related hospitalizations",
     "detail": "",
-    "units": "per 100,000 adults (age 65+)",
+    "units": "per 100,000 adults age 65+",
     "indicatorDetail": ""
   },
   "flu-vaccination": {
@@ -604,7 +604,7 @@
     "type": "Rate",
     "of": "births",
     "detail": "where the mother is under age 20",
-    "units": "per 1,000 females (age 15 to 19)",
+    "units": "per 1,000 females age 15 to 19",
     "indicatorDetail": ""
   },
   "infant-mort": {
@@ -652,7 +652,7 @@
     "type": "Rate",
     "of": "emergency department visits for asthma",
     "detail": "",
-    "units": "per 10,000 children (age 5 to 17)",
+    "units": "per 10,000 children age 5 to 17",
     "indicatorDetail": ""
   },
   "psych-hosp": {
@@ -668,7 +668,7 @@
     "type": "Rate",
     "of": "psychiatric hospitalizations",
     "detail": "",
-    "units": "per 100,000 adults (age 18+)",
+    "units": "per 100,000 adults age 18+",
     "indicatorDetail": ""
   },
   "smoking": {

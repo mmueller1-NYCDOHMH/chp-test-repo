@@ -26,7 +26,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { resolveNarrative } from '@/lib/copy/resolveNarrative';
-import { buildInsight, getFlaggedEstimateFootnote, getInsightBadgeClass, DIRECTION_ARROWS } from '@/lib/utils/compareIndicator';
+import { buildInsight, getFlaggedEstimateFootnote, getUnreliableNote, getInsightBadgeClass, DIRECTION_ARROWS } from '@/lib/utils/compareIndicator';
 import { SELECTED } from '@/lib/charts/chartColors';
 import RankDotStrip from '@/components/data-display/RankDotStrip';
 import { ComparisonProvider } from '@/lib/context/ComparisonContext';
@@ -223,6 +223,7 @@ function Body({
             metadataDetail={meta?.detail}
             metadataUnits={meta?.units}
             isCount={isCount}
+            unreliableNote={getUnreliableNote(meta?.dataSource, meta?.unit === '%')}
             neighborhoods={comparisonCandidates}
           />
         </ComparisonProvider>

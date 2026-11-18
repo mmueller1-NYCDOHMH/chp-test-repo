@@ -50,6 +50,7 @@ export default function IndicatorComparisonChart({
   metadataDetail,
   metadataUnits,
   isCount,
+  unreliableNote = null, // 2026-11-18: hover wording, matches the flyout footnote
   neighborhoods = [],
 }) {
   const { comparisonNeighborhood } = useComparison();
@@ -71,8 +72,9 @@ export default function IndicatorComparisonChart({
       height: CHART_HEIGHT,
       expanded: true,
       isCount,
+      unreliableNote,
     }),
-    [data, geoId, title, subtitle, metadataType, metadataOf, metadataDetail, metadataUnits, isCount]
+    [data, geoId, title, subtitle, metadataType, metadataOf, metadataDetail, metadataUnits, isCount, unreliableNote]
   );
 
   const handleViewReady = useCallback((view) => {

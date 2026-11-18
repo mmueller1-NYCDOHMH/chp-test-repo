@@ -27,6 +27,7 @@ import { composeExportCanvas, loadImage, downloadCanvas, copyCanvas } from './ch
 
 export default function ExpandedChartModal({
   suppressionNote = null, // 2026-09-30: shown under the chart when any value is suppressed
+  flaggedNote = null,     // 2026-11-18: unreliable-estimate note, shown when any value is flagged (*)
   open,
   indicatorKey,
   expandedSpec,
@@ -69,7 +70,9 @@ export default function ExpandedChartModal({
     const chart = await loadImage(await view.toImageURL('png', scale));
     // Only suppressed rows — everything else is labeled in the chart image (2026-10-13)
     const legendItems = buildLegendItems(indicatorData, geoId, comparisonNeighborhood).filter(i => i.suppressed);
-    return composeExportCanvas({ chart, title, subtitle, legendItems, scale });
+    // 2026-11-18 (per Liza): notes + source go on the image too.
+    const footerLines = [flaggedNote, suppressionNote, sourceClean ? `Source: ${sourceClean}` : null];
+    return composeExportCanvas({ chart, title, subtitle, legendItems, footerLines, scale });
   }
 
   async function handleDownloadImage() {
@@ -264,8 +267,11 @@ export default function ExpandedChartModal({
           )}
         </div>
 
-        {suppressionNote && (
-          <p className="px-7 -mt-3 pb-5 text-xs text-gray-600 italic leading-snug">{suppressionNote}</p>
+        {(flaggedNote || suppressionNote) && (
+          <div className="px-7 -mt-3 pb-5 space-y-1">
+            {flaggedNote && <p className="text-xs text-gray-600 italic leading-snug">{flaggedNote}</p>}
+            {suppressionNote && <p className="text-xs text-gray-600 italic leading-snug">{suppressionNote}</p>}
+          </div>
         )}
 
         {/* ── Source citation ─────────────────────────────────── */}

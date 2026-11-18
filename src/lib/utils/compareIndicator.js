@@ -36,6 +36,7 @@
 
 import phrases from '../../../content/site/phrases.json';
 import { displayName } from './formatGeography';
+import { generalNotes } from '@/config/chartNotes';
 
 // ─── computeDelta ─────────────────────────────────────────────────────────────
 
@@ -157,6 +158,22 @@ export function getFlaggedEstimateFootnote(dataSource, isPercent = false) {
       : phrases.flaggedFootnote.administrativeRate;
   }
   return null;
+}
+
+/**
+ * Unreliable-estimate note for charts that show every CD (hover tooltip,
+ * expanded chart, image export) — 2026-11-18, per Liza: same wording as the
+ * flyout footnote above, picked by data source. Falls back to the sitewide
+ * chartNotes.json general.unreliable text when an indicator has no dataSource.
+ */
+export function getUnreliableNote(dataSource, isPercent = false) {
+  return getFlaggedEstimateFootnote(dataSource, isPercent)
+    ?? (generalNotes.unreliable ? `*${generalNotes.unreliable}` : null);
+}
+
+/** True when any row in an indicator's data is a flagged (unreliable) estimate. */
+export function hasFlaggedRow(rows) {
+  return (rows ?? []).some(r => r?.ValueStatus === 'flagged');
 }
 
 // ─── Insight badge / arrow helpers ──────────────────────────────────────────

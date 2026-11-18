@@ -91,6 +91,7 @@ import DetailsButton from './expandableChartCard/DetailsButton';
 import NotesModal from './expandableChartCard/NotesModal';
 import { getChartNote } from '@/config/chartNotes';
 import { getSuppressionNote, isSuppressedRow } from '@/lib/utils/suppression';
+import { getUnreliableNote, hasFlaggedRow } from '@/lib/utils/compareIndicator';
 import { useComparison } from '@/lib/context/ComparisonContext';
 import { SELECTED, COMPARISON } from '@/lib/charts/chartColors';
 import { stripCdCode } from './expandableChartCard/chartCardUtils';
@@ -139,6 +140,11 @@ export default function ExpandableChartCard({
   // by its own chart label ("<Name> · suppressed") — the extra on-chart note
   // was removed per Morgan.
   const suppressionNote = useMemo(() => getSuppressionNote(indicatorData), [indicatorData]);
+  // 2026-11-18 (per Liza): unreliable-estimate wording matches the flyout
+  // footnote — used in the hover tooltip, and shown in the expanded chart /
+  // image export whenever any value is flagged.
+  const unreliableNote = getUnreliableNote(dataSource, isPercent);
+  const flaggedNote    = hasFlaggedRow(indicatorData) ? unreliableNote : null;
 
   // Suppressed Selected / Comparison CDs (2026-10-01, per Morgan): no bar and
   // no in-chart label (see buildBarChartSpec) — listed instead in a stacked
@@ -158,15 +164,15 @@ export default function ExpandableChartCard({
 
   const compactSpec = useMemo(
     () => (compactSpecOptions
-      ? buildBarChartSpec({ ...compactSpecOptions, data: indicatorData ?? [], geoId })
+      ? buildBarChartSpec({ ...compactSpecOptions, data: indicatorData ?? [], geoId, unreliableNote })
       : null),
-    [compactSpecOptions, indicatorData, geoId],
+    [compactSpecOptions, indicatorData, geoId, unreliableNote],
   );
   const expandedSpec = useMemo(
     () => (isExpanded && expandedSpecOptions
-      ? buildBarChartSpec({ ...expandedSpecOptions, data: indicatorData ?? [], geoId, expanded: true })
+      ? buildBarChartSpec({ ...expandedSpecOptions, data: indicatorData ?? [], geoId, expanded: true, unreliableNote })
       : null),
-    [isExpanded, expandedSpecOptions, indicatorData, geoId],
+    [isExpanded, expandedSpecOptions, indicatorData, geoId, unreliableNote],
   );
 
   const { open: openFlyout } = useFlyout();
@@ -204,7 +210,7 @@ export default function ExpandableChartCard({
       compactSpec,
       // Export tray (2026-09-29): the flyout builds the expanded spec from
       // these on demand, so its PNG matches the expanded modal's.
-      expandedSpecOptions,
+      expandedSpecOptions: expandedSpecOptions && { ...expandedSpecOptions, unreliableNote },
     });
   }
 
@@ -408,7 +414,7 @@ export default function ExpandableChartCard({
         sourceClean={sourceClean}
         sourceUrl={sourceUrl}
         description={description}
-        note={[chartNote, suppressionNote]}
+        note={[chartNote, flaggedNote, suppressionNote]}
         onClose={() => setNotesOpen(false)}
       />
 
@@ -423,6 +429,7 @@ export default function ExpandableChartCard({
         indicatorData={indicatorData}
         geoId={geoId}
         suppressionNote={suppressionNote}
+        flaggedNote={flaggedNote}
         onClose={() => setIsExpanded(false)}
         restoreFocusRef={expandBtnRef}
         embedBtnRef={embedBtnRef}

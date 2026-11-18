@@ -58,7 +58,7 @@ function wrapText(ctx, text, maxWidth) {
  * itself — for DOM-rasterized charts, which have no built-in padding the way
  * a Vega view does.
  */
-export function composeExportCanvas({ chart, title, subtitle, legendItems = [], scale = 2, chartInset = false }) {
+export function composeExportCanvas({ chart, title, subtitle, legendItems = [], footerLines = [], scale = 2, chartInset = false }) {
   const PADDING     = 28 * scale;
   const TITLE_SIZE  = 15 * scale;
   const TITLE_LINE  = 20 * scale;   // line height for wrapped title rows
@@ -69,6 +69,9 @@ export function composeExportCanvas({ chart, title, subtitle, legendItems = [], 
   const LEG_SIZE    = 11 * scale;   // legend text size
   const LEG_ROW     = 20 * scale;   // row height per legend item
   const DOT_R       = 5  * scale;   // circle radius
+  const FOOT_SIZE   = 11 * scale;   // footer notes + source (2026-11-18)
+  const FOOT_LINE   = 15 * scale;
+  const FOOT_GAP    = 6  * scale;   // gap between footer items
 
   const inset   = chartInset ? PADDING : 0;
   const canvas  = document.createElement('canvas');
@@ -81,6 +84,14 @@ export function composeExportCanvas({ chart, title, subtitle, legendItems = [], 
   const titleLines = title ? wrapText(ctx, title, textW) : [];
   ctx.font = `${SUB_SIZE}px ${FONT}`;
   const subLines = title && subtitle ? wrapText(ctx, subtitle, textW) : [];
+  // Footer (2026-11-18, per Liza): unreliable/suppression notes + source
+  // under the chart so a downloaded image carries its caveats and citation.
+  ctx.font = `${FOOT_SIZE}px ${FONT}`;
+  const footItems = footerLines.filter(Boolean).map(t => wrapText(ctx, t, textW));
+  const footLineCount = footItems.reduce((n, l) => n + l.length, 0);
+  const footerH = footLineCount
+    ? BLOCK_GAP + FOOT_SIZE + (footLineCount - 1) * FOOT_LINE + (footItems.length - 1) * FOOT_GAP + PADDING
+    : 0;
 
   const headerH = titleLines.length
     ? PADDING + TITLE_SIZE + (titleLines.length - 1) * TITLE_LINE
@@ -90,7 +101,7 @@ export function composeExportCanvas({ chart, title, subtitle, legendItems = [], 
   const legendH = legendItems.length ? legendItems.length * LEG_ROW + BLOCK_GAP : 0;
   const chartY  = headerH + legendH || inset;
 
-  canvas.height = chartY + chart.height + inset;
+  canvas.height = chartY + chart.height + inset + footerH;
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -139,6 +150,19 @@ export function composeExportCanvas({ chart, title, subtitle, legendItems = [], 
   }
 
   ctx.drawImage(chart, inset, chartY);
+
+  if (footLineCount) {
+    ctx.font      = `${FOOT_SIZE}px ${FONT}`;
+    ctx.fillStyle = '#4B5563';
+    let y = chartY + chart.height + inset + BLOCK_GAP + FOOT_SIZE;
+    footItems.forEach((lines, i) => {
+      if (i) y += FOOT_LINE + FOOT_GAP;
+      lines.forEach((line, j) => {
+        if (j) y += FOOT_LINE;
+        ctx.fillText(line, PADDING, y);
+      });
+    });
+  }
   return canvas;
 }
 
