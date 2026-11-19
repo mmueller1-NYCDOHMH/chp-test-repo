@@ -582,10 +582,15 @@ export function buildBarChartSpec({ data, geoId, title, subtitle, metadataType, 
           // tops out BAND px down (labels live in the strip). No selected CD
           // and no comparison: just enough headroom (HUG_ROOM px) for labels
           // hugging the tallest bars.
+          // Written against Vega's live `height` signal (= height + BAND at
+          // build time, so cards are numerically unchanged) rather than baked
+          // numbers — lets the Details flyout resize the mini bar with
+          // view.height(h) and keep the label band a fixed BAND px
+          // (2026-11-19).
           scale: {
             domainMax: { expr: hasSel
-              ? `${maxValue * (height + BAND) / height}`
-              : `comparisonGeoId !== null ? ${maxValue * (height + BAND) / height} : ${maxValue * (height + BAND) / (height + BAND - HUG_ROOM)}` },
+              ? `${maxValue} * height / max(1, height - ${BAND})`
+              : `comparisonGeoId !== null ? ${maxValue} * height / max(1, height - ${BAND}) : ${maxValue} * height / max(1, height - ${HUG_ROOM})` },
             nice: false, zero: true,
           },
         } : {}),
