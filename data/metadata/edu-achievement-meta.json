@@ -1,6 +1,6 @@
 {
   "IndicatorKey": "edu-achievement",
-  "Title": "Educational Attainment",
+  "Title": "Educational Achievement",
   "Label": "Highest Level of Education Achieved",
   "Subtitle": "Percentage of adults ages 25 and older.",
   "TimePeriod": "2019-2023",

@@ -1,6 +1,6 @@
 {
   "IndicatorKey": "premature-mort",
-  "Label": "Premature Mortality",
+  "Label": "Highest Level of Education Achieved",
   "Section": "health-conditions",
   "Subsection": "health-outcomes",
   "Data": [

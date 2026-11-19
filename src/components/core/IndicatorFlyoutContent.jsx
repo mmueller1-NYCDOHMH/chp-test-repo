@@ -50,6 +50,27 @@ import RankDotStrip from '@/components/data-display/RankDotStrip';
 import { CHOROPLETH_STOPS, SELECTED, CITYWIDE } from '@/lib/charts/chartColors';
 import IconHint from '@/components/charts/expandableChartCard/IconHint';
 import ChartDataTable from '@/components/charts/expandableChartCard/ChartDataTable';
+import { useVerticalResize } from '@/components/core/flyoutShell/useVerticalResize';
+import VerticalResizeGrip from '@/components/core/flyoutShell/VerticalResizeGrip';
+
+// ── User-resizable map / mini bar heights (2026-11-19) ──────────────────────
+// Modest ranges on purpose — a preference tweak, not a layout mode.
+// Grips are desktop-only (sm+); on mobile the map keeps its fixed 220px.
+const MAP_H_DEFAULT = 340;
+const MAP_H_MIN     = 240;
+const MAP_H_MAX     = 520;
+const CHART_SHRINK  = 30;   // px the mini bar can lose from its built height
+const CHART_GROW    = 160;  // px it can gain
+
+// Leaflet + Vega re-measure on window resize; nudge once per frame mid-drag.
+let nudgeRaf = 0;
+function nudgeLayout() {
+  if (typeof window === 'undefined' || nudgeRaf) return;
+  nudgeRaf = requestAnimationFrame(() => {
+    nudgeRaf = 0;
+    window.dispatchEvent(new Event('resize'));
+  });
+}
 
 const ChoroplethMap = dynamic(
   () => import('@/components/maps/ChoroplethMap'),
@@ -198,8 +219,41 @@ export default function IndicatorFlyoutContent({
   // instead. The reverse direction (bar → map) uses Vega's standard
   // view-level mouseover/mouseout mark events — both wired without touching
   // VegaLiteChart.jsx itself.
+  // ── Resizable map + mini bar (2026-11-19) ─────────────────────────────────
+  const mapResize = useVerticalResize({
+    initial: MAP_H_DEFAULT,
+    min: MAP_H_MIN,
+    max: MAP_H_MAX,
+    storageKey: 'chp:flyoutMapH',
+    onResize: nudgeLayout, // Leaflet invalidates size on window resize
+  });
+
+  // Mini bar: range is relative to the spec's built height (height + label
+  // band), so every chart gets the same shrink/grow allowance. The height
+  // is pushed into the live Vega view (no re-embed); the spec's y-domain is
+  // written against Vega's `height` signal so the label band stays fixed.
+  const chartBaseH = typeof compactSpec?.height === 'number' ? compactSpec.height : 200;
+  const applyChartHeight = useCallback((h) => {
+    const view = miniBarViewRef.current;
+    if (!view) return;
+    try { view.height(h).runAsync(); } catch { /* view finalized */ }
+  }, []);
+  const chartResize = useVerticalResize({
+    initial: chartBaseH,
+    min: chartBaseH - CHART_SHRINK,
+    max: chartBaseH + CHART_GROW,
+    storageKey: 'chp:flyoutChartH',
+    onResize: applyChartHeight,
+  });
+  const chartHeightRef = useRef(chartResize.height);
+  chartHeightRef.current = chartResize.height;
+
   const handleMiniBarViewReady = useCallback((view) => {
     miniBarViewRef.current = view;
+    // Apply the user's saved/current height as soon as the view exists
+    if (chartHeightRef.current !== view.height()) {
+      try { view.height(chartHeightRef.current).runAsync(); } catch { /* ignore */ }
+    }
     view.addEventListener('mouseover', (_event, item) => {
       if (item?.datum?.GeoID != null) setStripHoveredGeoId(item.datum.GeoID);
     });
@@ -273,7 +327,13 @@ export default function IndicatorFlyoutContent({
             distribution cards (causes of premature death, cancer types) pass
             no indicatorData, so there's nothing to map (2026-09-27). */}
         {hasMap && (
-        <div className="flyout-map relative w-full h-[220px] sm:h-[340px] overflow-hidden border-y border-gray-100">
+        <>
+        {/* Height: fixed 220px on mobile; user-resizable on sm+ via the grip
+            below (--map-h, see useVerticalResize). */}
+        <div
+          className="flyout-map relative w-full h-[220px] sm:h-[var(--map-h)] overflow-hidden border-y border-gray-100"
+          style={{ '--map-h': `${mapResize.height}px` }}
+        >
           {/* Note: the map is pan/zoomable (matching the main sidebar map), so on
               touch devices dragging over the map pans it rather than scrolling the
               flyout body. The "Back to origin" button resets the view. */}
@@ -296,6 +356,12 @@ export default function IndicatorFlyoutContent({
             <span className="text-xs text-gray-600">High</span>
           </div>
         </div>
+        <VerticalResizeGrip
+          label="Resize map height"
+          className="hidden sm:flex -mt-2 relative z-[1001]"
+          {...mapResize.gripProps}
+        />
+        </>
         )}
 
         <div className="px-5 pt-4 pb-5 flex flex-col gap-4">
@@ -349,6 +415,11 @@ export default function IndicatorFlyoutContent({
                 How this neighborhood compares
               </p> */}
               <VegaLiteChart spec={compactSpec} onViewReady={handleMiniBarViewReady} />
+              <VerticalResizeGrip
+                label="Resize chart height"
+                className="hidden sm:flex mt-1"
+                {...chartResize.gripProps}
+              />
               {/* Screen-reader table for the card's chart — lives here (and in
                   the expanded chart) instead of on every card (2026-10-13). */}
               <ChartDataTable

@@ -2,7 +2,7 @@
   "IndicatorKey": "cancer-rank-rate",
   "Title": "Top 3 types of cancers among premature deaths",
   "Label": "Cancers among premature deaths",
-  "Subtitle": "Rate of premature deaths (before the age of 65) due to cancer type per 100,000 people",
+  "Subtitle": "Rate (per 100,000 people) of premature deaths (before the age of 65) due to cancer among the top three types of cancer.",
   "AgeAdjustment": "Yes",
   "MethodsNote": "Breast cancer is limited to female population.",
   "Source": "NYC DOHMH, Bureau of Vital Statistics",

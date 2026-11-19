@@ -1,6 +1,6 @@
 {
   "IndicatorKey": "edu-achievement",
-  "Label": "Educational Attainment",
+  "Label": "Highest Level of Education Achieved",
   "Section": "social",
   "Subsection": "education",
   "Data": [

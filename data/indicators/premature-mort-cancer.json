@@ -1,6 +1,6 @@
 {
   "IndicatorKey": "premature-mort-cancer",
-  "Label": "Cancers among premature deaths",
+  "Label": "Highest Level of Education Achieved",
   "Section": "health-conditions",
   "Subsection": "health-outcomes",
   "Data": [
@@ -102,8 +102,8 @@
         },
         {
           "SegmentKey": "cancer-lung-rate",
-          "Value": 6.0,
-          "DisplayValue": "6.0",
+          "Value": 6,
+          "DisplayValue": "6",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -187,8 +187,8 @@
         },
         {
           "SegmentKey": "cancer-colorectal-rate",
-          "Value": 4.0,
-          "DisplayValue": "4.0",
+          "Value": 4,
+          "DisplayValue": "4",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -239,8 +239,8 @@
         },
         {
           "SegmentKey": "cancer-lung-rate",
-          "Value": 5.0,
-          "DisplayValue": "5.0",
+          "Value": 5,
+          "DisplayValue": "5",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -376,8 +376,8 @@
         },
         {
           "SegmentKey": "cancer-lung-rate",
-          "Value": 8.0,
-          "DisplayValue": "8.0",
+          "Value": 8,
+          "DisplayValue": "8",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -513,8 +513,8 @@
         },
         {
           "SegmentKey": "cancer-lung-rate",
-          "Value": 6.0,
-          "DisplayValue": "6.0",
+          "Value": 6,
+          "DisplayValue": "6",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -650,8 +650,8 @@
         },
         {
           "SegmentKey": "cancer-lung-rate",
-          "Value": 5.0,
-          "DisplayValue": "5.0",
+          "Value": 5,
+          "DisplayValue": "5",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -787,8 +787,8 @@
         },
         {
           "SegmentKey": "cancer-lung-rate",
-          "Value": 8.0,
-          "DisplayValue": "8.0",
+          "Value": 8,
+          "DisplayValue": "8",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -982,7 +982,7 @@
           "GeoRank": null
         },
         {
-          "SegmentKey": "cancer-breast-count",
+          "SegmentKey": "cancer-breast-rate",
           "Value": null,
           "DisplayValue": null,
           "ValueType": "rate",
@@ -1394,7 +1394,7 @@
         },
         {
           "SegmentKey": "cancer-breast-rate",
-          "Value": 7.0,
+          "Value": 7,
           "DisplayValue": "7.0*",
           "ValueType": "rate",
           "LCLValue": null,
@@ -1557,8 +1557,8 @@
         },
         {
           "SegmentKey": "cancer-colorectal-rate",
-          "Value": 2.0,
-          "DisplayValue": "2.0",
+          "Value": 2,
+          "DisplayValue": "2",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -1694,8 +1694,8 @@
         },
         {
           "SegmentKey": "cancer-colorectal-rate",
-          "Value": 4.0,
-          "DisplayValue": "4.0",
+          "Value": 4,
+          "DisplayValue": "4",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -2490,8 +2490,8 @@
         },
         {
           "SegmentKey": "cancer-breast-rate",
-          "Value": 13.0,
-          "DisplayValue": "13.0",
+          "Value": 13,
+          "DisplayValue": "13",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -2789,7 +2789,7 @@
           "GeoRank": null
         },
         {
-          "SegmentKey": "cancer-colorectal-count",
+          "SegmentKey": "cancer-colorectal-rate",
           "Value": null,
           "DisplayValue": null,
           "ValueType": "rate",
@@ -3037,7 +3037,7 @@
           "GeoRank": null
         },
         {
-          "SegmentKey": "cancer-breast-count",
+          "SegmentKey": "cancer-breast-rate",
           "Value": null,
           "DisplayValue": null,
           "ValueType": "rate",
@@ -3063,7 +3063,7 @@
           "GeoRank": null
         },
         {
-          "SegmentKey": "cancer-colorectal-count",
+          "SegmentKey": "cancer-colorectal-rate",
           "Value": null,
           "DisplayValue": null,
           "ValueType": "rate",
@@ -3090,8 +3090,8 @@
         },
         {
           "SegmentKey": "cancer-liver-rate",
-          "Value": 4.0,
-          "DisplayValue": "4.0",
+          "Value": 4,
+          "DisplayValue": "4",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -3174,7 +3174,7 @@
           "GeoRank": null
         },
         {
-          "SegmentKey": "cancer-breast-count",
+          "SegmentKey": "cancer-breast-rate",
           "Value": null,
           "DisplayValue": null,
           "ValueType": "rate",
@@ -3253,8 +3253,8 @@
         },
         {
           "SegmentKey": "cancer-lung-rate",
-          "Value": 13.0,
-          "DisplayValue": "13.0",
+          "Value": 13,
+          "DisplayValue": "13",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -3474,7 +3474,7 @@
           "GeoRank": null
         },
         {
-          "SegmentKey": "cancer-colorectal-count",
+          "SegmentKey": "cancer-colorectal-rate",
           "Value": null,
           "DisplayValue": null,
           "ValueType": "rate",
@@ -3722,7 +3722,7 @@
           "GeoRank": null
         },
         {
-          "SegmentKey": "cancer-breast-count",
+          "SegmentKey": "cancer-breast-rate",
           "Value": null,
           "DisplayValue": null,
           "ValueType": "rate",
@@ -4023,8 +4023,8 @@
         },
         {
           "SegmentKey": "cancer-colorectal-rate",
-          "Value": 5.0,
-          "DisplayValue": "5.0",
+          "Value": 5,
+          "DisplayValue": "5",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -4349,8 +4349,8 @@
         },
         {
           "SegmentKey": "cancer-lung-rate",
-          "Value": 4.0,
-          "DisplayValue": "4.0",
+          "Value": 4,
+          "DisplayValue": "4",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -4408,8 +4408,8 @@
         },
         {
           "SegmentKey": "cancer-breast-rate",
-          "Value": 9.0,
-          "DisplayValue": "9.0",
+          "Value": 9,
+          "DisplayValue": "9",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -4544,7 +4544,7 @@
           "GeoRank": null
         },
         {
-          "SegmentKey": "cancer-breast-count",
+          "SegmentKey": "cancer-breast-rate",
           "Value": null,
           "DisplayValue": null,
           "ValueType": "rate",
@@ -4845,8 +4845,8 @@
         },
         {
           "SegmentKey": "cancer-colorectal-rate",
-          "Value": 4.0,
-          "DisplayValue": "4.0",
+          "Value": 4,
+          "DisplayValue": "4",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -4956,8 +4956,8 @@
         },
         {
           "SegmentKey": "cancer-breast-rate",
-          "Value": 7.0,
-          "DisplayValue": "7.0",
+          "Value": 7,
+          "DisplayValue": "7",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -4965,7 +4965,7 @@
           "SegmentRank": 30,
           "NYCComparison": null,
           "ValueStatus": null,
-          "GeoRank": 1
+          "GeoRank": 3
         },
         {
           "SegmentKey": "cancer-colorectal-count",
@@ -4991,7 +4991,7 @@
           "SegmentRank": 22,
           "NYCComparison": null,
           "ValueStatus": null,
-          "GeoRank": 4
+          "GeoRank": 3
         },
         {
           "SegmentKey": "cancer-liver-count",
@@ -5017,7 +5017,7 @@
           "SegmentRank": 3,
           "NYCComparison": null,
           "ValueStatus": null,
-          "GeoRank": 3
+          "GeoRank": 2
         },
         {
           "SegmentKey": "cancer-lung-count",
@@ -5043,7 +5043,7 @@
           "SegmentRank": 19,
           "NYCComparison": null,
           "ValueStatus": null,
-          "GeoRank": 2
+          "GeoRank": 1
         },
         {
           "SegmentKey": "cancer-pancreatic-count",
@@ -5118,7 +5118,7 @@
           "GeoRank": null
         },
         {
-          "SegmentKey": "cancer-colorectal-count",
+          "SegmentKey": "cancer-colorectal-rate",
           "Value": null,
           "DisplayValue": null,
           "ValueType": "rate",
@@ -5641,8 +5641,8 @@
         },
         {
           "SegmentKey": "cancer-breast-rate",
-          "Value": 9.0,
-          "DisplayValue": "9.0",
+          "Value": 9,
+          "DisplayValue": "9",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -6626,8 +6626,8 @@
         },
         {
           "SegmentKey": "cancer-colorectal-rate",
-          "Value": 4.0,
-          "DisplayValue": "4.0",
+          "Value": 4,
+          "DisplayValue": "4",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -6737,8 +6737,8 @@
         },
         {
           "SegmentKey": "cancer-breast-rate",
-          "Value": 5.0,
-          "DisplayValue": "5.0",
+          "Value": 5,
+          "DisplayValue": "5",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -7010,7 +7010,7 @@
           "GeoRank": null
         },
         {
-          "SegmentKey": "cancer-breast-count",
+          "SegmentKey": "cancer-breast-rate",
           "Value": null,
           "DisplayValue": null,
           "ValueType": "rate",
@@ -7063,8 +7063,8 @@
         },
         {
           "SegmentKey": "cancer-liver-rate",
-          "Value": 3.0,
-          "DisplayValue": "3.0",
+          "Value": 3,
+          "DisplayValue": "3",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -7089,8 +7089,8 @@
         },
         {
           "SegmentKey": "cancer-lung-rate",
-          "Value": 4.0,
-          "DisplayValue": "4.0",
+          "Value": 4,
+          "DisplayValue": "4",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -7148,8 +7148,8 @@
         },
         {
           "SegmentKey": "cancer-breast-rate",
-          "Value": 9.0,
-          "DisplayValue": "9.0",
+          "Value": 9,
+          "DisplayValue": "9",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -7695,7 +7695,7 @@
           "GeoRank": null
         },
         {
-          "SegmentKey": "cancer-breast-count",
+          "SegmentKey": "cancer-breast-rate",
           "Value": null,
           "DisplayValue": null,
           "ValueType": "rate",
@@ -7859,8 +7859,8 @@
         },
         {
           "SegmentKey": "cancer-colorectal-rate",
-          "Value": 4.0,
-          "DisplayValue": "4.0",
+          "Value": 4,
+          "DisplayValue": "4",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -8244,8 +8244,8 @@
         },
         {
           "SegmentKey": "cancer-breast-rate",
-          "Value": 6.0,
-          "DisplayValue": "6.0",
+          "Value": 6,
+          "DisplayValue": "6",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,
@@ -8269,7 +8269,7 @@
           "GeoRank": null
         },
         {
-          "SegmentKey": "cancer-colorectal-count",
+          "SegmentKey": "cancer-colorectal-rate",
           "Value": null,
           "DisplayValue": null,
           "ValueType": "rate",
@@ -8407,8 +8407,8 @@
         },
         {
           "SegmentKey": "cancer-colorectal-rate",
-          "Value": 5.0,
-          "DisplayValue": "5.0",
+          "Value": 5,
+          "DisplayValue": "5",
           "ValueType": "rate",
           "LCLValue": null,
           "UCLValue": null,

@@ -74,6 +74,7 @@ import { useIsMobileViewport } from './flyoutShell/useIsMobileViewport';
 import { useMobileDragSheet } from './flyoutShell/useMobileDragSheet';
 import { useFlyoutHistoryBack } from './flyoutShell/useFlyoutHistoryBack';
 import { useFlyoutA11yEffects } from './flyoutShell/useFlyoutA11yEffects';
+import { useDesktopResize } from './flyoutShell/useDesktopResize';
 import FlyoutExportTray, { flyoutHasExports } from './flyoutShell/FlyoutExportTray';
 
 // Lazy-load so Leaflet bundle only loads when an indicator flyout opens
@@ -168,6 +169,15 @@ export default function FlyoutShell({ children }) {
   // Back button / native back-gesture closes the panel
   useFlyoutHistoryBack({ isOpen, triggerQuickClose });
 
+  // Desktop drag-to-resize from the panel's left edge (2026-11-19)
+  const {
+    width: panelWidth,
+    isResizing,
+    minWidth: panelMinWidth,
+    getMaxWidth: getPanelMaxWidth,
+    handleProps: resizeHandleProps,
+  } = useDesktopResize({ enabled: !isMobile && isOpen });
+
   // ── Render ───────────────────────────────────────────────────────────────
   //
   // Tailwind utility classes drive almost everything below. The one
@@ -256,13 +266,54 @@ export default function FlyoutShell({ children }) {
         // land on invisible, screen-reader-hidden controls. inert removes the
         // whole closed panel from focus + the accessibility tree.
         inert={!isOpen || undefined}
-        style={isMobile ? { '--drag-y': `${dragY}px` } : undefined}
+        // Desktop width is inline (it's a live drag value — same reasoning as
+        // --drag-y above). 420px stays the default/minimum.
+        style={isMobile ? { '--drag-y': `${dragY}px` } : { width: `${panelWidth}px` }}
         className={
           isMobile
             ? `absolute pointer-events-auto bottom-0 left-0 right-0 w-full rounded-t-2xl bg-white shadow-xl flex flex-col overflow-hidden ${panelPositionClass} ${panelMaxHeightClass} ${panelTransformClass} ${panelTransitionClass}`
-            : `absolute pointer-events-auto top-0 right-0 h-full w-[420px] max-w-full bg-white shadow-xl flex flex-col overflow-hidden ${panelTransformClass} ${panelTransitionClass}`
+            : `absolute pointer-events-auto top-0 right-0 h-full max-w-full bg-white shadow-xl flex flex-col overflow-hidden ${panelTransformClass} ${panelTransitionClass}`
         }
       >
+
+        {/* ── Resize handle (desktop only, 2026-11-19) ─────────────
+            Sits on the panel's left edge; drag left to widen. A visible grip
+            is always shown; z-[1100] keeps it above the Leaflet map panes (z 400–1000). role="separator" + aria-value* makes
+            it a standard keyboard-operable splitter (←/→, Home, End).
+            Double-click resets to the default width. */}
+        {!isMobile && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize panel"
+            aria-valuenow={panelWidth}
+            aria-valuemin={panelMinWidth}
+            aria-valuemax={isOpen ? getPanelMaxWidth() : panelMinWidth}
+            tabIndex={0}
+            title="Drag to resize · double-click to reset"
+            {...resizeHandleProps}
+            className="group absolute left-0 top-0 h-full w-4 z-[1100] cursor-col-resize touch-none select-none flex items-center justify-center focus-visible:outline-none"
+          >
+            {/* Always-visible grip tab — white pill with three dots so it reads
+                as "pull me". Darkens on hover, brand-colored while dragging,
+                blue ring on keyboard focus. */}
+            <span
+              aria-hidden="true"
+              className={`flex flex-col items-center justify-center gap-1 w-3 h-14 rounded-full border shadow-sm transition-colors duration-150 ${
+                isResizing
+                  ? 'bg-brand-tint border-brand'
+                  : 'bg-white border-gray-400 group-hover:bg-gray-100 group-hover:border-gray-500 group-focus-visible:ring-2 group-focus-visible:ring-blue-500'
+              }`}
+            >
+              {[0, 1, 2].map(i => (
+                <span
+                  key={i}
+                  className={`block w-1 h-1 rounded-full ${isResizing ? 'bg-brand' : 'bg-gray-500 group-hover:bg-gray-700'}`}
+                />
+              ))}
+            </span>
+          </div>
+        )}
 
         {/* ── Drag handle (mobile only) ────────────────────────── */}
         {isMobile && (

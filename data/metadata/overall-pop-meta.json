@@ -8,7 +8,7 @@
   "Source": "NYC DOHMH population estimates, modified from US Census Bureau interpolated intercensal population estimates, 2000-2020. Updated September 2021.",
   "DenominatorSource": null,
   "TimePeriod": "2024",
-  "Unit": "persons",
+  "Unit": "people",
   "Decimals": 0,
   "Section": "at-a-glance",
   "Subsection": "population"
